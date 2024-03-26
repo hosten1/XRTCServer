@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屏幕共享推流端</title>
+    <style>
+      body {
+        font-size: 14px;
+      }
+      .titleHighlight {
+        background-color: #eeeeee;
+        margin: 1 0 6px 1;
+        padding: 0.5em 1.5em;
+      }
+      /* .videoHighlight {
+        background-color: #dddddd;
+        margin: 1 0 6px 1;
+        padding: 0.5em 1.5em;
+        size: 1280px 720px;
+      } */
+      video {
+        width: 1280px;
+        height: 720px;
+      }
+      button {
+        background-color: #d84a38;
+        border: none;
+        border-radius: 4.5px;
+        color: white;
+         width: 110px;
+         height: 60px;
+      }
+      button:hover{
+        background-color: #cf402d;
+      }
+    </style>
+</head>
+<body>
+    <h2>屏幕共享推流端</h2>
+    <div class="titleHighlight">
+        <span>
+            uid = {{ .uid }}
+            stream = {{ .streamName }}
+            audio = {{ .aduio }}
+            video = {{ .video }}
+       
+        </span>
+    </div>
+    <div>
+        <video src="localVideo" controls autoplay></video>
+    </div>
+
+
+    <button id="startPushBtn">开始推流</button>
+    <button id="stopPushBtn">停止推流</button>
+</body>
+</html>
