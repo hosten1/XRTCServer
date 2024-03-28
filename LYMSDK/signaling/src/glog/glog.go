@@ -98,16 +98,19 @@ type severity int32 // sync/atomic int32
 // A message written to a high-severity log file is also written to each
 // lower-severity log file.
 const (
-	infoLog severity = iota
+
+	debugLog severity = iota
+	infoLog  
 	warningLog
 	errorLog
 	fatalLog
-	numSeverity = 4
+	numSeverity = 5
 )
 
-const severityChar = "IWEF"
+const severityChar = "DIWEF"
 
 var severityName = []string{
+	debugLog:    "DEBUG",
 	infoLog:    "INFO",
 	warningLog: "WARNING",
 	errorLog:   "ERROR",
@@ -180,10 +183,11 @@ func (s *OutputStats) Bytes() int64 {
 // Stats tracks the number of lines of output and number of bytes
 // per severity level. Values must be read with atomic.LoadInt64.
 var Stats struct {
-	Info, Warning, Error OutputStats
+	Debug,Info, Warning, Error OutputStats
 }
 
 var severityStats = [numSeverity]*OutputStats{
+	debugLog : &Stats.Debug,
 	infoLog:    &Stats.Info,
 	warningLog: &Stats.Warning,
 	errorLog:   &Stats.Error,
@@ -394,6 +398,19 @@ type flushSyncWriter interface {
 	Sync() error
 	io.Writer
 }
+
+func SetLogTostderr(value  bool) {
+	logging.toStderr = value
+}
+
+func SetLogLevel(level string)  {
+	logging.stderrThreshold.Set(level)
+	
+}
+
+// func SetStderrThreshold()  {
+	
+// }
 
 func init() {
 	flag.BoolVar(&logging.toStderr, "logtostderr", false, "log to standard error instead of files")
@@ -693,13 +710,15 @@ func (l *loggingT) output(s severity, buf *buffer, file string, line int, alsoTo
 		}
 		switch s {
 		case fatalLog:
-			l.file[fatalLog].Write(data)
+			// l.file[fatalLog].Write(data)
 			fallthrough
 		case errorLog:
-			l.file[errorLog].Write(data)
+			// l.file[errorLog].Write(data)
 			fallthrough
 		case warningLog:
 			l.file[warningLog].Write(data)
+			fallthrough
+		case debugLog:
 			fallthrough
 		case infoLog:
 			l.file[infoLog].Write(data)
@@ -875,7 +894,7 @@ func (l *loggingT) createFiles(sev severity) error {
 	return nil
 }
 
-const flushInterval = 30 * time.Second
+const flushInterval = 30 * time.Millisecond
 
 // flushDaemon periodically flushes the log file buffers.
 func (l *loggingT) flushDaemon() {
@@ -1047,6 +1066,30 @@ func (v Verbose) Infof(format string, args ...interface{}) {
 	if v {
 		logging.printf(infoLog, format, args...)
 	}
+}
+
+// Debug logs to the DEBUG log.
+// Arguments are handled in the manner of fmt.Print; a newline is appended if missing.
+func Debug(args ...interface{}) {
+	logging.print(debugLog, args...)
+}
+
+// DebugDepth acts as Debug but uses depth to determine which call frame to log.
+// DebugDepth(0, "msg") is the same as Debug("msg").
+func DebugDepth(depth int, args ...interface{}) {
+	logging.printDepth(debugLog, depth, args...)
+}
+
+// Debugln logs to the DEBUG log.
+// Arguments are handled in the manner of fmt.Println; a newline is appended if missing.
+func Debugln(args ...interface{}) {
+	logging.println(debugLog, args...)
+}
+
+// Debugf logs to the DEBUG log.
+// Arguments are handled in the manner of fmt.Printf; a newline is appended if missing.
+func Debugf(format string, args ...interface{}) {
+	logging.printf(debugLog, format, args...)
 }
 
 // Info logs to the INFO log.

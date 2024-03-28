@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"flag"  // 导入flag包
 	"test/src/framework"
 	"test/src/glog"
 )
@@ -13,7 +14,8 @@ func main(){
 	if errInit != nil {
 		panic(errInit)
 	}
-	glog.info("Init success")
+	glog.Info("Init success")
+	glog.Flash()
 	errHttp := framework.StartHttp()
 	if errHttp != nil {
 		panic(errHttp)
