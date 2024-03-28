@@ -3,7 +3,7 @@ package main
 // import "fmt"
 
 import (
-	"fmt"
+	// "fmt"
 	"flag"  // 导入flag包
 	"test/src/framework"
 	"test/src/glog"

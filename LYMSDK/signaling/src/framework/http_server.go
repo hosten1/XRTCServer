@@ -3,6 +3,8 @@ package framework
 import (
 	"fmt"
 	"net/http"
+	// "test/src/glog"
+	"test/src/framework"
 )
 
 // 定义路由处理接口
@@ -18,6 +20,11 @@ func init() {
 	http.HandleFunc("/", entry)
 }
 
+ type CommonRequest struct {
+	R *http.Request
+	Logger  commonLog
+	LogId   uint32
+}
 // 响应错误
 func responseError(w http.ResponseWriter, status int, err string) {
 	w.WriteHeader(status)
@@ -37,9 +44,15 @@ func entry(w http.ResponseWriter, r *http.Request) {
 
 	// 查找路由处理器
 	if action, ok := GActionRouter[r.URL.Path]; ok {
-		r.ParseForm()//解析url中参数
 		if action != nil {
-			action.Execute(w, r)
+			r.ParseForm()//解析url中参数
+			cr := &CommonRequest{
+				R: r,
+				Logger: commonLog{},
+				LogId: getLogId32(),
+			}
+			action.Execute(w, cr)
+			cr.Logger.Info("GActionRouter....")
 		} else {
 			responseError(w, http.StatusInternalServerError, "Internal server error")
 		}

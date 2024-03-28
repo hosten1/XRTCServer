@@ -3,7 +3,7 @@ package action
 import (
 	"fmt"
 	"html/template"
-	// "os"
+	"test/src/framework"
 	"net/http"
 )
 
@@ -16,8 +16,9 @@ func WriteHtmlErrorResopnse(w http.ResponseWriter,status int ,err string){
 	w.WriteHeader(status)
 	w.Write([]byte(fmt.Sprintf("%d==%s", status, err)))
 }
-func (a *lrtcClientPushAction) Execute(w http.ResponseWriter, r *http.Request) {
+func (a *lrtcClientPushAction) Execute(w http.ResponseWriter, r *framework.CommonRequest) {
 	// fmt.Println("Hi!! test l rtc client")
+  r := r.R
   t,err :=template.ParseFiles("./static/template/push.html")
    if err != nil {
 	fmt.Println(err)
