@@ -37,7 +37,7 @@ func entry(w http.ResponseWriter, r *http.Request) {
 
 	// 查找路由处理器
 	if action, ok := GActionRouter[r.URL.Path]; ok {
-		r.parseFrom()//解析url中参数
+		r.ParseForm()//解析url中参数
 		if action != nil {
 			action.Execute(w, r)
 		} else {

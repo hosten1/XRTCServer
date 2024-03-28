@@ -7,6 +7,10 @@ import (
 	"test/src/framework"
 )
 func main(){
+	err := framework.init()
+	if err != nil {
+		panic(err)
+	}
 	err := framework.StartHttp()
 	if err != nil {
 		panic(err)
