@@ -22,7 +22,7 @@ func (l *commonLog) Debugf(format string,args ...interface{}){
 	glog.Debugf(format,args...)
 }
 func (l *commonLog) Infof(format string,args ...interface{}){
-	glog.Info(format,args...)
+	glog.Infof(format,args...)
 }
 func (l *commonLog) Warningf(format string,args ...interface{}){
 	glog.Warningf(format,args...)

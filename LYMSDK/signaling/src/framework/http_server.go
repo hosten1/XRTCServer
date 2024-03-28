@@ -7,7 +7,7 @@ import (
 
 // 定义路由处理接口
 type ActionInterface interface {
-	Execute(w http.ResponseWriter, r *http.Request)
+	Execute(w http.ResponseWriter, r *CommonRequest)
 }
 
 // 路由处理器映射表
