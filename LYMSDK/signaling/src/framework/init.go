@@ -6,7 +6,7 @@ import (
 )
 
 func init() error {
-	glog.setLogDic("./log")
-	glog.setLogFileName("lymrtc.log");
+	glog.SetLogDic("./log")
+	glog.SetLogFileName("lymrtc.log");
 	return nil
 }
