@@ -7,14 +7,13 @@ import (
 	"test/src/glog"
 )
 
-func Init(){
+func init(){
 	rand.Seed(time.Now().Unix())
 }
 func getLogId32() uint32{
 	return rand.Uint32()
 }
 
-}
 type commonLog struct {
 	
 }
