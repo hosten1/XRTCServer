@@ -50,7 +50,7 @@ func entry(w http.ResponseWriter, r *http.Request) {
 				LogId: getLogId32(),
 			}
 			action.Execute(w, cr)
-			cr.Logger.Info("GActionRouter....")
+			cr.Logger.Infof("GActionRouter....")
 		} else {
 			responseError(w, http.StatusInternalServerError, "Internal server error")
 		}
