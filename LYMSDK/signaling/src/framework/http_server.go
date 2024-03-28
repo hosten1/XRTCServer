@@ -37,9 +37,6 @@ func entry(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(""))
 		return
 	}
-
-	fmt.Println(">>>>>", r.URL.Path)
-
 	// 查找路由处理器
 	if action, ok := GActionRouter[r.URL.Path]; ok {
 		if action != nil {
@@ -50,7 +47,7 @@ func entry(w http.ResponseWriter, r *http.Request) {
 				LogId: getLogId32(),
 			}
 			action.Execute(w, cr)
-			cr.Logger.Infof("GActionRouter....")
+			cr.Logger.Infof("http request uri = " + r.URL.Path +" paramate",r.URL.paramate)
 		} else {
 			responseError(w, http.StatusInternalServerError, "Internal server error")
 		}
