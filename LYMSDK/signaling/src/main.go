@@ -7,13 +7,13 @@ import (
 	"test/src/framework"
 )
 func main(){
-	err := framework.Init()
-	if err != nil {
-		panic(err)
+	errInit := framework.Init()
+	if errInit != nil {
+		panic(errInit)
 	}
-	err := framework.StartHttp()
-	if err != nil {
-		panic(err)
+	errHttp := framework.StartHttp()
+	if errHttp != nil {
+		panic(errHttp)
 	}
 	fmt.Println("HTTP server started successfully!")
 }
