@@ -44,7 +44,7 @@ func setLogDic(name string){
    *logDir = name
 }
 
-setLogFileName(logName string){
+func setLogFileName(logName string){
     logFileName = logName
 }
 func createLogDirs() {
