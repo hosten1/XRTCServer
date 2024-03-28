@@ -21,3 +21,4 @@
 go.work
 LYMSDK/signaling/signaling
 .DS_Store
+LYMSDK/signaling/log/*
