@@ -399,8 +399,8 @@ type flushSyncWriter interface {
 	io.Writer
 }
 
-func SetLogTostderr(value  bool) {
-	logging.toStderr = value
+func SetAlsoLogToStderr(value  bool) {
+	logging.alsoToStderr = value
 }
 
 func SetLogLevel(level string)  {

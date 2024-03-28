@@ -8,7 +8,7 @@ import (
 func Init() error {
 	glog.SetLogDic("./log")
 	glog.SetLogFileName("lymrtc.log");
-	glog.SetLogTostderr(true)
+	glog.SetAlsoLogToStderr(true)
 	glog.SetLogLevel("DEBUG")
 	// glog.setlo
 	return nil

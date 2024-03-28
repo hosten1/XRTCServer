@@ -15,10 +15,9 @@ func main(){
 		panic(errInit)
 	}
 	glog.Info("Init success")
-	glog.Flash()
 	errHttp := framework.StartHttp()
 	if errHttp != nil {
 		panic(errHttp)
 	}
-	fmt.Println("HTTP server started successfully!")
+	glog.Info("HTTP server started successfully!")
 }
