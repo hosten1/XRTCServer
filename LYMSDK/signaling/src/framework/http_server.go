@@ -47,7 +47,7 @@ func entry(w http.ResponseWriter, r *http.Request) {
 				LogId: getLogId32(),
 			}
 			action.Execute(w, cr)
-			cr.Logger.Infof("http request uri = " + r.URL.Path +" paramate",r.URL.paramate)
+			cr.Logger.Infof("http request uri = " + r.URL.Path)
 		} else {
 			responseError(w, http.StatusInternalServerError, "Internal server error")
 		}
