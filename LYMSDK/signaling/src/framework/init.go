@@ -5,7 +5,7 @@ import (
 	"test/src/glog"
 )
 
-func init() error {
+func Init() error {
 	glog.SetLogDic("./log")
 	glog.SetLogFileName("lymrtc.log");
 	return nil

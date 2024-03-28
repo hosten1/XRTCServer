@@ -7,7 +7,7 @@ import (
 	"test/src/framework"
 )
 func main(){
-	err := framework.init()
+	err := framework.Init()
 	if err != nil {
 		panic(err)
 	}
