@@ -15,10 +15,10 @@ func Init(confFile string) error {
 	}
     fmt.Printf("conf:%+v\n",gconf)
 	
-	glog.SetLogDic("./log")
-	glog.SetLogFileName("lymrtc");
-	glog.SetAlsoLogToStderr(true)
-	glog.SetLogLevel("DEBUG")
+	glog.SetLogDic(gconf.logDir)
+	glog.SetLogFileName(gconf.logFile);
+	glog.SetAlsoLogToStderr(gconf.logToStderr)
+	glog.SetLogLevel(gconf.logLevel)
 	// glog.setlo
 	return nil
 }
