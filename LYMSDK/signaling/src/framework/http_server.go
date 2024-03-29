@@ -65,7 +65,7 @@ func entry(w http.ResponseWriter, r *http.Request) {
 			cr.Logger.AddNotice("clientRealIP",GetRealClientIP(r))
 			r.ParseForm()//解析url中参数
 
-			for k , v := range r.From {
+			for k , v := range r.Form {
 				cr.Logger.AddNotice(k,v[0])
 				
 			}

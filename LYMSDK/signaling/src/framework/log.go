@@ -63,13 +63,13 @@ func (l *CommonLog) GetPrefixLog() string{
 	for _, item := range l.mainLog {
 		prefixLog += fmt.Sprintf("%s[%s]",item.field,item.value)		
 	}
-	for _.timeItem := range l.timeLogs {
-		diff = timeItem.endTime - timeItem.begingTime
+	for _, timeItem := range l.timeLogs {
+		diff := timeItem.endTime - timeItem.begingTime
 		if diff < 0 {
 			continue
 		}
 		fdiff := float64(diff)/1000.0
-		prefixLog += fmt.Sprintf("%s[%.3fms]",item.field,fdiff)
+		prefixLog += fmt.Sprintf("%s[%.3fms]",timeItem.field,fdiff)
 	}
 	return prefixLog
 }
