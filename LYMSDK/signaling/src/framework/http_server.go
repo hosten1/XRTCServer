@@ -21,7 +21,7 @@ func init() {
 
  type CommonRequest struct {
 	R *http.Request
-	Logger  commonLog
+	Logger  CommonLog
 	LogId   uint32
 }
 func GetRealClientIP(r *http.Request) string{
@@ -52,7 +52,7 @@ func entry(w http.ResponseWriter, r *http.Request) {
 		if action != nil {
 			cr := &CommonRequest{
 				R: r,
-				Logger: commonLog{},
+				Logger: CommonLog{},
 				LogId: getLogId32(),
 			}
 
@@ -64,6 +64,12 @@ func entry(w http.ResponseWriter, r *http.Request) {
 			cr.Logger.AddNotice("cookit",r.Header.Get("Cookie"))
 			cr.Logger.AddNotice("clientRealIP",GetRealClientIP(r))
 			r.ParseForm()//解析url中参数
+
+			for k , v := range r.From {
+				cr.Logger.AddNotice(k,v[0])
+				
+			}
+           
 			action.Execute(w, cr)
 			cr.Logger.Infof("http request uri = " + r.URL.Path)
 		} else {
