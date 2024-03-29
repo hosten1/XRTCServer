@@ -3,6 +3,7 @@ package framework
 import (
 	"fmt"
 	"net/http"
+	"strconv" // 导入 strconv 包
 )
 
 // 定义路由处理接口
@@ -23,13 +24,14 @@ func init() {
 	Logger  commonLog
 	LogId   uint32
 }
-func getRealClientIP(r *http.Request) string{
+func GetRealClientIP(r *http.Request) string{
    ip := r.RemoteAddr
    if rip := r.Header.Get("X-Real-IP"); len(rip) > 0 {
        ip = rip
    } else if rip :=  r.Header.Get("X-Forwarded-IP"); len(rip) > 0 {
        ip = rip
    }
+   return ip
 }
 // 响应错误
 func responseError(w http.ResponseWriter, status int, err string) {
@@ -53,13 +55,14 @@ func entry(w http.ResponseWriter, r *http.Request) {
 				Logger: commonLog{},
 				LogId: getLogId32(),
 			}
+
 			cr.Logger.AddNotice("log_id", strconv.Itoa(int(cr.LogId)))
 			cr.Logger.AddNotice("url", r.URL.Path)
-			cr.Logger.AddNotice("referer", r.Header.get("Referer"))
-			cr.Logger.AddNotice("user_agent", r.Header.get("User-Agent"))
+			cr.Logger.AddNotice("referer", r.Header.Get("Referer"))
+			cr.Logger.AddNotice("user_agent", r.Header.Get("User-Agent"))
 			cr.Logger.AddNotice("clientIp", r.RemoteAddr)
-			cr.Logger.AddNotice("cookit",r.Header.get("Cookie"))
-			cr.Logger.AddNotice("clientRealIP",getRealClientIP(r))
+			cr.Logger.AddNotice("cookit",r.Header.Get("Cookie"))
+			cr.Logger.AddNotice("clientRealIP",GetRealClientIP(r))
 			r.ParseForm()//解析url中参数
 			action.Execute(w, cr)
 			cr.Logger.Infof("http request uri = " + r.URL.Path)
