@@ -15,14 +15,11 @@ func getLogId32() uint32{
 }
 
 type commonLog struct {
-	
+	mainLog []logItem
 }
 type logItem struct {
 	field string
 	value string
-}
-type struct {
-	mainLog []logItem
 }
 
 
