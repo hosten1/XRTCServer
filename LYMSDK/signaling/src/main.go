@@ -15,6 +15,7 @@ func main(){
 		panic(errInit)
 	}
 	// 协程的方式启动 http 和 https服务
+	framework.RegisterStaticUrl()
     go StartHttp()
     StartHttps()
 	

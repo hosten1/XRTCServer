@@ -13,7 +13,7 @@ func Init(confFile string) error {
 	if err != nil {
 		return err
 	}
-    fmt.Printf("conf:%+v\n",gconf)
+    // fmt.Printf("conf:%+v\n",gconf)
 	
 	glog.SetLogDic(gconf.logDir)
 	glog.SetLogFileName(gconf.logFile);

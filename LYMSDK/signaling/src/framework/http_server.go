@@ -81,6 +81,10 @@ func entry(w http.ResponseWriter, r *http.Request) {
 		responseError(w, http.StatusNotFound, "Not found")
 	}
 }
+func RegisterStaticUrl(){
+	fs := http.FileServer(http.Dir(gconf.httpStaticDic))
+	http.Handle(gconf.staticPrefix,http.StripPrefix( gconf.httpStaticDic,fs))
+}
 // 启动 HTTP 服务器
 func StartHttp() error {
 	glog.Infof("start http server on port :%d",gconf.httpPort)
