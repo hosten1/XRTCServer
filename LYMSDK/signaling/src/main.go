@@ -10,7 +10,7 @@ import (
 )
 func main(){
 	flag.Parse()
-	errInit := framework.Init()
+	errInit := framework.Init("./conf/framwork.conf")
 	if errInit != nil {
 		panic(errInit)
 	}
