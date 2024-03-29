@@ -10,6 +10,8 @@ type FrameworkConf struct{
 	logLevel string
 	logToStderr bool
 	logToFile bool
+	httpPort int
+	httpStaticDic string
 }
 
 var configFile *goconfig.ConfigFile
@@ -37,6 +39,14 @@ func LoadConf(confFile string) (*FrameworkConf,error) {
 		return nil,err
 	}
 	conf.logToFile,err = configFile.Bool("log","logToFile")
+	if err != nil {
+		return nil,err
+	}	
+	conf.httpPort,err = configFile.Int("log","httpPort")
+    if err != nil {
+		return nil,err
+	}
+	conf.httpStaticDic,err = configFile.GetValue("log","httpStaticDic")
 	if err != nil {
 		return nil,err
 	}	
