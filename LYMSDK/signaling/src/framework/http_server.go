@@ -23,6 +23,14 @@ func init() {
 	Logger  commonLog
 	LogId   uint32
 }
+func getRealClientIP(r *http.Request) string{
+   ip := r.RemoteAddr
+   if rip := r.Header.Get("X-Real-IP"); len(rip) > 0 {
+       ip = rip
+   } else if rip :=  r.Header.Get("X-Forwarded-IP"); len(rip) > 0 {
+       ip = rip
+   }
+}
 // 响应错误
 func responseError(w http.ResponseWriter, status int, err string) {
 	w.WriteHeader(status)
@@ -40,12 +48,19 @@ func entry(w http.ResponseWriter, r *http.Request) {
 	// 查找路由处理器
 	if action, ok := GActionRouter[r.URL.Path]; ok {
 		if action != nil {
-			r.ParseForm()//解析url中参数
 			cr := &CommonRequest{
 				R: r,
 				Logger: commonLog{},
 				LogId: getLogId32(),
 			}
+			cr.Logger.AddNotice("log_id", strconv.Itoa(int(cr.LogId)))
+			cr.Logger.AddNotice("url", r.URL.Path)
+			cr.Logger.AddNotice("referer", r.Header.get("Referer"))
+			cr.Logger.AddNotice("user_agent", r.Header.get("User-Agent"))
+			cr.Logger.AddNotice("clientIp", r.RemoteAddr)
+			cr.Logger.AddNotice("cookit",r.Header.get("Cookie"))
+			cr.Logger.AddNotice("clientRealIP",getRealClientIP(r))
+			r.ParseForm()//解析url中参数
 			action.Execute(w, cr)
 			cr.Logger.Infof("http request uri = " + r.URL.Path)
 		} else {
