@@ -3,6 +3,7 @@
 set -e
 
 export GO111MODULE="on"
+export GOFLAGS=-v
 # 清除之前的构建文件（如果有的话）
 # rm -f signaling
 go env -w GO111MODULE="on"
@@ -12,10 +13,12 @@ echo "GOPATH = "${GOPATH} "GO111MODULE" ${GO111MODULE}
 if [ -f "signaling" ]; then
     # 如果存在，删除它
     rm signaling
-    echo "File 'signaling' has been deleted."
+    echo "程序 'signaling' has been deleted."
 else
-    echo "File 'signaling' not found."
+    echo "程序 'signaling' not found."
 fi
+
+echo "build ............"
 # # 查找并构建 Go 源文件
 # find src -name "*.go" -type f -print0 | xargs -0 go build -o signaling
 go build -o  signaling src/*.go

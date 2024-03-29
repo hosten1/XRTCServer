@@ -21,6 +21,7 @@ func LoadConf(confFile string) (*FrameworkConf,error) {
 	if err != nil {
 		return nil,err
 	}
+	
 	conf := &FrameworkConf{}
 	conf.logDir,err = configFile.GetValue("log","logDir")
 	if err != nil {
