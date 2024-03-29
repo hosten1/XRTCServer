@@ -3,7 +3,7 @@ package framework
 
 import (
 	"test/src/glog"
-	"fmt"
+	// "fmt"
 )
 
 var gconf *FrameworkConf
@@ -13,7 +13,7 @@ func Init(confFile string) error {
 	if err != nil {
 		return err
 	}
-    fmt.Printf("conf:%+v\n",gconf)
+    // fmt.Printf("conf:%+v\n",gconf)
 	
 	glog.SetLogDic(gconf.logDir)
 	glog.SetLogFileName(gconf.logFile);

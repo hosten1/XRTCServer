@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv" // 导入 strconv 包
+	"test/src/glog"
+	"os"
 )
 
 // 定义路由处理接口
@@ -47,6 +49,8 @@ func entry(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(""))
 		return
 	}
+	glog.Infof("-----> entry :%s ",r.URL.Path)
+
 	// 查找路由处理器
 	if action, ok := GActionRouter[r.URL.Path]; ok {
 		if action != nil {
@@ -80,8 +84,35 @@ func entry(w http.ResponseWriter, r *http.Request) {
 		responseError(w, http.StatusNotFound, "Not found")
 	}
 }
+func RegisterStaticUrl(){
+	staticDir := gconf.httpStaticDic // 静态文件目录路径
+
+	// 检查静态文件目录是否存在
+	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
+		glog.Infof("静态文件目录 %s 不存在\n", staticDir)
+		return
+	}
+
+	// 检查静态文件目录访问权限
+	if _, err := os.Stat(staticDir); err != nil {
+		glog.Infof("无法访问静态文件目录 %s：%v\n", staticDir, err)
+		return
+	}
+	glog.Infof("start http static file server on dic path :%s prifx:%s",staticDir,gconf.httpStaticPrefix)
+
+	fs := http.FileServer(http.Dir(staticDir))
+	http.Handle(gconf.httpStaticPrefix,http.StripPrefix(gconf.httpStaticPrefix,fs))
+}
 // 启动 HTTP 服务器
 func StartHttp() error {
-	fmt.Println("start http!!!")
-	return http.ListenAndServe(":8080", nil)
+	glog.Infof("start http server on port :%d",gconf.httpPort)
+	return http.ListenAndServe(fmt.Sprintf(":%d",gconf.httpPort), nil)
+}
+// 启动 HTTP 服务器
+func StartHttps() error {
+	// 指定证书文件和私钥文件
+	certFile := gconf.httpsCert
+	keyFile := gconf.httpsKey
+	glog.Infof("start https server on port :%d",gconf.httpsPort)
+	return http.ListenAndServeTLS(fmt.Sprintf(":%d",gconf.httpsPort), certFile, keyFile, nil)
 }

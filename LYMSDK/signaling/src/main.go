@@ -14,10 +14,23 @@ func main(){
 	if errInit != nil {
 		panic(errInit)
 	}
-	// glog.Info("Init success")
+	// 协程的方式启动 http 和 https服务
+	framework.RegisterStaticUrl()
+    go StartHttp()
+    StartHttps()
+	
+}
+func StartHttp(){
 	errHttp := framework.StartHttp()
 	if errHttp != nil {
 		glog.Info("HTTP server started error!")
 		panic(errHttp)
+	}
+}
+func StartHttps(){
+	errHttps := framework.StartHttps()
+	if errHttps != nil {
+		glog.Info("HTTPS server started error!")
+		panic(errHttps)
 	}
 }

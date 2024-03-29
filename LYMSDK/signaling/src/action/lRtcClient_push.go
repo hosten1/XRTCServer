@@ -19,7 +19,7 @@ func WriteHtmlErrorResopnse(w http.ResponseWriter,status int ,err string){
 func (a *lrtcClientPushAction) Execute(w http.ResponseWriter, cr *framework.CommonRequest) {
 	// fmt.Println("Hi!! test l rtc client")
   r := cr.R
-  t,err :=template.ParseFiles("./static/template/push.html")
+  t,err :=template.ParseFiles(framework.GetStaticDir() +  "/template/push.html")
    if err != nil {
 	fmt.Println(err)
 	WriteHtmlErrorResopnse(w,http.StatusNotFound,"404 - Not Found")
