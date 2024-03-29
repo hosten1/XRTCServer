@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv" // 导入 strconv 包
+	"test/src/glog"
 )
 
 // 定义路由处理接口
@@ -82,6 +83,14 @@ func entry(w http.ResponseWriter, r *http.Request) {
 }
 // 启动 HTTP 服务器
 func StartHttp() error {
-	fmt.Println("start http!!!")
-	return http.ListenAndServe(":8080", nil)
+	glog.Infof("start http server on port :%d",gconf.httpPort)
+	return http.ListenAndServe(fmt.Sprintf(":%d",gconf.httpPort), nil)
+}
+// 启动 HTTP 服务器
+func StartHttps() error {
+	// 指定证书文件和私钥文件
+	certFile := gconf.httpsCert
+	keyFile := gconf.httpsKey
+	glog.Infof("start https server on port :%d",gconf.httpsPort)
+	return http.ListenAndServeTLS(fmt.Sprintf(":%d",gconf.httpsPort), certFile, keyFile, nil)
 }
