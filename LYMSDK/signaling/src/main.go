@@ -14,7 +14,7 @@ func main(){
 	if errInit != nil {
 		panic(errInit)
 	}
-	// glog.Info("Init success")
+	glog.Info("Init success")
 	errHttp := framework.StartHttp()
 	if errHttp != nil {
 		glog.Info("HTTP server started error!")

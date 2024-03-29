@@ -42,11 +42,11 @@ func LoadConf(confFile string) (*FrameworkConf,error) {
 	if err != nil {
 		return nil,err
 	}	
-	conf.httpPort,err = configFile.Int("log","httpPort")
+	conf.httpPort,err = configFile.Int("http","port")
     if err != nil {
 		return nil,err
 	}
-	conf.httpStaticDic,err = configFile.GetValue("log","httpStaticDic")
+	conf.httpStaticDic,err = configFile.GetValue("http","staticDic")
 	if err != nil {
 		return nil,err
 	}	
