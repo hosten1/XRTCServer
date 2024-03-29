@@ -3,7 +3,7 @@ package framework
 
 import (
 	"test/src/glog"
-	"fmt"
+	// "fmt"
 )
 
 var gconf *FrameworkConf
