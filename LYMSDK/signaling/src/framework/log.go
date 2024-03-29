@@ -48,6 +48,7 @@ func (l *CommonLog) TimeBegin(field string)  {
 	}
 	l.timeLogs = append(l.timeLogs,item)
 }
+
 func  (l *CommonLog) TimeEnd(field string){
 	for i,item := range l.timeLogs {
 		if item.field == field{
@@ -69,7 +70,7 @@ func (l *CommonLog) GetPrefixLog() string{
 			continue
 		}
 		fdiff := float64(diff)/1000.0
-		prefixLog += fmt.Sprintf("%s[%.3fms]",timeItem.field,fdiff)
+		prefixLog += fmt.Sprintf(" %s[%.3fms] ",timeItem.field,fdiff)
 	}
 	return prefixLog
 }
