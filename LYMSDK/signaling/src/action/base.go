@@ -15,6 +15,13 @@ type CommonHttpResp struct {
 	ErrMsg  string `json:"errMsg"`
 	Data  interface{} `json:"data"`
 }
+const (
+	CMDNO_PUSH = 1
+	CMDNO_PULL = 2
+	CMDNO_ANSWER = 3
+	CMDNO_STOP_PUSH = 4
+	CMDNO_STOP_PULL = 5
+)
 
 func writeJsonErrorResponse(cerr *commonErrors.Errors, w http.ResponseWriter, cr *framework.CommonRequest) {
 	cr.Logger.AddNotice("errNo", strconv.Itoa(cerr.Errno()))

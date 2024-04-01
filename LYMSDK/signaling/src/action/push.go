@@ -1,7 +1,7 @@
 package action
 
 import (
-	"fmt"
+	// "fmt"
 	"strconv"
 	"test/src/framework"
 	"test/src/commonErrors"
@@ -13,6 +13,19 @@ type PushAction struct{
 }
 func NewPushAction()  *PushAction {
 		return &PushAction{}
+}
+
+type LRtcPushReq struct {
+   Cmdno int `json:"cmdno"`
+   Uid uint64 `json:"uid"`
+   StreamName string `json:"stream_name"`
+   Auido int `json:"audio"`
+   Video int `json:"video"`
+}
+type LRtcPushResp struct {
+  ErrorNo int `json:"err_no"`
+  ErrorMsg int `json:"err_msg"`
+  Offer int `json:"offer"`
 }
 
 func (*PushAction) Execute(w http.ResponseWriter, cr *framework.CommonRequest){
@@ -64,5 +77,20 @@ func (*PushAction) Execute(w http.ResponseWriter, cr *framework.CommonRequest){
   }else{
 	video = 1;
   }
-  fmt.Println(uid,streamName,audio,video)
+  // fmt.Println(uid,streamName,audio,video)
+  req := LRtcPushReq{
+    Cmdno : CMDNO_PUSH,
+    Uid :uid,
+    StreamName:streamName,
+    Auido:audio,
+    Video:video,
+  }
+  var resp LRtcPushResp 
+  err = framework.Call("LRtc",req,resp,cr.LogId)
+  if err != nil {
+    cerr := commonErrors.New(commonErrors.NetworkErr,"backend process error!!")
+    writeJsonErrorResponse(cerr,w,cr)
+    return
+  }
+
 }
