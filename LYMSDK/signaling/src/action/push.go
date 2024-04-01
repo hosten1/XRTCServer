@@ -86,7 +86,7 @@ func (*PushAction) Execute(w http.ResponseWriter, cr *framework.CommonRequest){
     Video:video,
   }
   var resp LRtcPushResp 
-  err = framework.Call("LRtc",req,resp,cr.LogId)
+  err = framework.Call("lrtc",req,resp,cr.LogId)
   if err != nil {
     cerr := commonErrors.New(commonErrors.NetworkErr,"backend process error!!")
     writeJsonErrorResponse(cerr,w,cr)
