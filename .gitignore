@@ -23,4 +23,6 @@ LYMSDK/signaling/signaling
 .DS_Store
 LYMSDK/signaling/log/*
 LYMSDK/lrtcserver/out/*
-/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/librtcbase/output/*
+LYMSDK/lrtcserver/thirdpart/librtcbase/output/*
+LYMSDK/lrtcserver/thirdpart/librtcbase/out/*
+LYMSDK/lrtcserver/thirdpart/yaml-cpp/out/*
