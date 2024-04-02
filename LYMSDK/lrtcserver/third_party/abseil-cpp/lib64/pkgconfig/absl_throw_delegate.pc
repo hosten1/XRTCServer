@@ -1,0 +1,12 @@
+prefix=/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/abseil-cpp/out
+exec_prefix=${prefix}
+libdir=/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/abseil-cpp/out/lib64
+includedir=/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/abseil-cpp/out/include
+
+Name: absl_throw_delegate
+Description: Abseil throw_delegate library
+URL: https://abseil.io/
+Version: head
+Requires: absl_config = head, absl_raw_logging_internal = head
+Libs: -L${libdir}   -labsl_throw_delegate -labsl_throw_delegate
+Cflags: -I${includedir} -DNOMINMAX

@@ -2,7 +2,8 @@
 set -e
 
 target_run_name=lrtcserver
-
+SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
+echo "SCRIPT_DIR = " $SCRIPT_DIR
 # 获取 CPU 核心数
 cpu_cores=$(nproc)
 
