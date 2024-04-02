@@ -119,10 +119,10 @@ link_directories(
 # 添加依赖库
 add_library(libwebrtc STATIC ${SOURCES})
 
-
+# 查找 pthread 库
+# find_package(Threads REQUIRED)
 target_link_libraries(libwebrtc 
                     pthread
-                    yaml-cpp
                     absl_strings
                     absl_strerror
 )

@@ -23,12 +23,12 @@ namespace lrtc {
         rtc::LogMessage::SetLogToStderr(true);
         return 0;
     }
-  void OnLogMessage(const std::string& message,
+  void LrtcLog::OnLogMessage(const std::string& message,
                             rtc::LoggingSeverity severity)
     {
         
     }
-  void OnLogMessage(const std::string& message)
+  void LrtcLog::OnLogMessage(const std::string& message)
   {
 
 

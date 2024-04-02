@@ -30,6 +30,7 @@ file(GLOB all_src
 add_executable(lrtcserver ${all_src})
 
 target_link_libraries(lrtcserver 
+                    pthread
                     libwebrtc
                     yaml-cpp
                     absl_strings
