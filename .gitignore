@@ -26,3 +26,4 @@ LYMSDK/lrtcserver/out/*
 LYMSDK/lrtcserver/thirdpart/librtcbase/output/*
 LYMSDK/lrtcserver/thirdpart/librtcbase/out/*
 LYMSDK/lrtcserver/thirdpart/yaml-cpp/out/*
+LYMSDK/lrtcserver/thirdpart/abseil-cpp/out/*
