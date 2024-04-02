@@ -22,7 +22,8 @@ int init_general_conf(const char* filename) {
     }  
     
 }
-int  init_log(const std::string& log_dir, const std::string& log_name, std::string& log_level){
+int  init_log(const std::string& log_dir, const
+ std::string& log_name, std::string& log_level){
     g_log = new lrtc::LrtcLog(log_dir,log_name,log_level);
     int ret = g_log->setUpLogging();
     if (ret != 0)
@@ -46,6 +47,8 @@ int  main(int argc, const char** argv) {
    {
     return -1;
    }
-   LOG(LS_DEBUG) << "hello world";
+    std::cout << "g_conf log_level:" << g_conf->log_level << std::endl;
+
+   RTC_LOG(LS_INFO) << "hello world";
     return 0;
 }

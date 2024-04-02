@@ -1,10 +1,10 @@
 #ifndef __LYMSDK_LRTCSERVER_SRC_BASE_LOG_H_
 #define __LYMSDK_LRTCSERVER_SRC_BASE_LOG_H_
 
-#include "logging.h"
+#include "rtc_base/logging.h"
 
 namespace lrtc {
-class LrtcLog :public rtcbase::LogSink
+class LrtcLog :public rtc::LogSink
 {
 private:
     /* data */
@@ -16,7 +16,9 @@ public:
 
     int setUpLogging();
     
-    void on_log_message(const std::string& message, rtcbase::LoggingSeverity severity) override;
+    void OnLogMessage(const std::string& message,
+                            rtc::LoggingSeverity severity) override;
+    void OnLogMessage(const std::string& message) override;
 
 private:
 

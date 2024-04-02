@@ -10,13 +10,13 @@ add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX -DWEBRTC_LI
 # 头文件路径
 include_directories(
     "./src"
-    "./thirdpart/librtcbase/src"
+    "./thirdpart/libwebrtc/libwebrtc"
     "./third_party/yaml-cpp/include"
     "./third_party/abseil-cpp/include"
 )
 # 链接库路径
 link_directories(
-    "./thirdpart/librtcbase"
+    "./thirdpart/libwebrtc/out"
     "./third_party/yaml-cpp/lib64"
     "./third_party/abseil-cpp/lib64"
     )
@@ -30,7 +30,7 @@ file(GLOB all_src
 add_executable(lrtcserver ${all_src})
 
 target_link_libraries(lrtcserver 
-                    rtcbase
+                    libwebrtc
                     yaml-cpp
                     absl_strings
                     absl_strerror

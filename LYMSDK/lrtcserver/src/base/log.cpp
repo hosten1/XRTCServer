@@ -19,13 +19,21 @@ namespace lrtc {
 
     int LrtcLog::setUpLogging()
     {
-        rtcbase::LogMessage::add_log_to_stream(this, rtcbase::LS_DEBUG);
+        rtc::LogMessage::AddLogToStream(this, rtc::LS_VERBOSE);
+        rtc::LogMessage::SetLogToStderr(true);
         return 0;
     }
-
-    void LrtcLog::on_log_message(const std::string &message, rtcbase::LoggingSeverity severity)
+  void OnLogMessage(const std::string& message,
+                            rtc::LoggingSeverity severity)
     {
         
     }
+  void OnLogMessage(const std::string& message)
+  {
+
+
+  }
+
+
 
 }  // namespace lrtc
