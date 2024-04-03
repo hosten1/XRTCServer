@@ -36,6 +36,8 @@ int  init_log(const std::string& log_dir, const
 }
 
 int  main(int argc, const char** argv) {
+    // LYMSDK/lrtcserver/conf/general.yaml
+    // LYMSDK/lrtcserver/src/main.cpp
    int ret = init_general_conf("../conf/general.yaml");
    if (ret != 0)
    {
