@@ -38,7 +38,7 @@ int  init_log(const std::string& log_dir, const
 int  main(int argc, const char** argv) {
     // LYMSDK/lrtcserver/conf/general.yaml
     // LYMSDK/lrtcserver/src/main.cpp
-   int ret = init_general_conf("../conf/general.yaml");
+   int ret = init_general_conf("./conf/general.yaml");
    if (ret != 0)
    {
     return -1;
@@ -49,6 +49,9 @@ int  main(int argc, const char** argv) {
     return -1;
    }
    g_log->set_log_to_stderror(g_conf->log_to_stderr);
-   RTC_LOG(LS_INFO) << "hello world";
+   RTC_LOG(LS_INFO) << "hello world log_to_stderr=" << g_conf->log_to_stderr 
+                            <<" log_level=" << g_conf->log_level
+                            <<" log_dir=" << g_conf->log_dir
+                             <<" log_name=" << g_conf->log_name;
     return 0;
 }

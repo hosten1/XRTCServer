@@ -22,6 +22,9 @@ namespace lrtc {
     if ("verbose" == level)
     {
       return rtc::LS_VERBOSE;
+    }else if ("debug" == level)
+    {
+      return rtc::LS_DEBUG;
     }else if ("info" == level)
     {
       return rtc::LS_INFO;

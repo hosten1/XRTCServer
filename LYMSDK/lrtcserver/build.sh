@@ -33,10 +33,11 @@ else
     make -j$(($cpu_cores * 2))
 fi
 
+cd ../
 # 检查是否传递了第二个参数，如果是 "-run"，则执行目标运行文件
 if [ $# -gt 1 ] && [ "$2" = "-run" ]; then
     echo "Running $target_run_name..."
-    ./"$target_run_name"
+    ./out/"$target_run_name"
 fi
 
 
