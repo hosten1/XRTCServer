@@ -17,7 +17,8 @@ include_directories(
     "./third_party/yaml-cpp/include"
     "./third_party/abseil-cpp/include"
     "./third_party/jsoncpp/include"
-    "./third_party/libuv/include"
+    # "./third_party/libuv/include"
+    "./third_party/libev/include"
 )
 # 链接库路径
 link_directories(
@@ -25,12 +26,14 @@ link_directories(
     "./third_party/yaml-cpp/lib64"
     "./third_party/abseil-cpp/lib64"
     "./third_party/jsoncpp/lib64"
-    "./third_party/libuv/lib64"
+    # "./third_party/libuv/include"
+    "./third_party/libev/lib"
     )
 
 file(GLOB all_src
     "./src/*.cpp"
     "./src/base/*.cpp"
+    # "./src/base/handles/*.cpp"
     "./src/server/*.cpp"
    )    
 
@@ -40,7 +43,8 @@ target_link_libraries(lrtcserver
                     pthread
                     libwebrtc
                     yaml-cpp
-                    uv
+                    # uv
+                    ev
                     jsoncpp
                     absl_strings
                     absl_strerror
