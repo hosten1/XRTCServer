@@ -16,19 +16,22 @@ include_directories(
     "./thirdpart/libwebrtc/libwebrtc"
     "./third_party/yaml-cpp/include"
     "./third_party/abseil-cpp/include"
+    "./third_party/jsoncpp/include"
+    "./third_party/libuv/include"
 )
 # 链接库路径
 link_directories(
     "./thirdpart/libwebrtc/out"
     "./third_party/yaml-cpp/lib64"
     "./third_party/abseil-cpp/lib64"
+    "./third_party/jsoncpp/lib64"
+    "./third_party/libuv/lib64"
     )
 
 file(GLOB all_src
     "./src/*.cpp"
     "./src/base/*.cpp"
     "./src/server/*.cpp"
-
    )    
 
 add_executable(lrtcserver ${all_src})
@@ -37,6 +40,8 @@ target_link_libraries(lrtcserver
                     pthread
                     libwebrtc
                     yaml-cpp
+                    uv
+                    jsoncpp
                     absl_strings
                     absl_strerror
 )

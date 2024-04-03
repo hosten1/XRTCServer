@@ -2,6 +2,7 @@
 #include "signaling_server.h"
 #include <yaml-cpp/yaml.h>
 #include <rtc_base/logging.h>
+#include "base/socket.h"
 
 namespace lrtc {
     SignalingServer::SignalingServer()
@@ -38,6 +39,9 @@ namespace lrtc {
 
             return -1;
          }
+
+         listen_fd_ = Create_tcp_server(options_.host.c_str(),options_.port);
+         
          return 0;
 
     }

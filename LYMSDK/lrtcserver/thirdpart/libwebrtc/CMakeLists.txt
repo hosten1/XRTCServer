@@ -126,3 +126,6 @@ target_link_libraries(libwebrtc
                     absl_strings
                     absl_strerror
 )
+set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/install)  # 设置安装目录
+install(TARGETS libwebrtc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+

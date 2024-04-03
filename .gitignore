@@ -29,3 +29,5 @@ LYMSDK/lrtcserver/thirdpart/yaml-cpp/out/*
 LYMSDK/lrtcserver/thirdpart/abseil-cpp/out/*
 LYMSDK/lrtcserver/thirdpart/libwebrtc/out/*
 LYMSDK/lrtcserver/thirdpart/libwebrtc/deps/*
+LYMSDK/lrtcserver/thirdpart/jsoncpp/jsoncpp/out/*
+LYMSDK/lrtcserver/thirdpart/libuv/out/*

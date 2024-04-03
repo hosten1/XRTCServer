@@ -25,7 +25,7 @@ int load_general_conf(const char *filename, GeneralConf *conf)
         conf->log_level = config["log"]["log_level"].as<std::string>();
         conf->log_to_stderr = config["log"]["log_to_stderr"].as<bool>();
     }
-    catch(const YAML::Exception e)
+    catch(const YAML::Exception& e)
     {
         std::cerr << "catch a YAML::Exeption,err: "<<e.what() 
                     << " line : "<<e.mark.line+1 <<" col:"<<e.mark.column+1

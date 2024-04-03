@@ -22,6 +22,8 @@ namespace lrtc {
 
     private:
     SignalingServerOptions options_;
+
+    int listen_fd_ = -1;
   };
 
 

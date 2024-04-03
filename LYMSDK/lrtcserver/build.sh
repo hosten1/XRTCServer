@@ -7,6 +7,9 @@ echo "SCRIPT_DIR = " $SCRIPT_DIR
 # 获取 CPU 核心数
 cpu_cores=$(nproc)
 
+# 编译 libuv jsoncpp libwebrtc  abseil-cpp
+# cd${SCRIPT_DIR}/thirdpart/jsoncpp
+# cmake .. -DCMAKE_INSTALL_PREFIX=${SCRIPT_DIR}/third_party/jsoncpp
 # 判断当前目录是否存在 out 目录
 if [ ! -d "out" ]; then
     echo "Creating 'out' directory..."
