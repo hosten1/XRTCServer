@@ -18,7 +18,7 @@ namespace lrtc {
     }
 
     LrtcLog::~LrtcLog()
-    {  
+    {
       stop();
       out_file_.close();
       out_file_wf_.close();
@@ -44,33 +44,34 @@ namespace lrtc {
      return rtc::LS_NONE;
     }
     return rtc::LS_NONE;
-    
    }
 
     int LrtcLog::setUpLogging()
     {
-        rtc::LogMessage::ConfigureLogging("thread tstamp");
-        rtc::LogMessage::AddLogToStream(this, get_log_severity(log_level_));
-        int ret = mkdir(log_dir_.c_str(),0755);
-        if (ret != 0 && errno != EEXIST)
-        {
-          fprintf(stderr,"create log dir[%s] failed\n",log_dir_.c_str());
-         return -1;
-        }
-        //打开文件
-        out_file_.open(log_file_,std::ios::app);
-        if(!out_file_.is_open()){
-          fprintf(stderr,"create log file [%s] failed\n",log_file_.c_str());
-           return -1;
-        }
-        //打开文件
-        out_file_wf_.open(log_file_,std::ios::app);
-        if(!out_file_wf_.is_open()){
-          fprintf(stderr,"create log file [%s] failed\n",log_file_wf_.c_str());
-           return -1;
-        }
-        
-        return 0;
+      rtc::LogMessage::ConfigureLogging("thread tstamp");
+      rtc::LogMessage::AddLogToStream(this, get_log_severity(log_level_));
+      int ret = mkdir(log_dir_.c_str(), 0755);
+      if (ret != 0 && errno != EEXIST)
+      {
+        fprintf(stderr, "create log dir[%s] failed\n", log_dir_.c_str());
+        return -1;
+      }
+      // 打开文件
+      out_file_.open(log_file_, std::ios::app);
+      if (!out_file_.is_open())
+      {
+        fprintf(stderr, "create log file [%s] failed\n", log_file_.c_str());
+        return -1;
+      }
+      // 打开文件
+      out_file_wf_.open(log_file_, std::ios::app);
+      if (!out_file_wf_.is_open())
+      {
+        fprintf(stderr, "create log file [%s] failed\n", log_file_wf_.c_str());
+        return -1;
+      }
+
+      return 0;
     }
     void LrtcLog::set_log_to_stderror(bool on){
         rtc::LogMessage::SetLogToStderr(on);

@@ -53,7 +53,7 @@ int  main(int argc, const char** argv) {
    g_log->start();
 
 
-   RTC_LOG(LS_INFO) << "hello world log_to_stderr=" << g_conf->log_to_stderr 
+   RTC_LOG(LS_DEBUG) << "hello world log_to_stderr=" << g_conf->log_to_stderr 
                             <<" log_level=" << g_conf->log_level
                             <<" log_dir=" << g_conf->log_dir
                              <<" log_name=" << g_conf->log_name;

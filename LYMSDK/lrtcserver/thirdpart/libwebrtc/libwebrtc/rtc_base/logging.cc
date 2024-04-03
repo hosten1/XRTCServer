@@ -115,7 +115,6 @@ LogMessage::StreamList LogMessage::streams_ RTC_GUARDED_BY(g_log_crit);
 
 // Boolean options default to false (0)
 bool LogMessage::thread_, LogMessage::timestamp_;
-std::vector<std::string> LogMessage::preprocessed_cache{"Load Cache Log ..."};
 // lym 日志格式化输出 YYYY-MM-DD HH:MM:SS.mmm
 static std::string FormatTimestamp(int64_t milliseconds) 
 {
@@ -159,7 +158,8 @@ LogMessage::LogMessage(const char* file,
                        LogErrorContext err_ctx,
                        int err)
     : severity_(sev) {
-   print_stream_ << "[ " << FormatTimestamp(SystemTimeMillis()) << " ] ";
+   print_stream_ << LoggingSeverityToString(sev) 
+                <<" [" << FormatTimestamp(SystemTimeMillis()) << "] ";
   if (timestamp_) {
     // Use SystemTimeMillis so that even if tests use fake clocks, the timestamp
     // in log messages represents the real system time.
@@ -264,23 +264,7 @@ LogMessage::~LogMessage() {
   CritScope cs(&g_log_crit);
   for (auto& kv : streams_) {
     if (severity_ >= kv.second) {
-#if defined(WEBRTC_ANDROID)
-      //// Cache the preprocessed logs
-      for (auto perlog : LogMessage::preprocessed_cache) {
-        kv.first->OnLogMessage(perlog, severity_);
-      }
-      LogMessage::preprocessed_cache.clear();
-
-      kv.first->OnLogMessage(str, severity_, tag_);
-#else
-      //// Cache the preprocessed logs
-      for (auto perlog : LogMessage::preprocessed_cache) {
-        kv.first->OnLogMessage(perlog, severity_);
-      }
-      LogMessage::preprocessed_cache.clear();
-
-      kv.first->OnLogMessage(str, severity_);
-#endif
+        kv.first->OnLogMessage(str, severity_);
     }
   }
 }
@@ -650,16 +634,6 @@ void Log(const LogArgType* fmt, ...) {
         return;
     }
   }
-
-     // Cache the preprocessed logs
-  if (LogMessage::GetLogStreamCount() <= 0) {
-      LogMessage::preprocessed_cache.emplace_back();
-      LogMessage::preprocessed_cache.back() = "\n" + log_message.stream().str();
-  }
-
-  // for (auto perlog : LogMessage::preprocessed_cache) {
-  //   std::cout << perlog << std::endl;
-  // }
   va_end(args);
 }
 

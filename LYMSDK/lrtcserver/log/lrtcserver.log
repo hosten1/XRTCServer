@@ -1,1 +1,0 @@
-Load Cache Log ...[ 1970-01-06 04:24:42.064 ] [000:000] [2864312] (main.cpp:56): hello world log_to_stderr=1 log_level=debug log_dir=./log log_name=lrtcserver
