@@ -1,12 +1,13 @@
 #ifndef __LYMSDK_LRTCSERVER_SRC_BASE_LOG_H_
 #define __LYMSDK_LRTCSERVER_SRC_BASE_LOG_H_
 
-#include "rtc_base/logging.h"
+
 #include <fstream>
 #include <queue>
 #include <mutex>
 #include <thread>
 #include <atomic>
+#include "rtc_base/logging.h"
 
 namespace lrtc {
 class LrtcLog :public rtc::LogSink
