@@ -66,6 +66,7 @@
         "csignal": "cpp",
         "regex": "cpp",
         "future": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "*.inc": "cpp"
     }
 }

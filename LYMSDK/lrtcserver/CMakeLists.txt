@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.20)
-project(lrtcserver)
+project(lrtcserver )
+# 设置版本变量
+set(PROJECT_VERSION_MAJOR 1)
+set(PROJECT_VERSION_MINOR 0)
 
 add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX -DWEBRTC_LINUX")
 

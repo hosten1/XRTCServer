@@ -29,6 +29,8 @@ static const int kMaxLogLineSize = 1024 - 60;
 
 #include <stdio.h>
 #include <string.h>
+#include <iomanip>
+#include <chrono>
 #include <time.h>
 #include <algorithm>
 #include <cstdarg>
@@ -44,9 +46,6 @@ static const int kMaxLogLineSize = 1024 - 60;
 #include "rtc_base/thread_annotations.h"
 #include "rtc_base/time_utils.h"
 
-/* 新增代码 */
-char vrv_client_info[128];
-/* 新增代码 */
 
 namespace rtc {
 namespace {
@@ -117,7 +116,40 @@ LogMessage::StreamList LogMessage::streams_ RTC_GUARDED_BY(g_log_crit);
 // Boolean options default to false (0)
 bool LogMessage::thread_, LogMessage::timestamp_;
 std::vector<std::string> LogMessage::preprocessed_cache{"Load Cache Log ..."};
-
+// lym 日志格式化输出 YYYY-MM-DD HH:MM:SS.mmm
+static std::string FormatTimestamp(int64_t milliseconds) 
+{
+    // 将毫秒转换为时间点
+    std::chrono::milliseconds duration(milliseconds);
+    std::chrono::system_clock::time_point tp(duration);
+    // 将时间转换为 time_t
+    std::time_t time = std::chrono::system_clock::to_time_t(tp);
+    
+    // 获取毫秒部分
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
+    
+    // 使用 std::put_time 格式化时间
+    std::ostringstream oss;
+    oss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S");
+    
+    // 添加毫秒部分
+    oss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+    
+    return oss.str();
+}
+// 将枚举转换为字符串的函数
+static std::string LoggingSeverityToString(LoggingSeverity severity) {
+    switch (severity) {
+        case LS_VERBOSE: return "VERBOSE";
+        case LS_DEBUG: return "DEBUG";
+        case LS_INFO: return "INFO";
+        case LS_WARNING: return "WARNING";
+        case LS_ERROR: return "ERROR";
+        case LS_NONE: return "";
+        default: return ""; // 处理未知的枚举值
+    }
+}
+// lym end
 LogMessage::LogMessage(const char* file, int line, LoggingSeverity sev)
     : LogMessage(file, line, sev, ERRCTX_NONE, 0) {}
 
@@ -127,6 +159,7 @@ LogMessage::LogMessage(const char* file,
                        LogErrorContext err_ctx,
                        int err)
     : severity_(sev) {
+   print_stream_ << "[ " << FormatTimestamp(SystemTimeMillis()) << " ] ";
   if (timestamp_) {
     // Use SystemTimeMillis so that even if tests use fake clocks, the timestamp
     // in log messages represents the real system time.
@@ -255,6 +288,13 @@ LogMessage::~LogMessage() {
 void LogMessage::AddTag(const char* tag) {
 #ifdef WEBRTC_ANDROID
   tag_ = tag;
+#else
+// 这里只是为了消除警告
+  if (!tag)
+  {
+    /* code */
+  }
+  
 #endif
 }
 
@@ -365,6 +405,8 @@ void LogMessage::ConfigureLogging(const char* params) {
       current_level = LS_VERBOSE;
     } else if (token == "info") {
       current_level = LS_INFO;
+    } else if (token == "debug") {
+      current_level = LS_DEBUG;
     } else if (token == "warning") {
       current_level = LS_WARNING;
     } else if (token == "error") {
@@ -456,6 +498,9 @@ void LogMessage::OutputToDebug(const std::string& str,
     case LS_VERBOSE:
       prio = ANDROID_LOG_VERBOSE;
       break;
+    case LS_DEBUG:
+      prio = ANDROID_LOG_INFO;
+      break;
     case LS_INFO:
       prio = ANDROID_LOG_INFO;
       break;
@@ -489,7 +534,7 @@ void LogMessage::OutputToDebug(const std::string& str,
   }
 #endif  // WEBRTC_ANDROID
   if (log_to_stderr) {
-    fprintf(stderr, "%s", str.c_str());
+    fprintf(stderr, "%s %s",LoggingSeverityToString(severity).c_str() ,str.c_str());
     fflush(stderr);
   }
 }

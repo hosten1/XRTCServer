@@ -15,6 +15,8 @@ public:
     ~LrtcLog() override;
 
     int setUpLogging();
+
+    void set_log_to_stderror(bool on);
     
     void OnLogMessage(const std::string& message,
                             rtc::LoggingSeverity severity) override;

@@ -58,10 +58,6 @@
 #include "rtc_base/strings/string_builder.h"
 #include "rtc_base/system/inline.h"
 
-/* 新增代码 */
-extern char vrv_client_info[128];
-/* 新增代码 */
-
 #if defined(WEBRTC_MAC) && !defined(WEBRTC_IOS)
 #include "rtc_base/logging_mac.h"
 #endif  // WEBRTC_MAC
@@ -85,15 +81,14 @@ namespace rtc {
 //  LS_WARNING: Something that may warrant investigation.
 //  LS_ERROR: Something that should not have occurred.
 //  LS_NONE: Don't log.
-// ����LS_VRV������־  skx  2019-8-13
 enum LoggingSeverity {
   LS_VERBOSE,
-  LS_VRV,
+  LS_DEBUG,
   LS_INFO,
   LS_WARNING,
   LS_ERROR,
   LS_NONE,
-  VRV = LS_VRV,
+  DEBUG = LS_DEBUG,
   INFO = LS_INFO,
   WARNING = LS_WARNING,
   LERROR = LS_ERROR

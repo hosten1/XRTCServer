@@ -41,14 +41,12 @@ int  main(int argc, const char** argv) {
    {
     return -1;
    }
-    std::cout << "g_conf :" << g_conf->log_name << std::endl;
-    ret = init_log(g_conf->log_dir,g_conf->log_name,g_conf->log_level);
+   ret = init_log(g_conf->log_dir,g_conf->log_name,g_conf->log_level);
    if (ret != 0)
    {
     return -1;
    }
-    std::cout << "g_conf log_level:" << g_conf->log_level << std::endl;
-
+   g_log->set_log_to_stderror(g_conf->log_to_stderr);
    RTC_LOG(LS_INFO) << "hello world";
     return 0;
 }
