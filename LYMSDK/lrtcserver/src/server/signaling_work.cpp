@@ -188,9 +188,25 @@ namespace lrtc
 
     void SignalingWork::_on_recv_notify(int fd)
     {
-        RTC_LOG(LS_INFO) << "signaling server _on_recv_notify fd:"<< fd 
-                            << ", work_id : "<<work_id_;
+        RTC_LOG(LS_INFO) << "signaling server _on_recv_notify fd:" << fd
+                         << ", work_id : " << work_id_;
+        if (fd < 0 || (size_t)fd > conn_tcps_.size())
+        {
+             RTC_LOG(LS_ERROR) << "invalid fd:" << fd
+                              << ", work_id : " << work_id_ << " is invalid";
+            return;
+        }
 
+        TcpConnection *conn = conn_tcps_[fd].get();
+        if (!conn)
+        {
+            RTC_LOG(LS_ERROR) << "invalid conn fd:" << fd
+                              << ", work_id : " << work_id_ << " is invalid";
+            return;
+        }
+        // 读取数据
+        char buf[1024];
+        // int len = conn->read(buf, sizeof(buf));
     }
 
 } // namespace lrtc

@@ -3,6 +3,10 @@
 
 #include <string>
 #include "base/event_loop.h"
+#include "base/lheader.h"
+extern "C" {
+  #include "rtc_base/sds/sds.h"
+}
 
 
 namespace lrtc
@@ -26,6 +30,9 @@ namespace lrtc
         int fd_;
         char ip_[64];
         int port_;
+        // sds queryBuf;
+        size_t bytes_expected_ = L_HEADER_SIZE;
+        size_t bytes_processed_ = 0;
        
         int recv_len_;
         int send_len_;

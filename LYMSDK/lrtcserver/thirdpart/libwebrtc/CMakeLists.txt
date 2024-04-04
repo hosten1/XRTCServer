@@ -45,6 +45,9 @@ set(SOURCES
     "libwebrtc/rtc_base/strings/string_builder.cc"
     "libwebrtc/rtc_base/synchronization/sequence_checker.cc"
     "libwebrtc/rtc_base/strings/audio_format_to_string.cc"
+    # "libwebrtc/rtc_base/sds/sds.cc"
+    # "libwebrtc/rtc_base/sds/zmalloc.cc"
+    
 
 
     "libwebrtc/api/transport/bitrate_settings.cc"

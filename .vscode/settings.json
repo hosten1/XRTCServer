@@ -68,6 +68,7 @@
         "future": "cpp",
         "typeindex": "cpp",
         "*.inc": "cpp",
-        "cerrno": "cpp"
+        "cerrno": "cpp",
+        "string.h": "c"
     }
 }
