@@ -15,10 +15,8 @@ namespace lrtc
         {
             T value;
             Node *next;
-            Node()
-            {
-                next = nullptr;
-            }
+            Node(const T& value) : value(value), next(nullptr) {}
+            Node(T&& value) : value(value), next(nullptr) {}
         };
         Node *first_;
         Node *divider_;

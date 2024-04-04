@@ -3,10 +3,14 @@
 
 #include <string>
 #include <thread>
+#include <vector>
+
 #include "base/event_loop.h"
+#include "server/signaling_work.h"
 
 namespace lrtc
 {
+  // class SignalingServer;
   struct SignalingServerOptions
   {
     std::string host;
@@ -31,15 +35,17 @@ namespace lrtc
     int notify(int msg);
     void joined();
 
-    friend void signaling_server_recv_notifi_cb(EventLoop *el,
-                                                IOWatcher *w,
-                                                int fd,
-                                                int events,
-                                                void *data);
+    friend void signaling_server_recv_notifi_cb(EventLoop *el,IOWatcher *w,
+                                                int fd, int events, void *data);
+    friend void accep_new_conn(EventLoop *el, IOWatcher *w, 
+                                  int fd, int events, void *data);
+
 
   private:
     void on_recv_notify(int msg);
     void _stop();
+    int _create_worker(int worker_id);
+    void _dispatch_new_conn(int fd);
 
   private:
     SignalingServerOptions options_;
@@ -53,6 +59,9 @@ namespace lrtc
     int listen_fd_ = -1;
     int notify_recv_fd_ = -1;
     int notify_send_fd_ = -1;
+
+    std::vector<std::unique_ptr<SignalingWork>> workers_;
+    int next_works_index_ = 0;
   };
 
 } // namespace lrtc

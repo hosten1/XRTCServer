@@ -102,6 +102,6 @@ int  init_log(const std::string& log_dir, const
 
      g_sig_nal->start();
      g_sig_nal->joined();
-    //  g_log->join();
+     g_log->join();
      return 0;
  }

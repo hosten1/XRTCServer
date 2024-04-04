@@ -75,5 +75,71 @@ namespace lrtc
         // close(serverSocket);
         return serverSocket;
     }
+    int generic_accept(int sock, struct sockaddr *clientAddr, socklen_t* clientLen)
+    {
+        if (sock < 0)
+        {
+            RTC_LOG(LS_ERROR) << "Invalid socket provided";
+            return -1;
+        }
+
+       // 确保clientAddr和clientLen是有效指针
+    if (!clientAddr || !clientLen)
+    {
+        RTC_LOG(LS_ERROR) << "Invalid client address or length provided";
+        return -1;
+    }
+
+
+        int fd = -1;
+        while (true)
+        {
+            fd = accept(sock, clientAddr, clientLen);
+            if (fd < 0)
+            {
+                if (errno == EINTR)
+                {
+                    RTC_LOG(LS_INFO) << "accept interrupted, retrying";
+                    sleep(0.1); // 退避一段时间
+                   continue;
+                }
+                else
+                {
+                    RTC_LOG(LS_ERROR) << "Failed to accept connection err:" << strerror(errno) << ", errno:" << errno;
+                    return -1;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return fd;
+    }
+    int tcp_accept_client(int sock, char *host, int *cport)
+    {
+        struct sockaddr_in clientAddr;
+        socklen_t clientLen = sizeof(clientAddr);
+        int fd = generic_accept(sock,(sockaddr*)&clientAddr,&clientLen);
+        if (-1 == fd)
+        {
+            RTC_LOG(LS_ERROR) << "Failed to accept connection, errno:" << errno;
+            return -1;
+            
+        }
+
+        if (host)
+        {
+            strcpy(host, inet_ntoa(clientAddr.sin_addr));
+        }
+        if (cport)
+        {
+            *cport = ntohs(clientAddr.sin_port);
+        }
+        
+        RTC_LOG(LS_INFO) << "Connection accepted from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
+        return fd;
+    }
 
 } // namespace lrtc

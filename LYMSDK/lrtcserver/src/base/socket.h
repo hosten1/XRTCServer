@@ -5,6 +5,7 @@
 
 namespace lrtc {
 int Create_tcp_server(const char* addr,int port);
+int tcp_accept_client(int sock,char *host,int *cport);
 
 }  // namespace lrtc
 

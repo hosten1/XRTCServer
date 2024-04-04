@@ -93,7 +93,7 @@ func Call(serviceName string, request interface{} ,response interface{},logId ui
 	}
     req := lrpc.NewRequest(bytes.NewReader(content),logId)
 	resp,err := client.Do(req)
-	if err != nil {/
+	if err != nil {
 		return err
 	}
 
