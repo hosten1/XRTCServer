@@ -31,6 +31,7 @@ namespace lrtc
         void start_io_event(IOWatcher* watcher,int fd,int mask);
         //停止io event
         void stop_io_event(IOWatcher* watcher,int fd,int mask);
+        void delete_io_event(IOWatcher* watcher);
         void destroy_io_event(IOWatcher* watcher,int fd,int mask);
 
 

@@ -1,5 +1,8 @@
 
 #include <iostream>
+#include <csignal>
+#include <cstdlib>
+
 #include "base/conf.h"
 #include "base/log.h"
 #include "server/signaling_server.h"
@@ -51,7 +54,20 @@ int  init_log(const std::string& log_dir, const
     return 0;
     
  }
- int main(int argc, const char **argv)
+ static void process_signal(int sig)
+ {
+    RTC_LOG(LS_INFO) << "process_signal sig=" << sig;
+     if (SIGINT == sig   || SIGTERM == sig)
+     {
+         if (g_sig_nal)
+         {
+             RTC_LOG(LS_DEBUG)<<"process_signal sig="<<sig;
+             g_sig_nal->stop();
+             g_log->stop();
+         }
+     }
+ }
+ int main(int /*argc*/, const char **/*argv*/)
  {
      // LYMSDK/lrtcserver/conf/general.yaml
      // LYMSDK/lrtcserver/src/main.cpp
@@ -79,7 +95,13 @@ int  init_log(const std::string& log_dir, const
      {
          return -1;
      }
+    // 捕获系统中断事件
+     // 设置信号处理程序
+    signal(SIGINT, process_signal);
+    signal(SIGTERM, process_signal);
 
-     g_log->join();
+     g_sig_nal->start();
+     g_sig_nal->joined();
+    //  g_log->join();
      return 0;
  }

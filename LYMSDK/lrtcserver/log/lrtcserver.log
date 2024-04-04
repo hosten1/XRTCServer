@@ -66,3 +66,61 @@ port: 9000
 worker_num: 2
 connection_timeout: 5000 options_.host = 127.0.0.1 options_.port = 9000
 ERROR [1970-01-06 06:55:44.149] [000:001] [1384792] (socket.cpp:42): Failed to bind socket, errno:98
+DEBUG [1970-01-07 01:19:31.427] [000:000] [194086] (main.cpp:72): hello world log_to_stderr=1 log_level=debug log_dir=./log log_name=lrtcserver
+INFO [1970-01-07 01:19:31.427] [000:000] [194086] (signaling_server.cpp:31): signaling server constructor
+INFO [1970-01-07 01:19:31.427] [000:000] [194086] (signaling_server.cpp:40): signaling server init
+INFO [1970-01-07 01:19:31.428] [000:001] [194086] (signaling_server.cpp:53): signaling server conf = host: 127.0.0.1
+port: 9000
+worker_num: 2
+connection_timeout: 5000 options_.host = 127.0.0.1 options_.port = 9000
+INFO [1970-01-07 01:19:31.428] [000:001] [194086] (socket.cpp:54): Server listening on port 9000...
+INFO [1970-01-07 01:19:31.428] [000:001] [194086] (signaling_server.cpp:89): signaling server start
+INFO [1970-01-07 01:19:31.428] [000:001] [194086] (signaling_server.cpp:163): signaling server joined
+INFO [1970-01-07 01:19:31.429] [000:002] [194088] (signaling_server.cpp:100): signaling server event loop run
+DEBUG [1970-01-07 01:33:04.062] [000:000] [202491] (main.cpp:87): hello world log_to_stderr=1 log_level=debug log_dir=./log log_name=lrtcserver
+INFO [1970-01-07 01:33:04.062] [000:000] [202491] (signaling_server.cpp:31): signaling server constructor
+INFO [1970-01-07 01:33:04.062] [000:000] [202491] (signaling_server.cpp:40): signaling server init
+DEBUG [1970-01-07 01:33:55.043] [000:000] [203036] (main.cpp:87): hello world log_to_stderr=1 log_level=debug log_dir=./log log_name=lrtcserver
+INFO [1970-01-07 01:33:55.043] [000:000] [203036] (signaling_server.cpp:31): signaling server constructor
+INFO [1970-01-07 01:33:55.043] [000:000] [203036] (signaling_server.cpp:40): signaling server init
+INFO [1970-01-07 01:33:55.044] [000:001] [203036] (signaling_server.cpp:53): signaling server conf = host: 127.0.0.1
+port: 9000
+worker_num: 2
+connection_timeout: 5000 options_.host = 127.0.0.1 options_.port = 9000
+INFO [1970-01-07 01:33:55.044] [000:001] [203036] (socket.cpp:54): Server listening on port 9000...
+INFO [1970-01-07 01:33:55.044] [000:001] [203036] (signaling_server.cpp:89): signaling server start
+INFO [1970-01-07 01:33:55.044] [000:001] [203036] (signaling_server.cpp:163): signaling server joined
+INFO [1970-01-07 01:33:55.044] [000:001] [203038] (signaling_server.cpp:100): signaling server event loop run
+DEBUG [1970-01-07 01:38:59.146] [000:000] [206070] (main.cpp:90): hello world log_to_stderr=1 log_level=debug log_dir=./log log_name=lrtcserver
+INFO [1970-01-07 01:38:59.146] [000:000] [206070] (signaling_server.cpp:31): signaling server constructor
+INFO [1970-01-07 01:38:59.146] [000:000] [206070] (signaling_server.cpp:40): signaling server init
+INFO [1970-01-07 01:38:59.147] [000:001] [206070] (signaling_server.cpp:53): signaling server conf = host: 127.0.0.1
+port: 9000
+worker_num: 2
+connection_timeout: 5000 options_.host = 127.0.0.1 options_.port = 9000
+INFO [1970-01-07 01:38:59.147] [000:001] [206070] (socket.cpp:54): Server listening on port 9000...
+INFO [1970-01-07 01:38:59.147] [000:001] [206070] (signaling_server.cpp:89): signaling server start
+INFO [1970-01-07 01:38:59.147] [000:001] [206070] (signaling_server.cpp:163): signaling server joined
+INFO [1970-01-07 01:38:59.170] [000:024] [206074] (signaling_server.cpp:100): signaling server event loop run
+DEBUG [1970-01-07 01:40:31.993] [000:000] [207123] (main.cpp:88): hello world log_to_stderr=1 log_level=debug log_dir=./log log_name=lrtcserver
+INFO [1970-01-07 01:40:31.993] [000:000] [207123] (signaling_server.cpp:31): signaling server constructor
+INFO [1970-01-07 01:40:31.993] [000:000] [207123] (signaling_server.cpp:40): signaling server init
+INFO [1970-01-07 01:40:31.993] [000:000] [207123] (signaling_server.cpp:53): signaling server conf = host: 127.0.0.1
+port: 9000
+worker_num: 2
+connection_timeout: 5000 options_.host = 127.0.0.1 options_.port = 9000
+INFO [1970-01-07 01:40:31.994] [000:001] [207123] (socket.cpp:57): Server listening on port 9000...
+INFO [1970-01-07 01:40:31.994] [000:001] [207123] (signaling_server.cpp:89): signaling server start
+INFO [1970-01-07 01:40:31.994] [000:001] [207123] (signaling_server.cpp:163): signaling server joined
+INFO [1970-01-07 01:40:32.019] [000:026] [207126] (signaling_server.cpp:100): signaling server event loop run
+DEBUG [1970-01-07 01:41:18.526] [000:000] [207716] (main.cpp:88): hello world log_to_stderr=1 log_level=debug log_dir=./log log_name=lrtcserver
+INFO [1970-01-07 01:41:18.527] [000:000] [207716] (signaling_server.cpp:31): signaling server constructor
+INFO [1970-01-07 01:41:18.527] [000:000] [207716] (signaling_server.cpp:40): signaling server init
+INFO [1970-01-07 01:41:18.529] [000:002] [207716] (signaling_server.cpp:53): signaling server conf = host: 127.0.0.1
+port: 9000
+worker_num: 2
+connection_timeout: 5000 options_.host = 127.0.0.1 options_.port = 9000
+INFO [1970-01-07 01:41:18.529] [000:002] [207716] (socket.cpp:57): Server listening on port 9000...
+INFO [1970-01-07 01:41:18.529] [000:002] [207716] (signaling_server.cpp:89): signaling server start
+INFO [1970-01-07 01:41:18.529] [000:002] [207716] (signaling_server.cpp:163): signaling server joined
+INFO [1970-01-07 01:41:18.529] [000:002] [207718] (signaling_server.cpp:100): signaling server event loop run
