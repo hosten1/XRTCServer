@@ -3,6 +3,7 @@ package lrpc
 import(
 	"net"
 	"time"
+	"bufio"
 )
 const (
 	defaultConnectionTimeout = 100 * time.Millisecond
@@ -56,6 +57,14 @@ func (c *Client) Do(req *Request) (*Resopnse, error){
 
 	nc.SetReadDeadline(time.Now().Add(c.readTimeout()))
 	nc.SetWriteDeadline(time.Now().Add(c.writeTimeout()))
+
+	rw := bufio.NewReadWriter(bufio.NewReader(nc),bufio.NewWriter(nc))
+	if _, error  := req.Write(rw);error != nil{
+		return nil,error
+	}
+	if err := rw.Writer.Flush(); err != nil {
+		return nil, err
+	}
 
 	// 此处需要实现具体的请求发送和响应解析逻辑
 

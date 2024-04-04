@@ -4,10 +4,11 @@
 
 #include <rtc_base/logging.h>
 #include "signaling_work.h"
+#include "base/socket.h"
 
 namespace lrtc
 {
-    void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd, int events, void *data)
+    void signaling_server_recv_notify(EventLoop */*el*/, IOWatcher */*w*/, int fd, int /*events*/, void *data)
     {
         RTC_LOG(LS_VERBOSE) << "signaling server recv notify";
         int msg;
@@ -18,6 +19,16 @@ namespace lrtc
         }
         SignalingWork *worker = (SignalingWork*)data;
         worker->on_recv_notify(msg);
+    }
+    void conn_io_cb(EventLoop * /*el*/, IOWatcher * /*w*/, int fd, int events, void *data)
+    {
+        SignalingWork *worker = (SignalingWork *)data;
+        if (events & EventLoop::READ)
+        {
+            worker->_on_recv_notify(fd);
+        }
+        
+        
     }
 
     SignalingWork::SignalingWork(int work_id) : work_id_(work_id),
@@ -150,7 +161,36 @@ namespace lrtc
 
     void SignalingWork::_accept_new_connection(int fd)
     {
-        RTC_LOG(LS_INFO) << "signaling server _accept_new_connection fd:"<< fd << ", work_id : "<<work_id_;
+        RTC_LOG(LS_INFO) << "signaling server _accept_new_connection fd:"<< fd 
+                            << ", work_id : "<<work_id_;
+        if (fd < 0)
+        {
+            RTC_LOG(LS_ERROR) << "invalid fd:"<< fd 
+                            << ", work_id : "<<work_id_<<" is invalid";
+            return;
+        }
+        // 设置套接字为非阻塞
+        sock_setnonblock(fd);
+        // 设置为非延时
+        sock_setnodelay(fd);
+        // fd封装成connection
+        // 创建一个指向RTPConection对象的unique_ptr
+        std::unique_ptr<TcpConnection> conn = std::make_unique<TcpConnection>(fd);
+        // 创建io_watcher并设置
+        conn->io_watcher_ = el_->create_io_event(conn_io_cb, this);
+        el_->start_io_event(conn->io_watcher_, fd, EventLoop::READ);
+        if((size_t)fd > conn_tcps_.size()){
+            conn_tcps_.reserve(fd * 2);
+        }
+        // 将conn移动到conn_tcps_容器中，使用fd作为键
+        conn_tcps_[fd] = std::move(conn);
+    }
+
+    void SignalingWork::_on_recv_notify(int fd)
+    {
+        RTC_LOG(LS_INFO) << "signaling server _on_recv_notify fd:"<< fd 
+                            << ", work_id : "<<work_id_;
+
     }
 
 } // namespace lrtc

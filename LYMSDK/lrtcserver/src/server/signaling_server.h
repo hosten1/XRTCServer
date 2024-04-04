@@ -61,7 +61,7 @@ namespace lrtc
     int notify_send_fd_ = -1;
 
     std::vector<std::unique_ptr<SignalingWork>> workers_;
-    int next_works_index_ = 0;
+    size_t next_works_index_ = 0;
   };
 
 } // namespace lrtc

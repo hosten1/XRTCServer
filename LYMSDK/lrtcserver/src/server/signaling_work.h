@@ -3,9 +3,12 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <unordered_map>
 
 #include "base/event_loop.h"
 #include "base/lock_free_queue.h"
+#include "server/tcp_connection.h"
+
 
 namespace lrtc
 {
@@ -28,12 +31,15 @@ namespace lrtc
 
         friend void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd,
                                                  int events, void *data);
+        friend void conn_io_cb(EventLoop * /*el*/, IOWatcher * /*w*/, 
+                                                 int fd, int events, void *data);
 
     private:
         int _notify(int msg);
         void on_recv_notify(int msg);
         void _stop();
         void _accept_new_connection(int fd);
+        void _on_recv_notify(int fd);
 
     private:
         int work_id_;
@@ -45,6 +51,8 @@ namespace lrtc
 
         int notify_recv_fd_ = -1;
         int notify_send_fd_ = -1;
+
+        std::unordered_map<int, std::unique_ptr<TcpConnection>> conn_tcps_;
     };
 
 } // namespace signaling_work

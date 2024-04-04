@@ -9,7 +9,7 @@
 #include "base/socket.h"
 
 namespace lrtc {
-    void accep_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data)
+    void accep_new_conn(EventLoop */*el*/, IOWatcher */*w*/, int fd, int /*events*/, void *data)
     {
         RTC_LOG(LS_INFO) << "accept new client";        
         int cfd = 0;
@@ -25,7 +25,7 @@ namespace lrtc {
         server->_dispatch_new_conn(cfd);
         // server->accept_cb(fd);
     }
-    void signaling_server_recv_notifi_cb(EventLoop *el, IOWatcher *w, int fd, int events, void *data)
+    void signaling_server_recv_notifi_cb(EventLoop */*el*/, IOWatcher */*w*/, int fd, int /*events*/, void *data)
     {
         RTC_LOG(LS_INFO) << "signaling server recv notify";
         int msg;
@@ -121,7 +121,7 @@ namespace lrtc {
          io_watcher_ = loop_->create_io_event(accep_new_conn,this);
          loop_->start_io_event(io_watcher_,listen_fd_,EventLoop::READ);
          // 创建work 
-         for (size_t i = 0; i < options_.worker_num; i++)
+         for (int i = 0; i < options_.worker_num; i++)
          {
             if(_create_worker(i) != 0){
                 RTC_LOG(LS_ERROR) << "create worker error";
@@ -258,7 +258,7 @@ namespace lrtc {
     void SignalingServer::_dispatch_new_conn(int fd)
     {
         RTC_LOG(LS_INFO)<<"signaling server dispatch new conn fd:"<<fd;
-        int idx = next_works_index_;
+        size_t idx = next_works_index_;
         next_works_index_++;
         if (next_works_index_ >= workers_.size())
         {

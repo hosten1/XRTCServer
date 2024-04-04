@@ -12,6 +12,8 @@ var video = $("#video").val();
 pushBtn.addEventListener("click", () => {
     // 在控制台输出按钮被点击的消息
     console.log("Button clicked!");
+     // 禁用按钮
+     pushBtn.disabled = true;
     $.post("/signaling/push",
       {
     "uid" :uid,
@@ -20,6 +22,8 @@ pushBtn.addEventListener("click", () => {
     "video":video
       },
       (data,textStatus)=>{
+        // 请求完成后重新启用按钮
+        pushBtn.disabled = false;
 
       },
       "json")

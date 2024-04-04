@@ -1,9 +1,13 @@
-#include "socket.h"
+#include "base/socket.h"
 #include <rtc_base/logging.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <netinet/tcp.h>
+#include <sys/ioctl.h>
+#include <errno.h>
 
 namespace lrtc
 {
@@ -75,7 +79,7 @@ namespace lrtc
         // close(serverSocket);
         return serverSocket;
     }
-    int generic_accept(int sock, struct sockaddr *clientAddr, socklen_t* clientLen)
+    int generic_accept(int sock, struct sockaddr *clientAddr, socklen_t *clientLen)
     {
         if (sock < 0)
         {
@@ -83,13 +87,12 @@ namespace lrtc
             return -1;
         }
 
-       // 确保clientAddr和clientLen是有效指针
-    if (!clientAddr || !clientLen)
-    {
-        RTC_LOG(LS_ERROR) << "Invalid client address or length provided";
-        return -1;
-    }
-
+        // 确保clientAddr和clientLen是有效指针
+        if (!clientAddr || !clientLen)
+        {
+            RTC_LOG(LS_ERROR) << "Invalid client address or length provided";
+            return -1;
+        }
 
         int fd = -1;
         while (true)
@@ -101,7 +104,7 @@ namespace lrtc
                 {
                     RTC_LOG(LS_INFO) << "accept interrupted, retrying";
                     sleep(0.1); // 退避一段时间
-                   continue;
+                    continue;
                 }
                 else
                 {
@@ -121,12 +124,11 @@ namespace lrtc
     {
         struct sockaddr_in clientAddr;
         socklen_t clientLen = sizeof(clientAddr);
-        int fd = generic_accept(sock,(sockaddr*)&clientAddr,&clientLen);
+        int fd = generic_accept(sock, (sockaddr *)&clientAddr, &clientLen);
         if (-1 == fd)
         {
             RTC_LOG(LS_ERROR) << "Failed to accept connection, errno:" << errno;
             return -1;
-            
         }
 
         if (host)
@@ -137,9 +139,75 @@ namespace lrtc
         {
             *cport = ntohs(clientAddr.sin_port);
         }
-        
+
         RTC_LOG(LS_INFO) << "Connection accepted from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n";
         return fd;
+    }
+
+    int sock_setnonblock(int sock)
+    {
+        int flags = fcntl(sock, F_GETFL, 0);
+        if (-1 == flags)
+        {
+            RTC_LOG(LS_ERROR) << "fcntl(F_GETFL) failed, errno:" << strerror(errno) << " errno:" << errno;
+            return -1;
+        }
+
+        flags |= O_NONBLOCK;
+        if (-1 == fcntl(sock, F_SETFL, flags))
+        {
+            RTC_LOG(LS_ERROR) << "fcntl(F_SETFL) failed, errno:" << strerror(errno) << " errno:" << errno;
+            return -1;
+        }
+
+        return 0;
+    }
+
+    int sock_setnodelay(int sock)
+    {
+        int yes = 1;
+        int ret = setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void *)&yes, sizeof(yes));
+        if (-1 == ret)
+        {
+            RTC_LOG(LS_ERROR) << "setsockopt TCP_NODELAY failed, errno:" << strerror(errno) << " errno:" << errno;
+            return -1;
+        }
+
+        return 0;
+    }
+
+    int sock_peet_to_string(int sock, char *host, int *port)
+    {
+        struct sockaddr_in addr;
+        socklen_t len = sizeof(addr);
+        int ret = getpeername(sock, (struct sockaddr *)&addr, &len);
+        if (-1 == ret)
+        {
+            if (host)
+            {
+                host[0]='?';
+                host[1]='\0';
+            }
+            if (port)
+            {
+               *port = 0;
+            }
+            
+            
+            RTC_LOG(LS_ERROR) << "getsockname failed, errno:" << strerror(errno) << " errno:" << errno;
+            return -1;
+        }
+        if (host)
+        {
+            memcpy(host, inet_ntoa(addr.sin_addr), INET_ADDRSTRLEN);
+        }
+        if (port)
+        {
+            *port = ntohs(addr.sin_port);
+        }
+        
+        
+        return 0;
     }
 
 } // namespace lrtc
