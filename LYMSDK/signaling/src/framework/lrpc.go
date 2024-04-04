@@ -6,6 +6,8 @@ import(
     "errors"
 	"strconv"
 	"time"
+	"bytes"
+	"encoding/json"
 
 	"test/src/framework/lrpc"
 )
@@ -76,9 +78,28 @@ func loadLrpc() error {
 
 	return nil
 }
-func Call(serviceName string, request interface{} ,response interface{},LogId uint32) error{
+func Call(serviceName string, request interface{} ,response interface{},logId uint32) error{
    
 	fmt.Println("call" +serviceName)
+
+	client,ok := lrtpClients["lrpc."+serviceName]
+	if !ok {
+		return fmt.Errorf("[%s] service not found",serviceName)
+	}
+    
+    content,err := json.Marshal(request)
+	if(err != nil){
+		return err
+	}
+    req := lrpc.NewRequest(bytes.NewReader(content),logId)
+	resp,err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	
+	fmt.Println(resp)
+
 
 	return nil
 }

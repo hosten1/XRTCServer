@@ -22,3 +22,12 @@ go.work
 LYMSDK/signaling/signaling
 .DS_Store
 LYMSDK/signaling/log/*
+LYMSDK/lrtcserver/out/*
+LYMSDK/lrtcserver/thirdpart/librtcbase/output/*
+LYMSDK/lrtcserver/thirdpart/librtcbase/out/*
+LYMSDK/lrtcserver/thirdpart/yaml-cpp/out/*
+LYMSDK/lrtcserver/thirdpart/abseil-cpp/out/*
+LYMSDK/lrtcserver/thirdpart/libwebrtc/out/*
+LYMSDK/lrtcserver/thirdpart/libwebrtc/deps/*
+LYMSDK/lrtcserver/thirdpart/jsoncpp/jsoncpp/out/*
+ LYMSDK/lrtcserver/thirdpart/libuv/out/*

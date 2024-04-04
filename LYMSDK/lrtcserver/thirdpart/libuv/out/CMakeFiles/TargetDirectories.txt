@@ -1,0 +1,9 @@
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/install.dir
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/uv_a.dir
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/install/strip.dir
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/uv.dir
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/edit_cache.dir
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/install/local.dir
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/test.dir
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/list_install_components.dir
+/home/lym/XRTCServer/LYMSDK/lrtcserver/thirdpart/libuv/out/CMakeFiles/rebuild_cache.dir
