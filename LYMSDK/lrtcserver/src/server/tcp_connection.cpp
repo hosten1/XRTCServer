@@ -1,5 +1,6 @@
 #include "server/tcp_connection.h"
 #include <cstring>
+#include <unistd.h> // 包含 close 函数的头文件
 
 #include "base/socket.h"
 #include "tcp_connection.h"
@@ -94,6 +95,11 @@ namespace lrtc
         RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << header.toString()
                          << ", \nbody:" << body
                          << "\nprovider: " << std::string(header.provider, sizeof(header.provider));
+        return 0;
+    }
+    int TcpConnection::close_conn()
+    {
+        close(fd_);
         return 0;
     }
     // Function to parse data into lheader_t structure

@@ -36,7 +36,7 @@ namespace lrtc
         int read(int fd);
         int send(const char *buf, int len);
         int recv(char *buf, int len);
-        int close();
+        int close_conn();
 
         int get_fd() const { return fd_; }
         const char *get_ip() const { return ip_; }

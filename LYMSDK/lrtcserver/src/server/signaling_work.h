@@ -44,6 +44,8 @@ namespace lrtc
         int  _process_queue_buffer(const TcpConnection *conn);
         int _process_request(const TcpConnection *conn,const rtc::Slice* header,const rtc::Slice* body);
         #endif // USE_SDS
+        void _close_connection( TcpConnection *conn);
+        void _remove_connection( TcpConnection *conn);
 
     private:
         int work_id_;

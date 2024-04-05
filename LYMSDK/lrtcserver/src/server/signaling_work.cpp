@@ -212,7 +212,11 @@ namespace lrtc
                               << ", work_id : " << work_id_ << " is invalid";
             return;
         }
-        conn->read(fd);
+       if (-1 == conn->read(fd) ){
+            _close_connection(conn);
+            return ;
+
+       }
 #else
         int nread = 0;
         const int read_len = conn->bytes_expected_;
@@ -284,6 +288,28 @@ namespace lrtc
         return 0;
     }
 #endif
+
+    void SignalingWork::_close_connection( TcpConnection *conn)
+    {
+        if (conn)
+        {
+            conn->close_conn();
+        }
+        _remove_connection(conn);
+        
+
+    }
+
+    void SignalingWork::_remove_connection(TcpConnection *conn)
+    {
+        if (conn)
+        {
+            el_->delete_io_event(conn->io_watcher_);
+            conn_tcps_.erase(conn->get_fd());
+            conn = nullptr;
+            
+        }
+    }
 
 } // namespace lrtc
 
