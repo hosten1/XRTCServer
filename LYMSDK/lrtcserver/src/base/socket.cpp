@@ -210,4 +210,28 @@ namespace lrtc
         return 0;
     }
 
+    int sock_read_data(int sock, char *buf, int len)
+    {
+        int nread = read(sock, buf, len);
+        if (-1 == nread)
+        {
+            if (EAGAIN == errno)
+            {
+               nread = 0;
+
+            }else{
+                RTC_LOG(LS_WARNING) << "sock read failed, errno:" << strerror(errno) << " errno:" << errno;
+                return -1;
+            }
+            
+        }else if (0 == nread){
+            RTC_LOG(LS_WARNING)<<"sock read 0 bytes, errno:" << strerror(errno) << " errno:" << errno;
+                return -1;
+        }else{
+            return nread;
+        }
+        
+        return 0;
+    }
+
 } // namespace lrtc

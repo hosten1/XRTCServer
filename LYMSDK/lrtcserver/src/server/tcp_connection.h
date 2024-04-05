@@ -4,9 +4,11 @@
 #include <string>
 #include "base/event_loop.h"
 #include "base/lheader.h"
-extern "C" {
-  #include "rtc_base/sds/sds.h"
-}
+#include "rtc_base/byte_buffer.h"
+
+// extern "C" {
+//   #include "rtc_base/sds/sds.h"
+// }
 
 
 namespace lrtc
@@ -17,7 +19,8 @@ namespace lrtc
         TcpConnection(int fd, const char *ip, int port);
         TcpConnection(int fd);
         ~TcpConnection();
-
+        
+        int read(int fd);
         int send(const char *buf, int len);
         int recv(char *buf, int len);
         int close();
@@ -25,14 +28,21 @@ namespace lrtc
         int get_fd() const { return fd_; }
         const char *get_ip() const { return ip_; }
         int get_port() const { return port_; }
-        IOWatcher *io_watcher_;
+
+
+        IOWatcher *io_watcher_ = nullptr;
+
+        private:
+        bool _parseDataIntoLHeader(const char* data,size_t data_size, lheader_t& header);
+
     private:
         int fd_;
         char ip_[64];
         int port_;
-        // sds queryBuf;
-        size_t bytes_expected_ = L_HEADER_SIZE;
+        
         size_t bytes_processed_ = 0;
+         // sds queryBuf_;
+        size_t bytes_expected_ = L_HEADER_SIZE;
        
         int recv_len_;
         int send_len_;

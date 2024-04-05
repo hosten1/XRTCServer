@@ -25,7 +25,7 @@ namespace lrtc
         SignalingWork *worker = (SignalingWork *)data;
         if (events & EventLoop::READ)
         {
-            worker->_on_recv_notify(fd);
+            worker->_read_query(fd);
         }
         
         
@@ -105,12 +105,12 @@ namespace lrtc
         }
     }
 
-    void SignalingWork::notify_new_conn(int fd)
+    int SignalingWork::notify_new_conn(int fd)
     {
         //使用队列存储消息的内容
-        RTC_LOG(LS_INFO) << "signaling server notify new conn fd:" << fd;
+        RTC_LOG(LS_INFO) << "SignalingWork::notify_new_conn() notify new conn fd:" << fd;
         notify_queue_.produce(fd);
-        _notify(SignalingWork::MSG_NEW_CONN);
+       return _notify(SignalingWork::MSG_NEW_CONN);
     }
 
     int SignalingWork::_notify(int msg)
@@ -161,8 +161,8 @@ namespace lrtc
 
     void SignalingWork::_accept_new_connection(int fd)
     {
-        RTC_LOG(LS_INFO) << "signaling server _accept_new_connection fd:"<< fd 
-                            << ", work_id : "<<work_id_;
+        RTC_LOG(LS_INFO) << "SignalingWork::_accept_new_connection() [fd:"<< fd 
+                            << ", work_id : "<<work_id_  << "]";
         if (fd < 0)
         {
             RTC_LOG(LS_ERROR) << "invalid fd:"<< fd 
@@ -176,7 +176,7 @@ namespace lrtc
         // fd封装成connection
         // 创建一个指向RTPConection对象的unique_ptr
         std::unique_ptr<TcpConnection> conn = std::make_unique<TcpConnection>(fd);
-        // 创建io_watcher并设置
+        // // 创建io_watcher并设置
         conn->io_watcher_ = el_->create_io_event(conn_io_cb, this);
         el_->start_io_event(conn->io_watcher_, fd, EventLoop::READ);
         if((size_t)fd > conn_tcps_.size()){
@@ -186,14 +186,20 @@ namespace lrtc
         conn_tcps_[fd] = std::move(conn);
     }
 
-    void SignalingWork::_on_recv_notify(int fd)
+    void SignalingWork::_read_query(const int fd)
     {
-        RTC_LOG(LS_INFO) << "signaling server _on_recv_notify fd:" << fd
+         RTC_LOG(LS_INFO) << "SignalingWork::_read_query() fd:" << fd
                          << ", work_id : " << work_id_;
-        if (fd < 0 || (size_t)fd > conn_tcps_.size())
+        if (fd < 0 /*|| (size_t)fd > conn_tcps_.size()*/)
         {
              RTC_LOG(LS_ERROR) << "invalid fd:" << fd
                               << ", work_id : " << work_id_ << " is invalid";
+            // Output all keys
+              RTC_LOG(LS_INFO) << "All keys in conn_tcps_:"; 
+             for (const auto &pair : conn_tcps_)
+             {
+                  RTC_LOG(LS_INFO) << pair.first;
+             }
             return;
         }
 
@@ -204,9 +210,8 @@ namespace lrtc
                               << ", work_id : " << work_id_ << " is invalid";
             return;
         }
-        // 读取数据
-        char buf[1024];
-        // int len = conn->read(buf, sizeof(buf));
+        conn->read(fd);
+
     }
 
 } // namespace lrtc

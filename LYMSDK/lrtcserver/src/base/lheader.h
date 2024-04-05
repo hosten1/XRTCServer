@@ -22,6 +22,16 @@ namespace lrtc
         uint32_t magic_num;
         uint32_t reserved;
         uint32_t body_len;
+        public:
+        std::string toString()
+        {
+            return "id:" + std::to_string(id) +
+                   ", version:" + std::to_string(version) +
+                   ", log_id:" + std::to_string(log_id) +
+                   ", provider:" + std::string(provider, sizeof(provider)) +
+                   ", magic_num:" + std::to_string(magic_num) +
+                   ", reserved:" + std::to_string(reserved);
+        }
     };
 
 } // namespace lrtc
