@@ -3,6 +3,7 @@
  */
 
 #include <stdint.h>
+#include <sstream>
 
 #ifndef __LYMSDK_LRTCSERVER_SRC_BASE_LHEADER_H_
 #define __LYMSDK_LRTCSERVER_SRC_BASE_LHEADER_H_
