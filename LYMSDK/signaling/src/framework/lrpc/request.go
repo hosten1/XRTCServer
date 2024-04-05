@@ -3,6 +3,7 @@ package lrpc
 import(
 	"io"
 	"bytes"
+	// "net/http"
 )
 
 type Request struct {
@@ -26,4 +27,15 @@ func NewRequest(body io.Reader,logid uint32) (*Request){
 	}
 	return nil
 
+}
+func (r *Request) Write(w io.Writer) (n int, err error) {
+	n, err = r.Header.Write(w)
+	if err != nil {
+		return 0, err
+	}
+	written, err := io.Copy(w, r.Body)
+	if err != nil {
+		return 0, err
+	}
+	return int(written), nil
 }

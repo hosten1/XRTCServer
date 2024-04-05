@@ -1,4 +1,7 @@
 #include "base/event_loop.h"
+#include <cassert> // 用于断言非空指针
+
+
 #include "event_loop.h"
 
 #define TRANS_TO_EV_MASK(mask) \
@@ -75,6 +78,7 @@ namespace lrtc
     }
     void EventLoop::start_io_event(IOWatcher *watcher, int fd, int mask)
     {
+        assert(watcher != nullptr); // 确保 watcher 不是空指针
         struct ev_io *io = &(watcher->io_);
         // 如果之前有启动过 需要先停止然后 启动
         if (ev_is_active(io))
@@ -100,6 +104,8 @@ namespace lrtc
 
     void EventLoop::stop_io_event(IOWatcher *watcher,int fd,int mask)
     {
+        assert(watcher != nullptr); // 确保 watcher 不是空指针
+
         struct  ev_io *io = &(watcher->io_);
         if (ev_is_active(io))
         {
@@ -119,7 +125,12 @@ namespace lrtc
         }
         
     }
-
+   void EventLoop::delete_io_event(IOWatcher *watcher)
+    {
+        struct  ev_io *io = &(watcher->io_);
+        ev_io_stop(loop_, io);
+        delete watcher;
+    }
     void EventLoop::destroy_io_event(IOWatcher *watcher,int fd,int mask)
     {
         struct  ev_io *io = &(watcher->io_);

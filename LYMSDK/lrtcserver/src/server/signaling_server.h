@@ -2,8 +2,15 @@
 #define __LYMSDK_LRTCSERVER_SRC_SERVER_SIGNALING_SERVER_H_
 
 #include <string>
+#include <thread>
+#include <vector>
 
-namespace lrtc {
+#include "base/event_loop.h"
+#include "server/signaling_work.h"
+
+namespace lrtc
+{
+  // class SignalingServer;
   struct SignalingServerOptions
   {
     std::string host;
@@ -11,22 +18,52 @@ namespace lrtc {
     int worker_num;
     int connect_timeout;
   };
-  
+
   class SignalingServer
   {
 
   public:
+    enum
+    {
+      MSG_QUIT = 0,
+    };
     SignalingServer(/* args */);
     ~SignalingServer();
-    int init(const char* conf_file);
+    int init(const char *conf_file);
+    bool start();
+    int stop();
+    int notify(int msg);
+    void joined();
 
-    private:
+    friend void signaling_server_recv_notifi_cb(EventLoop *el,IOWatcher *w,
+                                                int fd, int events, void *data);
+    friend void accep_new_conn(EventLoop *el, IOWatcher *w, 
+                                  int fd, int events, void *data);
+
+
+  private:
+    void on_recv_notify(int msg);
+    void _stop();
+    int _create_worker(int worker_id);
+    void _dispatch_new_conn(int fd);
+
+  private:
     SignalingServerOptions options_;
+    std::unique_ptr<EventLoop> loop_ = nullptr;
+    IOWatcher *io_watcher_ = nullptr;
+    // 线程通讯用
+    IOWatcher *pipe_watcher_ = nullptr;
+    TimerWatcher *timer_watcher_ = nullptr;
+    std::unique_ptr<std::thread> ev_thread_;
 
     int listen_fd_ = -1;
+    int notify_recv_fd_ = -1;
+    int notify_send_fd_ = -1;
+
+    std::vector<std::unique_ptr<SignalingWork>> workers_;
+    size_t next_works_index_ = 0;
   };
 
+} // namespace lrtc
 
-}  // namespace lrtc
-
-#endif  // __LYMSDK_LRTCSERVER_SRC_SERVER_SIGNALING_SERVER_H_
+#endif // __LYMSDK_LRTCSERVER_SRC_SERVER_SIGNALING_SERVER_H_
