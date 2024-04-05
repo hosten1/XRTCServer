@@ -76,7 +76,7 @@ set(SOURCES
 # 添加头文件路径
 include_directories(
     "libwebrtc"
-    "./deps/abseil-cpp"
+    "../abseil-cpp"
     "./json/single_include/nlohmann"
 )
 

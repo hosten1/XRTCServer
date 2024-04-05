@@ -17,6 +17,7 @@ namespace lrtc
     EventLoop::EventLoop(void *owner) : owner_(owner),
                                         loop_(ev_loop_new(EVFLAG_AUTO))
     {
+        assert(loop_ != nullptr);
     }
 
     EventLoop::~EventLoop()

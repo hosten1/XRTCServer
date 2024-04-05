@@ -6,9 +6,13 @@
 #include "base/lheader.h"
 #include "rtc_base/byte_buffer.h"
 
-// extern "C" {
-//   #include "rtc_base/sds/sds.h"
-// }
+
+// #define USE_SDS
+#ifdef USE_SDS
+extern "C" {
+  #include "rtc_base/sds/sds.h"
+}
+#endif
 
 
 namespace lrtc
@@ -16,6 +20,15 @@ namespace lrtc
     class TcpConnection
     {
     public:
+#ifdef USE_SDS
+        enum
+        {
+            STATE_HEAD = 0,
+            STATE_BODY = 1,
+            STATE_DONE
+        };
+#endif // USE_SDS
+
         TcpConnection(int fd, const char *ip, int port);
         TcpConnection(int fd);
         ~TcpConnection();
@@ -31,9 +44,12 @@ namespace lrtc
 
 
         IOWatcher *io_watcher_ = nullptr;
+        #ifdef USE_SDS
+        int current_state_ = STATE_HEAD;
+        #endif
 
         private:
-        bool _parseDataIntoLHeader(const char* data,size_t data_size, lheader_t& header);
+        bool _parseDataIntoLHeader(const char* data,size_t data_size, lheader_t& header,std::string &body);
 
     private:
         int fd_;

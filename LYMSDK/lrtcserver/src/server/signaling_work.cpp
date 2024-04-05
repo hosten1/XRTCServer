@@ -204,6 +204,8 @@ namespace lrtc
         }
 
         TcpConnection *conn = conn_tcps_[fd].get();
+#ifndef USE_SDS
+        
         if (!conn)
         {
             RTC_LOG(LS_ERROR) << "invalid conn fd:" << fd
@@ -211,8 +213,77 @@ namespace lrtc
             return;
         }
         conn->read(fd);
+#else
+        int nread = 0;
+        const int read_len = conn->bytes_expected_;
+        
+        int qb_len = sdslen(conn->queryBuf_);
+        conn->queryBuf_ = sdsMakeRoomFor(conn->queryBuf_,read_len);
+        nread = sock_read_data(fd,conn->queryBuf_ + qb_len,read_len);
+        RTC_LOG(LS_INFO)<<"SignalingWork::_read_query() fd:" << fd
+                         << ", work_id : " << work_id_ << " nread:"<<nread;
 
+        if (-1 == nread)
+        {
+            // 读取失败
+            RTC_LOG(LS_ERROR) << "read query failed fd:" << fd
+                              << ", work_id : " << work_id_ << " nread:" << nread;
+           // _close_connection(fd);
+            return;
+        }else if (nread > 0)
+        {
+            sdsIncrLen(conn->queryBuf_,nread);
+        }
+        int ret = _process_queue_buffer(conn);
+
+#endif // !        #ifdef USE_SDS
     }
+#ifdef USE_SDS
+    int SignalingWork::_process_queue_buffer(const TcpConnection *conn)
+    {
+        while (sdslen(conn->queryBuf_) >= conn->bytes_processed_)
+        {
+            rhead_t * head = (lheader_t*)(conn->queryBuf_);
+            if (TcpConnection::STATE_HEAD == conn->current_state_)
+            {
+               if (L_HEADER_MAGIC_NUMBER != head->magic_num)
+               {
+                RTC_LOG(LS_WARNING) << "invalid magic number:" << head->magic_num;
+                return -1;
+                
+               }
+               conn->current_state_ = TcpConnection::STATE_BODY;
+               conn->bytes_expected_ = L_HEADER_SIZE;
+               conn->bytes_processed_ = head->body_len;
+               
+            }else{
+                rtc::Slice header(conn->queryBuf_,L_HEADER_SIZE);
+                rtc::Slice body(conn->queryBuf_ + L_HEADER_SIZE,head->body_len);
+                int ret = _process_request(conn,header,body);
+                if (-1 == ret )
+                {
+                    RTC_LOG(LS_ERROR) << "process request failed";
+                    return -1;
+                }
+                // 假定是一个短连接处理 忽略其他数据
+                conn->bytes_expected_ = 65535;
+                
+            }
+            
+        }
+
+        return 0;
+    }
+    int SignalingWork::_process_request(const TcpConnection *conn,
+                                        const rtc::Slice *header,
+                                        const rtc::Slice *body)
+    {
+        RTC_LOG(LS_INFO) << "SignalingWork::_process_request() fd:" << conn->fd_
+                         << ", work_id : " << work_id_ << " header:" << header->data()
+                         << ", body:" << body->data();
+        return 0;
+    }
+#endif
 
 } // namespace lrtc
 

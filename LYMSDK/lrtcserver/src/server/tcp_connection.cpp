@@ -7,8 +7,7 @@
 
 namespace lrtc
 {
-    TcpConnection::TcpConnection(int fd, const char *ip, int port) : 
-                                fd_(fd), port_(port)/*,queryBuf_(sdsempty)*/
+    TcpConnection::TcpConnection(int fd, const char *ip, int port) : fd_(fd), port_(port) /*,queryBuf_(sdsempty)*/
     {
         memset(ip_, 0, sizeof(ip_));
         if (ip)
@@ -29,26 +28,40 @@ namespace lrtc
 
     int TcpConnection::read(int fd)
     {
-         //本次实际上读取的大小
+        // 本次实际上读取的大小
         int nread = 0;
-        const int read_len = bytes_expected_;
-        
-        // int qb_len = sdslen(c->queryBuf_);
-        // conn->queryBuf_ = sdsMakeRoomFor(conn->queryBuf_,read_len);
-        // rtc::BufferT<char> readBuffer(read_len);
+        const int read_len = L_HEADER_SIZE * 4;
+
         char readBuffer[read_len];
-        memset(readBuffer,0,read_len);
-        nread = sock_read_data(fd,readBuffer,read_len);
+        memset(readBuffer, 0, read_len);
+        nread = sock_read_data(fd, readBuffer, read_len);
         RTC_LOG(LS_INFO) << "TcpConnection::read _on_recv_notify fd:" << fd
-                          << " nread:" << nread;
-        if(-1 == nread)
+                         << " nread:" << nread;
+        if (-1 == nread)
         {
             // _close_connection(fd);
             return -1;
-        }else if (nread > 0)
+        }
+        else if (nread > 0)
         {
-            recv(readBuffer,nread);
-            // sdsIncrLen(conn->queryBuf_,nread);
+            // // 创建二进制数据并分配足够的内存
+            // char *data = new char[sizeof(lheader_t)];
+
+            // // 填充 lheader_t 的实例 t 的数据
+            // lheader_t t;
+            // t.id = 1234;
+            // t.version = 1;
+            // t.log_id = 5678;
+            // std::strcpy(t.provider, "Provider"); // 使用 strcpy 将字符串复制到 provider 中
+            // t.magic_num = 0xfb202404;
+            // t.reserved = 0;
+            // t.body_len = 1024;
+
+            // // 使用 memcpy 将 t 的数据复制到 data 中
+            // memcpy(data, &t, sizeof(lheader_t));
+
+            recv(readBuffer, nread);
+            // delete[] data;
         }
 
         return 0;
@@ -56,32 +69,70 @@ namespace lrtc
     int TcpConnection::recv(char *buf, int len)
     {
         lheader_t header;
-        _parseDataIntoLHeader(buf,len,header);
-        RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << header.toString();
+        std::string body;
+        _parseDataIntoLHeader(buf, len, header, body);
+        //   RTC_LOG(LS_INFO) << "id: " << header.id;
+        //     RTC_LOG(LS_INFO) << "version: " << header.version;
+        //     RTC_LOG(LS_INFO) << "log_id: " << header.log_id;
+        //     RTC_LOG(LS_INFO) << "provider: " << std::string(header.provider, sizeof(header.provider));
+        //     RTC_LOG(LS_INFO) << "magic_num: "<< header.magic_num  << ", L_HEADER_MAGIC_NUMBER=" << L_HEADER_MAGIC_NUMBER;;
+        //     RTC_LOG(LS_INFO) << "reserved: " << header.reserved;
+        //     RTC_LOG(LS_INFO) << "body_len: " <<  header.body_len;
+        //     RTC_LOG(LS_INFO) << "body: " << body;
+        // char *data = new char[sizeof(lheader_t)];
+        // memcpy(data, buf, sizeof(lheader_t));
+        // lheader_t *header_copy = reinterpret_cast<lheader_t *>(data);
+        // RTC_LOG(LS_INFO) << "id: " << header_copy->id;
+        //     RTC_LOG(LS_INFO) << "version: " << header_copy->version;
+        //     RTC_LOG(LS_INFO) << "log_id: " << header_copy->log_id;
+        //     RTC_LOG(LS_INFO) << "provider: " << std::string(header_copy->provider, sizeof(header_copy->provider));
+        //     RTC_LOG(LS_INFO) << "magic_num: "<< header_copy->magic_num  << ", L_HEADER_MAGIC_NUMBER=" << L_HEADER_MAGIC_NUMBER;;
+        //     RTC_LOG(LS_INFO) << "reserved: " << header_copy->reserved;
+        //     RTC_LOG(LS_INFO) << "body_len: " <<  header_copy->body_len;
+
+        // 现在可以访问结构体的字段了
+        RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << header.toString()
+                         << ", \nbody:" << body
+                         << "\nprovider: " << std::string(header.provider, sizeof(header.provider));
         return 0;
     }
     // Function to parse data into lheader_t structure
-bool TcpConnection::_parseDataIntoLHeader(const char* data,size_t data_size, lheader_t& header)
-{
-    // Check if data size is at least the size of the header
-    if (data_size < sizeof(lheader_t))
+    bool TcpConnection::_parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header, std::string &body)
     {
-        return false; // Data size is too small
+        // Check if data size is at least the size of the header
+        if (data_size < sizeof(lheader_t))
+        {
+            return false; // Data size is too small
+        }
+
+        rtc::ByteBufferReader reader(data, data_size, rtc::ByteBuffer::ORDER_HOST);
+
+        // Read each field of the lheader_t structure
+        reader.ReadUInt16(&header.id);
+        reader.ReadUInt16(&header.version);
+        reader.ReadUInt32(&header.log_id);
+        reader.ReadBytes(header.provider, sizeof(header.provider));
+        reader.ReadUInt32(&header.magic_num);
+        reader.ReadUInt32(&header.reserved);
+        reader.ReadUInt32(&header.body_len);
+        if (L_HEADER_MAGIC_NUMBER != header.magic_num)
+        {
+            RTC_LOG(LS_WARNING) << "invalid magic number:" << header.magic_num
+                                << ", L_HEADER_MAGIC_NUMBER=" << L_HEADER_MAGIC_NUMBER;
+            return false;
+        }
+
+        if (reader.Length() > 0 && reader.Length() >= header.body_len)
+        {
+            reader.ReadString(&body, header.body_len);
+        }
+        else
+        {
+            RTC_LOG(LS_ERROR) << "lym body_len:" << header.body_len << ", reader.Length():" << reader.Length();
+        }
+
+        return true; // Parsing successful
     }
-
-    rtc::ByteBufferReader reader(data,data_size);
-
-    // Read each field of the lheader_t structure
-    reader.ReadUInt16(&header.id);
-    reader.ReadUInt16(&header.version);
-    reader.ReadUInt32(&header.log_id);
-    reader.ReadBytes(header.provider, sizeof(header.provider));
-    reader.ReadUInt32(&header.magic_num);
-    reader.ReadUInt32(&header.reserved);
-    reader.ReadUInt32(&header.body_len);
-
-    return true; // Parsing successful
-}
     // size_t TcpConnection::unpackageHeader(rtc::ArrayView<const uint8_t> package_frame,
     //                                                  uint8_t version[4],
     //                                                  uint8_t *iden,

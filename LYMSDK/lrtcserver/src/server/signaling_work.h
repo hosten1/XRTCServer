@@ -40,6 +40,10 @@ namespace lrtc
         void _stop();
         void _accept_new_connection(const int fd);
         void _read_query(int fd);
+        #ifdef USE_SDS
+        int  _process_queue_buffer(const TcpConnection *conn);
+        int _process_request(const TcpConnection *conn,const rtc::Slice* header,const rtc::Slice* body);
+        #endif // USE_SDS
 
     private:
         int work_id_;
