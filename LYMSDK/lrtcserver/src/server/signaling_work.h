@@ -27,7 +27,7 @@ namespace lrtc
         bool start();
         int stop();
         void joined();
-        void notify_new_conn(int fd);
+        int notify_new_conn(int fd);
 
         friend void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd,
                                                  int events, void *data);
@@ -38,14 +38,14 @@ namespace lrtc
         int _notify(int msg);
         void on_recv_notify(int msg);
         void _stop();
-        void _accept_new_connection(int fd);
-        void _on_recv_notify(int fd);
+        void _accept_new_connection(const int fd);
+        void _read_query(int fd);
 
     private:
         int work_id_;
         std::unique_ptr<EventLoop> el_;
 
-        IOWatcher *pipe_watcher_;
+        IOWatcher *pipe_watcher_ = nullptr;
         std::unique_ptr<std::thread> ev_thread_;
         LockFreeQueue<int> notify_queue_;
 

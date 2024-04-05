@@ -4,6 +4,7 @@ import(
 	"net"
 	"time"
 	"bufio"
+	"fmt"
 )
 const (
 	defaultConnectionTimeout = 100 * time.Millisecond
@@ -58,15 +59,18 @@ func (c *Client) Do(req *Request) (*Resopnse, error){
 	nc.SetReadDeadline(time.Now().Add(c.readTimeout()))
 	nc.SetWriteDeadline(time.Now().Add(c.writeTimeout()))
 
+	// 此处需要实现具体的请求发送和响应解析逻辑
+
 	rw := bufio.NewReadWriter(bufio.NewReader(nc),bufio.NewWriter(nc))
-	if _, error  := req.Write(rw);error != nil{
+	ret, error  := req.Write(rw);
+	if error != nil{
 		return nil,error
 	}
+	fmt.Println("req.Write ret:",ret)
 	if err := rw.Writer.Flush(); err != nil {
 		return nil, err
 	}
 
-	// 此处需要实现具体的请求发送和响应解析逻辑
 
 	return nil,nil
 }
