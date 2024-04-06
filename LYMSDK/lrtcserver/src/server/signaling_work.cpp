@@ -30,14 +30,46 @@ namespace lrtc
         
         
     }
+    void  conn_timer_cb(EventLoop *el, TimerWatcher * /*w*/, void *data){
+        SignalingWork *worker = (SignalingWork *)el->get_owner();
+        TcpConnection *conn = (TcpConnection *)data;
+        worker->_process_timeout(conn);
 
-    SignalingWork::SignalingWork(int work_id) : work_id_(work_id),
-                                                el_(std::make_unique<EventLoop>(this))
+    }
+
+    SignalingWork::SignalingWork(int work_id,const struct SignalingServerOptions option) :
+                                               work_id_(work_id),
+                                                el_(std::make_unique<EventLoop>(this)), 
+                                                options_(option)
     {
     }
 
     SignalingWork::~SignalingWork()
     {
+        // 使用范围循环遍历unordered_map并释放资源
+        for (auto &pair : conn_tcps_)
+        {
+            if ( pair.second)
+            {
+                _close_connection(pair.second.get()); // 如果 _close_connection 需要的是指针，则使用 pair.second.get() 获取指针
+            }
+            
+            pair.second.reset(); // 释放 TcpConnection 对象的内存
+        }
+        conn_tcps_.clear(); // 清空unordered_map
+        if (el_)
+        {
+            el_.reset();
+            el_ = nullptr;
+            
+        }
+        if (ev_thread_)
+        {
+           ev_thread_.reset();
+           ev_thread_ = nullptr;
+        }
+        
+        
     }
 
     int SignalingWork::init()
@@ -179,6 +211,12 @@ namespace lrtc
         // // 创建io_watcher并设置
         conn->io_watcher_ = el_->create_io_event(conn_io_cb, this);
         el_->start_io_event(conn->io_watcher_, fd, EventLoop::READ);
+        //创建计时器
+        conn->timer_watcher_ = el_->create_timer_event(conn_timer_cb, conn.get(),true);
+        el_->start_timer_event(conn->timer_watcher_, 100000);//100ms执行一次
+        // 首次连接创建的时间
+        conn->set_last_interaction_time(el_->now_time_usec());
+
         if((size_t)fd > conn_tcps_.size()){
             conn_tcps_.reserve(fd * 2);
         }
@@ -204,15 +242,204 @@ namespace lrtc
         }
 
         TcpConnection *conn = conn_tcps_[fd].get();
+#ifndef USE_SDS
+        
         if (!conn)
         {
             RTC_LOG(LS_ERROR) << "invalid conn fd:" << fd
                               << ", work_id : " << work_id_ << " is invalid";
             return;
         }
-        conn->read(fd);
+        int ret = conn->read(fd,[=](Json::Value root, uint32_t log_id){
+              _process_request_msg(conn,root,log_id);
+        });
+       if (-1 == ret){
+            _close_connection(conn);
+            return ;
+       }
+#else
+        int nread = 0;
+        const int read_len = conn->bytes_expected_;
+        
+        int qb_len = sdslen(conn->queryBuf_);
+        conn->queryBuf_ = sdsMakeRoomFor(conn->queryBuf_,read_len);
+        nread = sock_read_data(fd,conn->queryBuf_ + qb_len,read_len);
+        RTC_LOG(LS_INFO)<<"SignalingWork::_read_query() fd:" << fd
+                         << ", work_id : " << work_id_ << " nread:"<<nread;
+
+        if (-1 == nread)
+        {
+            // 读取失败
+            RTC_LOG(LS_ERROR) << "read query failed fd:" << fd
+                              << ", work_id : " << work_id_ << " nread:" << nread;
+           // _close_connection(fd);
+            return;
+        }else if (nread > 0)
+        {
+            sdsIncrLen(conn->queryBuf_,nread);
+        }
+        int ret = _process_queue_buffer(conn);
+
+#endif // !        #ifdef USE_SDS
+
+        // 接收到数据的时间
+        conn->set_last_interaction_time(el_->now_time_usec());
 
     }
+#ifdef USE_SDS
+    int SignalingWork::_process_queue_buffer(const TcpConnection *conn)
+    {
+        while (sdslen(conn->queryBuf_) >= conn->bytes_processed_)
+        {
+            rhead_t * head = (lheader_t*)(conn->queryBuf_);
+            if (TcpConnection::STATE_HEAD == conn->current_state_)
+            {
+               if (L_HEADER_MAGIC_NUMBER != head->magic_num)
+               {
+                RTC_LOG(LS_WARNING) << "invalid magic number:" << head->magic_num;
+                return -1;
+                
+               }
+               conn->current_state_ = TcpConnection::STATE_BODY;
+               conn->bytes_expected_ = L_HEADER_SIZE;
+               conn->bytes_processed_ = head->body_len;
+               
+            }else{
+                rtc::Slice header(conn->queryBuf_,L_HEADER_SIZE);
+                rtc::Slice body(conn->queryBuf_ + L_HEADER_SIZE,head->body_len);
+                int ret = _process_request(conn,header,body);
+                if (-1 == ret )
+                {
+                    RTC_LOG(LS_ERROR) << "process request failed";
+                    return -1;
+                }
+                // 假定是一个短连接处理 忽略其他数据
+                conn->bytes_expected_ = 65535;
+                
+            }
+            
+        }
+
+        return 0;
+    }
+    int SignalingWork::_process_request(const TcpConnection *conn,
+                                        const rtc::Slice *header,
+                                        const rtc::Slice *body)
+    {
+        RTC_LOG(LS_INFO) << "SignalingWork::_process_request() fd:" << conn->fd_
+                         << ", work_id : " << work_id_ << " header:" << header->data()
+                         << ", body:" << body->data();
+        return 0;
+    }
+#endif
+
+    void SignalingWork::_close_connection( TcpConnection *conn)
+    {
+        RTC_LOG(LS_INFO) << "SignalingWork::_close_connection() fd:" << conn->get_fd()
+                         << ", work_id : " << work_id_;
+        if (conn)
+        {
+            conn->close_conn();
+        }
+        _remove_connection(conn);
+        
+
+    }
+
+    void SignalingWork::_remove_connection(TcpConnection *conn)
+    {
+        if (conn)
+        {
+            el_->delete_timer_event(conn->timer_watcher_);
+            el_->delete_io_event(conn->io_watcher_);
+            conn_tcps_.erase(conn->get_fd());
+            conn = nullptr;
+            
+        }
+    }
+
+    void SignalingWork::_process_timeout(TcpConnection *conn)
+    {
+
+        uint32_t timer_sub = el_->now_time_usec() - conn->last_interaction_time();
+       
+        if (timer_sub > (uint32_t)options_.connect_timeout*1000)
+        {
+             RTC_LOG(LS_INFO) << "SignalingWork::_process_timeout() fd:" << conn->get_fd()
+                         << ", work_id : " << work_id_ 
+                         << " timer cout sub = " << timer_sub
+                         << "  connect_timeout setting:" << (uint32_t)options_.connect_timeout*1000;
+            _close_connection(conn);
+        }
+        
+
+    }
+
+    int SignalingWork::_process_request_msg(TcpConnection *conn, Json::Value root, uint32_t log_id)
+    {
+        // 解析body {"cmdno":1,"uid":1234321,"stream_name":"lymRTest","audio":1,"video":1}
+        int cmdNo = 0;
+        try
+        {
+            cmdNo = root["cmdno"].asInt();
+        }
+        catch (const Json::Exception &e)
+        {
+            RTC_LOG(LS_ERROR) << "no cmdno field in body err: " << e.what() << ",log_id:" << log_id;
+            return -1;
+        }
+        switch (cmdNo)
+        {
+        case CMDNUM_PUSH:
+            _process_request_push_msg(conn,cmdNo, root, log_id);
+
+            break;
+        case CMDNUM_PULL:
+
+            break;
+        case CMDNUM_ANSWER:
+
+            break;
+        case CMDNUM_STOP_PUSH:
+
+            break;
+        case CMDNUM_STOP_PULL:
+
+            break;
+        default:
+            break;
+        }
+
+        return 0;
+    }
+
+    int SignalingWork::_process_request_push_msg(TcpConnection *conn,int cmdno, Json::Value root, uint32_t log_id)
+    {
+        uint64_t uid = 0;
+        std::string stream_name;
+        int audio;
+        int video;
+        try
+        {
+            uid = root["uid"].asUInt64();
+            stream_name = root["stream_name"].asString();
+            audio = root["audio"].asInt();
+            video = root["video"].asInt();
+        }
+        catch (const Json::Exception &e)
+        {
+            RTC_LOG(LS_ERROR) << "parse json body  err: " << e.what() << ",log_id:" << log_id;
+            return -1;
+        }
+        RTC_LOG(LS_INFO) << "SignalingWork::_process_request_push_msg() fd:" << conn->get_fd()
+                         << ", work_id : " << work_id_ << " cmdno = "<< cmdno << " [uid:" << uid
+                         << ", stream_name:" << stream_name << ", audio:" << audio
+                         << ", video:" << video << "]";
+        return 0;
+    }
+
+
+
 
 } // namespace lrtc
 

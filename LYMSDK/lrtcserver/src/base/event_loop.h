@@ -34,6 +34,14 @@ namespace lrtc
         void delete_io_event(IOWatcher* watcher);
         void destroy_io_event(IOWatcher* watcher,int fd,int mask);
 
+        uint32_t now_time_usec(){
+            return static_cast<uint32_t>( ev_now(loop_)*1000000);
+        }
+
+        void* get_owner(){
+            return owner_;
+        }
+
 
         TimerWatcher* create_timer_event(timer_cb_t cb, void *data,bool need_repeat);
         void start_timer_event(TimerWatcher* watcher,uint32_t usec);

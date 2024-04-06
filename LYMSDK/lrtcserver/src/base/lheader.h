@@ -3,6 +3,9 @@
  */
 
 #include <stdint.h>
+#include <cstring> // 用于std::strlen
+#include <string>
+#include <sstream>
 
 #ifndef __LYMSDK_LRTCSERVER_SRC_BASE_LHEADER_H_
 #define __LYMSDK_LRTCSERVER_SRC_BASE_LHEADER_H_
@@ -23,16 +26,32 @@ namespace lrtc
         uint32_t body_len;
 
     public:
+        lheader_t()
+        {
+            id = 0;
+            version = 0;
+            log_id = 0;
+            memset(provider, 0, 16);
+            magic_num = 0;
+            reserved = 0;
+            body_len = 0;
+        }
         std::string toString()
         {
-            std::stringstream ss;
-            ss << "id: " << id
-               << ", version: " << version
-               << ", log_id: " << log_id
-               << ", provider: " << std::string(provider, sizeof(provider))
-               << ", magic_num: 0x" << std::hex << magic_num // Output in hexadecimal format
-               << ", reserved: " << reserved;
-            return ss.str();
+           std::string magicStr = getMagicNumFormatted();
+                return "id: " + std::to_string(id) +
+                       ", version: " + std::to_string(version) +
+                       ", log_id: " + std::to_string(log_id) +
+                       ", provider: " + std::string(provider) +
+                       ", magic_num: " + magicStr +
+                       ", reserved: " + std::to_string(reserved) +
+                       ", body_len: " + std::to_string(body_len);
+        }
+        std::string getMagicNumFormatted() const
+        {
+            std::ostringstream oss;
+            oss << "0x" << std::hex << magic_num;
+            return oss.str();
         }
     };
 

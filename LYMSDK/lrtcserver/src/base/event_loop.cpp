@@ -1,8 +1,7 @@
 #include "base/event_loop.h"
 #include <cassert> // 用于断言非空指针
 
-
-#include "event_loop.h"
+#include "rtc_base/logging.h"
 
 #define TRANS_TO_EV_MASK(mask) \
     (((mask) & EventLoop::READ ? EV_READ : 0) | ((mask) & EventLoop::WRITE ? EV_WRITE : 0))
@@ -17,6 +16,7 @@ namespace lrtc
     EventLoop::EventLoop(void *owner) : owner_(owner),
                                         loop_(ev_loop_new(EVFLAG_AUTO))
     {
+        assert(loop_ != nullptr);
     }
 
     EventLoop::~EventLoop()
@@ -170,15 +170,17 @@ namespace lrtc
 
         TimerWatcher *watcher = new TimerWatcher(this, cb, data, need_repeat);
         ev_init(&(watcher->timer_), genric_timer_cb);
-        return nullptr;
+        return watcher;
     }
 
     void EventLoop::start_timer_event(TimerWatcher *watcher, uint32_t usec)
     {
         struct  ev_timer *timer = &(watcher->timer_);
         float sec = float(usec) / 1000000.0;
+        RTC_LOG(LS_INFO) << "EventLoop::start_timer_event timer :" << timer << ", loop_ = " << loop_;
         if (!watcher->need_repeat_)
         {
+            ev_timer_stop(loop_, timer);
             ev_timer_set(timer, sec, 0);
             ev_timer_start(loop_, timer);
         }else{
