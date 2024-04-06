@@ -5,6 +5,9 @@
 #include <rtc_base/logging.h>
 #include "signaling_work.h"
 #include "base/socket.h"
+#include "server/rtc_server.h"
+
+extern lrtc::RtcServer *g_rtc_server;
 
 namespace lrtc
 {
@@ -103,7 +106,7 @@ namespace lrtc
         {
             ev_thread_ = std::make_unique<std::thread>([=]()
                                                        {
-            RTC_LOG(LS_INFO) << "signaling worker event loop run";
+            RTC_LOG(LS_INFO) << "signaling worker event loop start >>>";
             try {
                 el_->start(); // 假设 start 可能抛出异常，进行内部异常处理
                 RTC_LOG(LS_INFO) << "signaling worker event loop stop";
@@ -130,7 +133,7 @@ namespace lrtc
 
     void SignalingWork::joined()
     {
-        RTC_LOG(LS_INFO) << "signaling server joined";
+        RTC_LOG(LS_INFO) << "SignalingWork::joined()";
         if (ev_thread_ && ev_thread_->joinable())
         {
             ev_thread_->join();
@@ -140,7 +143,7 @@ namespace lrtc
     int SignalingWork::notify_new_conn(int fd)
     {
         //使用队列存储消息的内容
-        RTC_LOG(LS_INFO) << "SignalingWork::notify_new_conn() notify new conn fd:" << fd;
+        RTC_LOG(LS_INFO) << "Signaling Work::notify_new_conn() notify new conn fd:" << fd;
         notify_queue_.produce(fd);
        return _notify(SignalingWork::MSG_NEW_CONN);
     }
@@ -153,7 +156,7 @@ namespace lrtc
     }
     void SignalingWork::on_recv_notify(int msg)
     {
-        RTC_LOG(LS_INFO) << "signaling server notify msg:" << msg;
+        RTC_LOG(LS_INFO) << "SignalingWork notify msg:" << msg;
         switch (msg)
         {
         case SignalingWork::MSG_QUIT:
@@ -431,11 +434,19 @@ namespace lrtc
             RTC_LOG(LS_ERROR) << "parse json body  err: " << e.what() << ",log_id:" << log_id;
             return -1;
         }
+   
         RTC_LOG(LS_INFO) << "SignalingWork::_process_request_push_msg() fd:" << conn->get_fd()
                          << ", work_id : " << work_id_ << " cmdno = "<< cmdno << " [uid:" << uid
                          << ", stream_name:" << stream_name << ", audio:" << audio
                          << ", video:" << video << "]";
-        return 0;
+        std::shared_ptr<lrtc::LRtcMsg> msg = std::make_shared<lrtc::LRtcMsg>();
+        msg->cmdno = cmdno;
+        msg->uid = uid;
+        msg->stream_name = stream_name;
+        msg->audio = audio;
+        msg->video = video;
+        return g_rtc_server->send_rtc_msg(msg);
+       
     }
 
 

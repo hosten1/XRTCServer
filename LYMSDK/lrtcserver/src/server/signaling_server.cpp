@@ -145,7 +145,7 @@ namespace lrtc {
         {
             ev_thread_ = std::make_unique<std::thread>([=]()
                                                        {
-            RTC_LOG(LS_INFO) << "signaling server event loop run";
+            RTC_LOG(LS_INFO) << "signaling server event loop start >>>> ";
             try {
                 loop_->start(); // 假设 start 可能抛出异常，进行内部异常处理
                 RTC_LOG(LS_INFO) << "signaling server event loop stop";
