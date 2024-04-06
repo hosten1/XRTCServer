@@ -30,9 +30,17 @@ namespace lrtc
         
         
     }
+    void  conn_timer_cb(EventLoop *el, TimerWatcher * /*w*/, void *data){
+        SignalingWork *worker = (SignalingWork *)el->get_owner();
+        TcpConnection *conn = (TcpConnection *)data;
+        worker->_process_timeout(conn);
 
-    SignalingWork::SignalingWork(int work_id) : work_id_(work_id),
-                                                el_(std::make_unique<EventLoop>(this))
+    }
+
+    SignalingWork::SignalingWork(int work_id,const struct SignalingServerOptions option) :
+                                               work_id_(work_id),
+                                                el_(std::make_unique<EventLoop>(this)), 
+                                                options_(option)
     {
     }
 
@@ -179,6 +187,12 @@ namespace lrtc
         // // 创建io_watcher并设置
         conn->io_watcher_ = el_->create_io_event(conn_io_cb, this);
         el_->start_io_event(conn->io_watcher_, fd, EventLoop::READ);
+        //创建计时器
+        conn->timer_watcher_ = el_->create_timer_event(conn_timer_cb, conn.get(),true);
+        el_->start_timer_event(conn->timer_watcher_, 100000);//100ms执行一次
+        // 首次连接创建的时间
+        conn->set_last_interaction_time(el_->now_time_usec());
+
         if((size_t)fd > conn_tcps_.size()){
             conn_tcps_.reserve(fd * 2);
         }
@@ -241,6 +255,10 @@ namespace lrtc
         int ret = _process_queue_buffer(conn);
 
 #endif // !        #ifdef USE_SDS
+
+        // 接收到数据的时间
+        conn->set_last_interaction_time(el_->now_time_usec());
+
     }
 #ifdef USE_SDS
     int SignalingWork::_process_queue_buffer(const TcpConnection *conn)
@@ -308,6 +326,21 @@ namespace lrtc
             conn_tcps_.erase(conn->get_fd());
             conn = nullptr;
             
+        }
+    }
+
+    void SignalingWork::_process_timeout(TcpConnection *conn)
+    {
+        if (el_->now_time_usec() - conn->last_interaction_time() > (uint32_t)options_.connect_timeout*1000)
+        {
+            /* code */
+        }
+        
+        if ( conn )
+        {
+            RTC_LOG(LS_INFO) << "SignalingWork::_process_timeout() fd:" << conn-> get_fd()
+                             << ", work_id : " << work_id_;
+            _close_connection(conn);
         }
     }
 

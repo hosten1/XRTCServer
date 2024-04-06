@@ -180,6 +180,7 @@ namespace lrtc
         float sec = float(usec) / 1000000.0;
         if (!watcher->need_repeat_)
         {
+            ev_timer_stop(loop_, timer);
             ev_timer_set(timer, sec, 0);
             ev_timer_start(loop_, timer);
         }else{

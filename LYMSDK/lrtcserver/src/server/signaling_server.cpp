@@ -227,7 +227,7 @@ namespace lrtc {
 
         try
         {
-            std::unique_ptr<SignalingWork> worker = std::make_unique<SignalingWork>(worker_id);
+            std::unique_ptr<SignalingWork> worker = std::make_unique<SignalingWork>(worker_id,options_);
             if (worker->init() != 0)
             { // 使用了更明确的判断条件
                 RTC_LOG(LS_ERROR) << "init worker error worker_id:" << worker_id;

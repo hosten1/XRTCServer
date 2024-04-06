@@ -42,8 +42,18 @@ namespace lrtc
         const char *get_ip() const { return ip_; }
         int get_port() const { return port_; }
 
+        void set_last_interaction_time(uint32_t time) 
+        { 
+            last_interaction_time_ = time; 
+        }
+        uint32_t last_interaction_time(){
+            return last_interaction_time_;
+        }
+
 
         IOWatcher *io_watcher_ = nullptr;
+        TimerWatcher *timer_watcher_ = nullptr;
+
         #ifdef USE_SDS
         int current_state_ = STATE_HEAD;
         #endif
@@ -59,6 +69,8 @@ namespace lrtc
         size_t bytes_processed_ = 0;
          // sds queryBuf_;
         size_t bytes_expected_ = L_HEADER_SIZE;
+
+        uint32_t last_interaction_time_ = 0;
        
         int recv_len_;
         int send_len_;

@@ -8,7 +8,7 @@
 #include "base/event_loop.h"
 #include "base/lock_free_queue.h"
 #include "server/tcp_connection.h"
-
+#include "server/signaling_server_options.h"
 
 namespace lrtc
 {
@@ -21,7 +21,9 @@ namespace lrtc
             MSG_QUIT = 0,
             MSG_NEW_CONN = 1,
         };
-        SignalingWork(int work_id);
+
+        SignalingWork(int work_id,const struct SignalingServerOptions option);
+
         ~SignalingWork();
         int init();
         bool start();
@@ -33,6 +35,7 @@ namespace lrtc
                                                  int events, void *data);
         friend void conn_io_cb(EventLoop * /*el*/, IOWatcher * /*w*/, 
                                                  int fd, int events, void *data);
+        friend void  conn_timer_cb(EventLoop *el, TimerWatcher * /*w*/, void *data);
 
     private:
         int _notify(int msg);
@@ -46,6 +49,7 @@ namespace lrtc
         #endif // USE_SDS
         void _close_connection( TcpConnection *conn);
         void _remove_connection( TcpConnection *conn);
+        void _process_timeout(TcpConnection *conn);
 
     private:
         int work_id_;
@@ -59,6 +63,8 @@ namespace lrtc
         int notify_send_fd_ = -1;
 
         std::unordered_map<int, std::unique_ptr<TcpConnection>> conn_tcps_;
+
+        struct SignalingServerOptions options_;
     };
 
 } // namespace signaling_work

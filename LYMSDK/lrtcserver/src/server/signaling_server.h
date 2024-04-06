@@ -8,16 +8,10 @@
 #include "base/event_loop.h"
 #include "server/signaling_work.h"
 
+#include "server/signaling_server_options.h"
+
 namespace lrtc
 {
-  // class SignalingServer;
-  struct SignalingServerOptions
-  {
-    std::string host;
-    int port;
-    int worker_num;
-    int connect_timeout;
-  };
 
   class SignalingServer
   {
