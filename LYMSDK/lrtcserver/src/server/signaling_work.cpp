@@ -250,10 +250,12 @@ namespace lrtc
                               << ", work_id : " << work_id_ << " is invalid";
             return;
         }
-       if (-1 == conn->read(fd) ){
+        int ret = conn->read(fd,[=](Json::Value root, uint32_t log_id){
+              _process_request_msg(conn,root,log_id);
+        });
+       if (-1 == ret){
             _close_connection(conn);
             return ;
-
        }
 #else
         int nread = 0;
@@ -372,6 +374,72 @@ namespace lrtc
         
 
     }
+
+    int SignalingWork::_process_request_msg(TcpConnection *conn, Json::Value root, uint32_t log_id)
+    {
+        // 解析body {"cmdno":1,"uid":1234321,"stream_name":"lymRTest","audio":1,"video":1}
+        int cmdNo = 0;
+        try
+        {
+            cmdNo = root["cmdno"].asInt();
+        }
+        catch (const Json::Exception &e)
+        {
+            RTC_LOG(LS_ERROR) << "no cmdno field in body err: " << e.what() << ",log_id:" << log_id;
+            return -1;
+        }
+        switch (cmdNo)
+        {
+        case CMDNUM_PUSH:
+            _process_request_push_msg(conn,cmdNo, root, log_id);
+
+            break;
+        case CMDNUM_PULL:
+
+            break;
+        case CMDNUM_ANSWER:
+
+            break;
+        case CMDNUM_STOP_PUSH:
+
+            break;
+        case CMDNUM_STOP_PULL:
+
+            break;
+        default:
+            break;
+        }
+
+        return 0;
+    }
+
+    int SignalingWork::_process_request_push_msg(TcpConnection *conn,int cmdno, Json::Value root, uint32_t log_id)
+    {
+        uint64_t uid = 0;
+        std::string stream_name;
+        int audio;
+        int video;
+        try
+        {
+            uid = root["uid"].asUInt64();
+            stream_name = root["stream_name"].asString();
+            audio = root["audio"].asInt();
+            video = root["video"].asInt();
+        }
+        catch (const Json::Exception &e)
+        {
+            RTC_LOG(LS_ERROR) << "parse json body  err: " << e.what() << ",log_id:" << log_id;
+            return -1;
+        }
+        RTC_LOG(LS_INFO) << "SignalingWork::_process_request_push_msg() fd:" << conn->get_fd()
+                         << ", work_id : " << work_id_ << " cmdno = "<< cmdno << " [uid:" << uid
+                         << ", stream_name:" << stream_name << ", audio:" << audio
+                         << ", video:" << video << "]";
+        return 0;
+    }
+
+
+
 
 } // namespace lrtc
 

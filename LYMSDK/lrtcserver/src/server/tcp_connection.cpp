@@ -30,7 +30,8 @@ namespace lrtc
 #endif
     }
 
-    int TcpConnection::read(int fd)
+    int TcpConnection::read(int fd, 
+                            std::function<void( Json::Value, uint32_t)> callback)
     {
         // 本次实际上读取的大小
         int nread = 0;
@@ -64,17 +65,35 @@ namespace lrtc
             // // 使用 memcpy 将 t 的数据复制到 data 中
             // memcpy(data, &t, sizeof(lheader_t));
 
-            recv(readBuffer, nread);
+            _recv(readBuffer, nread,callback);
             // delete[] data;
         }
 
         return 0;
     }
-    int TcpConnection::recv(char *buf, int len)
+    int TcpConnection::_recv(char *buf, int len, 
+                            std::function<void(Json::Value, uint32_t)> callback)
     {
         lheader_t header;
         std::string body;
         _parseDataIntoLHeader(buf, len, header, body);
+         // 现在可以访问结构体的字段了
+        RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << header.toString()
+                         << ", \nbody:" << body
+                         << "\nprovider: " << std::string(header.provider, sizeof(header.provider));
+        Json::CharReaderBuilder buildr;
+        std::unique_ptr<Json::CharReader> reader(buildr.newCharReader());
+        Json::Value root;
+        JSONCPP_STRING errs;
+        reader->parse(body.c_str(), body.c_str() + body.size(), &root, &errs);
+        if(!errs.empty())
+        {
+            RTC_LOG(LS_WARNING) << "parse body json err : " << errs << ",log_id:" << header.log_id;
+            return -1;
+
+        }
+        if (callback)callback(root,header.log_id);
+
         //   RTC_LOG(LS_INFO) << "id: " << header.id;
         //     RTC_LOG(LS_INFO) << "version: " << header.version;
         //     RTC_LOG(LS_INFO) << "log_id: " << header.log_id;
@@ -94,10 +113,6 @@ namespace lrtc
         //     RTC_LOG(LS_INFO) << "reserved: " << header_copy->reserved;
         //     RTC_LOG(LS_INFO) << "body_len: " <<  header_copy->body_len;
 
-        // 现在可以访问结构体的字段了
-        RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << header.toString()
-                         << ", \nbody:" << body
-                         << "\nprovider: " << std::string(header.provider, sizeof(header.provider));
         return 0;
     }
     int TcpConnection::close_conn()

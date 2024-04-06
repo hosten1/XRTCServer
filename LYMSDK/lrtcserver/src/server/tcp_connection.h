@@ -2,9 +2,14 @@
 #define __LYMSDK_LRTCSERVER_SRC_SERVER_TCP_CONNECTION_H_
 
 #include <string>
+#include <functional>
 #include "base/event_loop.h"
 #include "base/lheader.h"
 #include "rtc_base/byte_buffer.h"
+//第三方库 jsoncpp
+#include "json/json.h"
+
+#include "base/lrtc_server_def.h"
 
 // #define USE_SDS
 #ifdef USE_SDS
@@ -32,9 +37,8 @@ namespace lrtc
         TcpConnection(int fd);
         ~TcpConnection();
 
-        int read(int fd);
+        int read(int fd, std::function<void( Json::Value, uint32_t)> callback);
         int send(const char *buf, int len);
-        int recv(char *buf, int len);
         int close_conn();
 
         int get_fd() const { return fd_; }
@@ -58,6 +62,8 @@ namespace lrtc
 #endif
 
     private:
+        int _recv(char *buf, int len, std::function<void( Json::Value, uint32_t)> callback);
+
         bool _parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header, std::string &body);
 
     private:
