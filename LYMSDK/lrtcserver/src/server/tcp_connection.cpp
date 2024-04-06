@@ -25,6 +25,9 @@ namespace lrtc
 
     TcpConnection::~TcpConnection()
     {
+#ifdef USE_SDS
+        sdsfree(queryBuf_);
+#endif
     }
 
     int TcpConnection::read(int fd)

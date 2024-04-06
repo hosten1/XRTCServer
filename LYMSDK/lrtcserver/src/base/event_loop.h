@@ -35,7 +35,7 @@ namespace lrtc
         void destroy_io_event(IOWatcher* watcher,int fd,int mask);
 
         uint32_t now_time_usec(){
-            return static_cast<uint32_t>( ev_now(loop_));
+            return static_cast<uint32_t>( ev_now(loop_)*1000000);
         }
 
         void* get_owner(){

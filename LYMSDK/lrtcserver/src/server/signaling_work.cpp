@@ -46,6 +46,30 @@ namespace lrtc
 
     SignalingWork::~SignalingWork()
     {
+        // 使用范围循环遍历unordered_map并释放资源
+        for (auto &pair : conn_tcps_)
+        {
+            if ( pair.second)
+            {
+                _close_connection(pair.second.get()); // 如果 _close_connection 需要的是指针，则使用 pair.second.get() 获取指针
+            }
+            
+            pair.second.reset(); // 释放 TcpConnection 对象的内存
+        }
+        conn_tcps_.clear(); // 清空unordered_map
+        if (el_)
+        {
+            el_.reset();
+            el_ = nullptr;
+            
+        }
+        if (ev_thread_)
+        {
+           ev_thread_.reset();
+           ev_thread_ = nullptr;
+        }
+        
+        
     }
 
     int SignalingWork::init()
@@ -309,6 +333,8 @@ namespace lrtc
 
     void SignalingWork::_close_connection( TcpConnection *conn)
     {
+        RTC_LOG(LS_INFO) << "SignalingWork::_close_connection() fd:" << conn->get_fd()
+                         << ", work_id : " << work_id_;
         if (conn)
         {
             conn->close_conn();
@@ -322,6 +348,7 @@ namespace lrtc
     {
         if (conn)
         {
+            el_->delete_timer_event(conn->timer_watcher_);
             el_->delete_io_event(conn->io_watcher_);
             conn_tcps_.erase(conn->get_fd());
             conn = nullptr;
@@ -331,17 +358,19 @@ namespace lrtc
 
     void SignalingWork::_process_timeout(TcpConnection *conn)
     {
-        if (el_->now_time_usec() - conn->last_interaction_time() > (uint32_t)options_.connect_timeout*1000)
+
+        uint32_t timer_sub = el_->now_time_usec() - conn->last_interaction_time();
+       
+        if (timer_sub > (uint32_t)options_.connect_timeout*1000)
         {
-            /* code */
-        }
-        
-        if ( conn )
-        {
-            RTC_LOG(LS_INFO) << "SignalingWork::_process_timeout() fd:" << conn-> get_fd()
-                             << ", work_id : " << work_id_;
+             RTC_LOG(LS_INFO) << "SignalingWork::_process_timeout() fd:" << conn->get_fd()
+                         << ", work_id : " << work_id_ 
+                         << " timer cout sub = " << timer_sub
+                         << "  connect_timeout setting:" << (uint32_t)options_.connect_timeout*1000;
             _close_connection(conn);
         }
+        
+
     }
 
 } // namespace lrtc
