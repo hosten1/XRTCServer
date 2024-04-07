@@ -3,8 +3,10 @@
 #include <unistd.h>
 
 #include <rtc_base/logging.h>
-#include "signaling_work.h"
 #include "base/socket.h"
+#include "server/rtc_server.h"
+
+extern lrtc::RtcServer *g_rtc_server;
 
 namespace lrtc
 {
@@ -95,7 +97,7 @@ namespace lrtc
         RTC_LOG(LS_INFO) << "signaling worker start worker id :"<<work_id_;
         if (ev_thread_)
         {
-            RTC_LOG(LS_WARNING) << "signaling worker is running";
+            RTC_LOG(LS_WARNING) << "signaling worker is running , worker id :"<<work_id_;;
             return false; // 修改返回值为 false，以保持返回类型的一致性
         }
 
@@ -103,10 +105,10 @@ namespace lrtc
         {
             ev_thread_ = std::make_unique<std::thread>([=]()
                                                        {
-            RTC_LOG(LS_INFO) << "signaling worker event loop run";
+            RTC_LOG(LS_INFO) << "signaling worker event loop start >>> , worker id :"<<work_id_;
             try {
                 el_->start(); // 假设 start 可能抛出异常，进行内部异常处理
-                RTC_LOG(LS_INFO) << "signaling worker event loop stop";
+                RTC_LOG(LS_INFO) << "signaling worker event loop stop , worker id :"<<work_id_;
             } catch (const std::exception& e) {
                 // 记录或处理异常
                 RTC_LOG(LS_ERROR) << "Event loop start failed: " << e.what();
@@ -130,7 +132,7 @@ namespace lrtc
 
     void SignalingWork::joined()
     {
-        RTC_LOG(LS_INFO) << "signaling server joined";
+        RTC_LOG(LS_INFO) << "SignalingWork::joined()" << ", worker id :"<<work_id_;;
         if (ev_thread_ && ev_thread_->joinable())
         {
             ev_thread_->join();
@@ -140,20 +142,20 @@ namespace lrtc
     int SignalingWork::notify_new_conn(int fd)
     {
         //使用队列存储消息的内容
-        RTC_LOG(LS_INFO) << "SignalingWork::notify_new_conn() notify new conn fd:" << fd;
+        RTC_LOG(LS_INFO) << "Signaling Work::notify_new_conn() notify new conn fd:" << fd << ", worker id :"<<work_id_;;
         notify_queue_.produce(fd);
        return _notify(SignalingWork::MSG_NEW_CONN);
     }
 
     int SignalingWork::_notify(int msg)
     {
-       RTC_LOG(LS_INFO) << "signaling worker notify msg:" << msg;
+       RTC_LOG(LS_INFO) << "signaling worker notify msg:" << msg << ", worker id :"<<work_id_;;
        int ret = write(notify_send_fd_, &msg, sizeof(msg));
        return ret == sizeof(msg) ? 0 : -1;
     }
     void SignalingWork::on_recv_notify(int msg)
     {
-        RTC_LOG(LS_INFO) << "signaling server notify msg:" << msg;
+        RTC_LOG(LS_INFO) << "SignalingWork notify msg:" << msg << ", worker id :"<<work_id_;;
         switch (msg)
         {
         case SignalingWork::MSG_QUIT:
@@ -166,11 +168,11 @@ namespace lrtc
                 _accept_new_connection(fd);
 
              }
-             RTC_LOG(LS_INFO)<<"signaling server _accept_new_connection fd:"<<fd;
+             RTC_LOG(LS_INFO)<<"signaling server _accept_new_connection fd:"<<fd << ", worker id :"<<work_id_;;
             break;
 
         default:
-            RTC_LOG(LS_WARNING) << "signaling server recv unknown msg:" << msg;
+            RTC_LOG(LS_WARNING) << "signaling server recv unknown msg:" << msg << ", worker id :"<<work_id_;;
             break;
         }
     }
@@ -431,11 +433,19 @@ namespace lrtc
             RTC_LOG(LS_ERROR) << "parse json body  err: " << e.what() << ",log_id:" << log_id;
             return -1;
         }
+   
         RTC_LOG(LS_INFO) << "SignalingWork::_process_request_push_msg() fd:" << conn->get_fd()
                          << ", work_id : " << work_id_ << " cmdno = "<< cmdno << " [uid:" << uid
                          << ", stream_name:" << stream_name << ", audio:" << audio
                          << ", video:" << video << "]";
-        return 0;
+        std::shared_ptr<lrtc::LRtcMsg> msg = std::make_shared<lrtc::LRtcMsg>();
+        msg->cmdno = cmdno;
+        msg->uid = uid;
+        msg->stream_name = stream_name;
+        msg->audio = audio;
+        msg->video = video;
+        return g_rtc_server->send_rtc_msg(msg);
+       
     }
 
 

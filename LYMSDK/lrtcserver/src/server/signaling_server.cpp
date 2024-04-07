@@ -145,7 +145,7 @@ namespace lrtc {
         {
             ev_thread_ = std::make_unique<std::thread>([=]()
                                                        {
-            RTC_LOG(LS_INFO) << "signaling server event loop run";
+            RTC_LOG(LS_INFO) << "signaling server event loop start >>>> ";
             try {
                 loop_->start(); // 假设 start 可能抛出异常，进行内部异常处理
                 RTC_LOG(LS_INFO) << "signaling server event loop stop";
@@ -246,12 +246,6 @@ namespace lrtc {
         { // 捕捉并处理所有标准异常
             // 记录异常信息，返回错误
             RTC_LOG(LS_ERROR) << "Exception caught in _create_worker: " << e.what() << " worker_id:" << worker_id;
-            return -1;
-        }
-        catch (...)
-        { // 捕捉所有非标准异常
-            // 记录未知异常信息，返回错误
-            RTC_LOG(LS_ERROR) << "Unknown exception caught in _create_worker worker_id:" << worker_id;
             return -1;
         }
     }

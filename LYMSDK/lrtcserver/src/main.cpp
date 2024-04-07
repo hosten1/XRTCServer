@@ -6,10 +6,12 @@
 #include "base/conf.h"
 #include "base/log.h"
 #include "server/signaling_server.h"
+#include "server/rtc_server.h"
 
 lrtc::GeneralConf *g_conf = nullptr;
 lrtc::LrtcLog *g_log = nullptr;
 lrtc::SignalingServer *g_sig_nal = nullptr;
+std::unique_ptr<lrtc::RtcServer> g_rtc_server{nullptr};
 
 int init_general_conf(const char *filename)
 {
@@ -55,6 +57,20 @@ int init_singnaling_server(const char *filename)
     }
     return 0;
 }
+int init_rtc_server(const char *filename)
+{
+    if (!filename)
+    {
+        RTC_LOG(LS_ERROR) << "ilename is nullptr\n";
+        return -1;
+    }
+    g_rtc_server = std::make_unique<lrtc::RtcServer>();
+    int ret = g_rtc_server->init(filename);
+    if (ret != 0)
+    {
+        return -1;
+    }
+}
 static void process_signal(int sig)
 {
     RTC_LOG(LS_INFO) << "process_signal sig=" << sig;
@@ -62,10 +78,19 @@ static void process_signal(int sig)
     {
         if (g_sig_nal)
         {
-            RTC_LOG(LS_DEBUG) << "process_signal sig=" << sig;
             g_sig_nal->stop();
+            
+        }
+        if (g_log)
+        {
             g_log->stop();
         }
+        
+        if (g_rtc_server)
+        {
+            g_rtc_server->stop();
+        }
+        
     }
 }
 int main(int /*argc*/, const char ** /*argv*/)
@@ -96,13 +121,21 @@ int main(int /*argc*/, const char ** /*argv*/)
     {
         return -1;
     }
+
+    ret = init_rtc_server("./conf/rtc_server.yaml");
+    if (ret != 0)
+    {
+        return -1;
+    }
     // 捕获系统中断事件
     // 设置信号处理程序
     signal(SIGINT, process_signal);
     signal(SIGTERM, process_signal);
 
     g_sig_nal->start();
+    g_rtc_server->start();
     g_sig_nal->joined();
     g_log->join();
+    g_rtc_server->joined();
     return 0;
 }
