@@ -1,21 +1,24 @@
 #ifndef __LYMSDK_LRTCSERVER_SRC_SERVER_TCP_CONNECTION_H_
 #define __LYMSDK_LRTCSERVER_SRC_SERVER_TCP_CONNECTION_H_
 
+// #define USE_SDS
+
 #include <string>
 #include <functional>
+#include <list>
 #include "base/event_loop.h"
 #include "base/lheader.h"
 #include "rtc_base/byte_buffer.h"
 //第三方库 jsoncpp
 #include "json/json.h"
-
 #include "base/lrtc_server_def.h"
 
-// #define USE_SDS
+
 #ifdef USE_SDS
 extern "C"
 {
 #include "rtc_base/sds/sds.h"
+#include "rtc_base/sds/slice.h"
 }
 #endif
 
@@ -41,6 +44,8 @@ namespace lrtc
         int send(const char *buf, int len);
         int close_conn();
 
+        void writerHeaderDataToBuffer(const lheader_t& header,rtc::ByteBufferWriter &writer);
+
         int get_fd() const { return fd_; }
         const char *get_ip() const { return ip_; }
         int get_port() const { return port_; }
@@ -53,13 +58,23 @@ namespace lrtc
         {
             return last_interaction_time_;
         }
+         
+         std::shared_ptr<lheader_t>  req_header()
+         {
+            return req_header_;
+         }
 
         IOWatcher *io_watcher_ = nullptr;
         TimerWatcher *timer_watcher_ = nullptr;
 
 #ifdef USE_SDS
         int current_state_ = STATE_HEAD;
+        std::list<rtc::Slice> reply_list;
+#else
+        std::list<std::unique_ptr<rtc::ByteBufferWriter>> reply_list;
 #endif
+// 记录写入的位置i
+       size_t cur_resp_pos = 0;
 
     private:
         int _recv(char *buf, int len, std::function<void( Json::Value, uint32_t)> callback);
@@ -84,6 +99,7 @@ namespace lrtc
         int recv_buf_len_;
         char *recv_buf_;
         char *send_buf_;
+        std::shared_ptr<lheader_t>  req_header_{nullptr};
     };
 
 }; // namespace lrtc

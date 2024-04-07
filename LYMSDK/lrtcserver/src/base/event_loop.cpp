@@ -110,7 +110,7 @@ namespace lrtc
         if (ev_is_active(io))
         {
             int active_events = TRANS_FROM_EV_MASK(io->events);
-            int events = active_events | (~mask);
+            int events = active_events & (~mask);
             if (events == active_events)
             {
                 return; // 没有事件变化不需要处理

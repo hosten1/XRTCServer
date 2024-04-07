@@ -77,6 +77,8 @@ namespace lrtc
         lheader_t header;
         std::string body;
         _parseDataIntoLHeader(buf, len, header, body);
+        //复制一个请求头
+        req_header_ =  std::make_shared<lheader_t>(header);
          // 现在可以访问结构体的字段了
         RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << header.toString()
                          << ", \nbody:" << body
@@ -119,6 +121,27 @@ namespace lrtc
     {
         close(fd_);
         return 0;
+    }
+    void TcpConnection::writerHeaderDataToBuffer(const lheader_t& header, rtc::ByteBufferWriter &writer)
+    {
+        // 将 id 写入 ByteBufferWriter
+        writer.WriteUInt16(header.id);
+
+        // 将 version 写入 ByteBufferWriter
+        writer.WriteUInt16(header.version);
+
+        // 将 log_id 写入 ByteBufferWriter
+        writer.WriteUInt32(header.log_id);
+
+       writer.WriteBytes(header.provider, sizeof(header.provider));
+        // 将 magic_num 写入 ByteBufferWriter
+        writer.WriteUInt32(header.magic_num);
+
+        // 将 reserved 写入 ByteBufferWriter
+        writer.WriteUInt32(header.reserved);
+
+        // 将 body_len 写入 ByteBufferWriter
+        writer.WriteUInt32(header.body_len);
     }
     // Function to parse data into lheader_t structure
     bool TcpConnection::_parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header, std::string &body)

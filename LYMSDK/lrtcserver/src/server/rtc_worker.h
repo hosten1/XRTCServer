@@ -10,6 +10,8 @@
 #include "base/lock_free_queue.h"
 #include "server/tcp_connection.h"
 #include "server/rtc_server_options.h"
+#include "base/lock_free_queue.h"
+#include "base/lrtc_server_def.h"
 
 
 namespace lrtc
@@ -17,10 +19,10 @@ namespace lrtc
     class RtcWorker
     {
     public:
-            enum
+        enum
         {
             MSG_QUIT = 0,
-            MSG_NEW_CONN = 1,
+            MSG_RTC_MSG = 1,
         };
         RtcWorker(int work_id, const struct rtcServerOptions& option);
         ~RtcWorker();
@@ -28,7 +30,10 @@ namespace lrtc
         bool start();
         int stop();
         void joined();
+        void push_msg(std::shared_ptr<LRtcMsg> rtc_msg);
+        bool pop_msg(std::shared_ptr<LRtcMsg> *rtc_msg);
         int notify_new_conn(int fd);
+        int send_rtc_msg(const std::shared_ptr<LRtcMsg> rtc_msg);
 
         friend void rtc_worker_recv_notify(EventLoop *el, IOWatcher *w, int fd,
                                                  int events, void *data);
@@ -40,7 +45,8 @@ namespace lrtc
         int _notify(int msg);
         void on_recv_notify(int msg);
         void _stop();
-        void _accept_new_connection(const int fd);
+        void _process_rtc_msg();
+        void _process_push_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg);
         void _read_query(int fd);
         void _close_connection( TcpConnection *conn);
         void _remove_connection( TcpConnection *conn);
@@ -54,7 +60,7 @@ namespace lrtc
 
         IOWatcher *pipe_watcher_ = nullptr;
         std::unique_ptr<std::thread> ev_thread_;
-        LockFreeQueue<int> notify_queue_;
+        LockFreeQueue<std::shared_ptr<LRtcMsg>> q_msg_;
 
         int notify_recv_fd_ = -1;
         int notify_send_fd_ = -1;

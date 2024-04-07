@@ -8,6 +8,7 @@
 #include <netinet/tcp.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include "socket.h"
 
 namespace lrtc
 {
@@ -233,5 +234,28 @@ namespace lrtc
         
         return 0;
     }
+    int sock_write_data(int sock, const char *buf, const int len)
+    {
+        int nwritten = write(sock,buf,len);
+        if (-1 == nwritten)
+        {
+            if (EAGAIN == errno)
+            {
+               nwritten = 0;
 
-} // namespace lrtc
+            }else{
+                RTC_LOG(LS_WARNING) << "sock write failed, errno:" << strerror(errno) << " errno:" << errno;
+                return -1;
+            }
+            
+        }else if (0 == nwritten){
+            RTC_LOG(LS_WARNING)<<"sock write 0 bytes, errno:" << strerror(errno) << " errno:" << errno;
+                return -1;
+        }else{
+            return nwritten;
+        }
+
+        return 0;
+    }
+
+} //namespace lrtc
