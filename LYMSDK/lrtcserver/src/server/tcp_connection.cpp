@@ -74,15 +74,13 @@ namespace lrtc
     int TcpConnection::_recv(char *buf, int len, 
                             std::function<void(Json::Value, uint32_t)> callback)
     {
-        lheader_t header;
         std::string body;
-        _parseDataIntoLHeader(buf, len, header, body);
-        //复制一个请求头
-        req_header_ =  std::make_shared<lheader_t>(header);
-         // 现在可以访问结构体的字段了
-        RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << header.toString()
+        _parseDataIntoLHeader(buf, len, req_header_, body);
+       
+         // req_header_
+        RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << req_header_.toString()
                          << ", \nbody:" << body
-                         << "\nprovider: " << std::string(header.provider, sizeof(header.provider));
+                         << "\nprovider: " << std::string(req_header_.provider, sizeof(req_header_.provider));
         Json::CharReaderBuilder buildr;
         std::unique_ptr<Json::CharReader> reader(buildr.newCharReader());
         Json::Value root;
@@ -90,11 +88,11 @@ namespace lrtc
         reader->parse(body.c_str(), body.c_str() + body.size(), &root, &errs);
         if(!errs.empty())
         {
-            RTC_LOG(LS_WARNING) << "parse body json err : " << errs << ",log_id:" << header.log_id;
+            RTC_LOG(LS_WARNING) << "parse body json err : " << errs << ",log_id:" << req_header_.log_id;
             return -1;
 
         }
-        if (callback)callback(root,header.log_id);
+        if (callback)callback(root,req_header_.log_id);
 
         //   RTC_LOG(LS_INFO) << "id: " << header.id;
         //     RTC_LOG(LS_INFO) << "version: " << header.version;

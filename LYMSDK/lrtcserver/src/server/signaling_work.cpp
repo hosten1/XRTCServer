@@ -541,7 +541,7 @@ namespace lrtc
             return;
         }
 
-        lheader_t *res_xh = nullptr;
+       
 #ifdef USE_SDS
         lheader_t *h = (lheader_t *)(c->querybuf);
         rtc::Slice header(c->querybuf, L_HEADER_SIZE);
@@ -553,9 +553,9 @@ namespace lrtc
             return;
         }
         memccpy(buf, header.data(), header.size());
-        res_xh = (lheader_t *)buf
+         lheader_t *res_xh  = (lheader_t *)buf
 #else
-        res_xh = conn->req_header().get();
+        lheader_t *res_xh  = conn->req_header();
         rtc::ByteBufferWriter writer(rtc::ByteBuffer::ORDER_HOST);
 #endif
         Json::Value resp_root;
@@ -573,8 +573,15 @@ namespace lrtc
         Json::StreamWriterBuilder write_builder;
         write_builder.settings_["indentation"] = "";
         std::string json_data = Json::writeString(write_builder, resp_root);
-        RTC_LOG(INFO) << "send_rtc_msg json_data:" << json_data;
+        RTC_LOG(INFO) << "send_rtc_msg json_data:" << json_data << ", res_xh:"<< res_xh;
+        if (res_xh == nullptr)
+        {
+            RTC_LOG(INFO) << "res_xh is nullptr";
+            return;
+        }
+        
         res_xh->body_len = json_data.size();
+        RTC_LOG(INFO) << "send_rtc_msg lheader_t:" << res_xh->toString();
 #ifdef USE_SDS
         snprintf(buf + L_HEADER_SIZE, MAX_RESP_BUFEER_SIZE, "%s", json_data.c_str());
         rtc::Slice reply(buf, L_HEADER_SIZE + res_xh->body_len);
@@ -596,9 +603,18 @@ namespace lrtc
         conn->reply_list.push_back(std::make_unique<rtc::ByteBufferWriter>(writer.Data(), writer.Length(),rtc::ByteBuffer::ORDER_HOST));
 #endif
    
-     
+       RTC_LOG(LS_INFO)<<"add reply conn fd:"<<conn->get_fd()
+                                    <<", worker_id:"<<work_id_;
+        if (!conn->io_watcher_ )
+        {
+           RTC_LOG(LS_ERROR)<<"add reply conn fd:"<<conn->get_fd()
+                                    <<", worker_id:"<<work_id_
+                                    <<", io_watcher_:"<<conn->io_watcher_;
+           return;
+        }
+        
       el_->start_io_event(conn->io_watcher_,conn->get_fd(),EventLoop::WRITE);
-      
+
     }
 
     void SignalingWork::_write_repaly(int fd)
@@ -611,63 +627,63 @@ namespace lrtc
         }
 
         TcpConnection *conn = conn_tcps_[fd];
-        while (!conn->reply_list.empty())
-        {
-            int nwritten = 0;
-#ifdef USE_SDS
-            rtc::Slice reply = conn->reply_list.front();
-             nwritten = sock_write_data(conn->get_fd(), reply->data() + conn->cur_resp_pos, reply->size() - conn->cur_resp_pos);
+//         while (!conn->reply_list.empty())
+//         {
+//             int nwritten = 0;
+// #ifdef USE_SDS
+//             rtc::Slice reply = conn->reply_list.front();
+//              nwritten = sock_write_data(conn->get_fd(), reply->data() + conn->cur_resp_pos, reply->size() - conn->cur_resp_pos);
 
-#else
-            rtc::ByteBufferWriter *reply = conn->reply_list.front().get();
-            nwritten = sock_write_data(conn->get_fd(), reply->Data() + conn->cur_resp_pos, reply->Length() - conn->cur_resp_pos);
+// #else
+//             rtc::ByteBufferWriter *reply = conn->reply_list.front().get();
+//             nwritten = sock_write_data(conn->get_fd(), reply->Data() + conn->cur_resp_pos, reply->Length() - conn->cur_resp_pos);
 
-#endif
-           if (-1 == nwritten)
-           {
-                _close_connection(conn);
+// #endif
+//            if (-1 == nwritten)
+//            {
+//                 _close_connection(conn);
             
-           }else if (0 == nwritten)
-           {
-                RTC_LOG(LS_WARNING)<<"Write zero bytes,fd: "<<conn->get_fd()
-                                <<", worker_id:"<<work_id_;
-#ifdef USE_SDS  
-           }
-           else if ((nwritten + conn->cur_resp_pos) >= reply.size())
-           {
-             conn->reply_list.pop_front();
+//            }else if (0 == nwritten)
+//            {
+//                 RTC_LOG(LS_WARNING)<<"Write zero bytes,fd: "<<conn->get_fd()
+//                                 <<", worker_id:"<<work_id_;
+// #ifdef USE_SDS  
+//            }
+//            else if ((nwritten + conn->cur_resp_pos) >= reply.size())
+//            {
+//              conn->reply_list.pop_front();
 
-             zfree((void*)read.data());
-             conn->cur_resp_pos = 0;
-            RTC_LOG(LS_WARNING)<<"Write all bytes,fd: "<<conn->get_fd()
-                                <<", worker_id:"<<work_id_;
+//              zfree((void*)read.data());
+//              conn->cur_resp_pos = 0;
+//             RTC_LOG(LS_WARNING)<<"Write all bytes,fd: "<<conn->get_fd()
+//                                 <<", worker_id:"<<work_id_;
 
-           }
-#else
-            }
-            else if ((nwritten + conn->cur_resp_pos) >= reply->Length())
-            {
-             conn->reply_list.pop_front();
+//            }
+// #else
+//             }
+//             else if ((nwritten + conn->cur_resp_pos) >= reply->Length())
+//             {
+//              conn->reply_list.pop_front();
 
-             reply->Clear();
-             conn->cur_resp_pos = 0;
-             reply = nullptr;
-             RTC_LOG(INFO) << "send_rtc_msg: " << nwritten << " " << conn->cur_resp_pos << " " << reply->Length();
-           }
-#endif
-           else
-           {
-             conn->cur_resp_pos += nwritten;
-           }
-           conn->set_last_interaction_time(el_->now_time_usec());
-           if (conn->reply_list.empty())
-           {
+//              reply->Clear();
+//              conn->cur_resp_pos = 0;
+//              reply = nullptr;
+//              RTC_LOG(INFO) << "send_rtc_msg: " << nwritten << " " << conn->cur_resp_pos << " " << reply->Length();
+//            }
+// #endif
+//            else
+//            {
+//              conn->cur_resp_pos += nwritten;
+//            }
+//            conn->set_last_interaction_time(el_->now_time_usec());
+//            if (conn->reply_list.empty())
+//            {
 
-            el_->stop_io_event(conn->io_watcher_,conn->get_fd(),EventLoop::WRITE);
-           }
+//             el_->stop_io_event(conn->io_watcher_,conn->get_fd(),EventLoop::WRITE);
+//            }
            
 
-        }
+        // }
     }
 
 } // namespace lrtc

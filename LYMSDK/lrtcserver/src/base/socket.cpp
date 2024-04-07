@@ -213,6 +213,7 @@ namespace lrtc
 
     int sock_read_data(int sock, char *buf, int len)
     {
+        RTC_LOG(LS_INFO) << "sock_read_data sockFd:"<<sock;
         int nread = read(sock, buf, len);
         if (-1 == nread)
         {
@@ -236,6 +237,8 @@ namespace lrtc
     }
     int sock_write_data(int sock, const char *buf, const int len)
     {
+        RTC_LOG(LS_INFO) << "sock_write_data sockFd:"<<sock << ", len = "<< len;
+
         int nwritten = write(sock,buf,len);
         if (-1 == nwritten)
         {

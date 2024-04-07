@@ -59,9 +59,9 @@ namespace lrtc
             return last_interaction_time_;
         }
          
-         std::shared_ptr<lheader_t>  req_header()
+        lheader_t*  req_header()
          {
-            return req_header_;
+            return &req_header_;
          }
 
         IOWatcher *io_watcher_ = nullptr;
@@ -99,7 +99,7 @@ namespace lrtc
         int recv_buf_len_;
         char *recv_buf_;
         char *send_buf_;
-        std::shared_ptr<lheader_t>  req_header_{nullptr};
+        lheader_t  req_header_;
     };
 
 }; // namespace lrtc
