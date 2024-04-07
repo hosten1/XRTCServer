@@ -11,16 +11,11 @@
 #include "base/event_loop.h"
 #include "base/lrtc_server_def.h"
 #include  "json/json.h"
-
+#include "server/rtc_worker.h"
+#include "server/rtc_server_options.h"
 
 
 namespace lrtc {
-    struct  rtcServerOpeions
-    {
-        int worker_num;
-        public:
-          rtcServerOpeions():worker_num(1){}
-    };
     
  class RtcServer
  {
@@ -50,10 +45,11 @@ namespace lrtc {
        void _process_notify(int msg);
        void _stop();
        void _process_rtc_msg();
+       int _create_worker(int work_id);
 
    private:
        std::unique_ptr<EventLoop> event_loop_{nullptr};
-       rtcServerOpeions options_;
+       rtcServerOptions options_;
        IOWatcher *pipe_watcher_{nullptr};
        std::unique_ptr<std::thread> ev_thread_;
 
@@ -62,6 +58,9 @@ namespace lrtc {
 
        int notify_recv_fd_ = -1;
        int notify_send_fd_ = -1;
+
+       std::vector<std::unique_ptr<RtcWorker>> workers_;
+       size_t next_works_index_ = 0;
  };
  
 

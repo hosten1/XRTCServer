@@ -1,9 +1,10 @@
-#include "rtc_server.h"
+#include "server/rtc_server.h"
 
 #include <unistd.h>
-#include <yaml-cpp/yaml.h>
 
+#include <yaml-cpp/yaml.h>
 #include "rtc_base/logging.h"
+#include "rtc_server.h"
 
 namespace lrtc
 {
@@ -27,10 +28,31 @@ namespace lrtc
     }
     RtcServer::~RtcServer()
     {
+        RTC_LOG(LS_INFO) << "rtc server destructor";
+        if (event_loop_)
+        {
+             event_loop_.reset();
+             event_loop_ = nullptr;
+        }
+        if (ev_thread_)
+        {
+            ev_thread_.reset();
+             ev_thread_ = nullptr;
+        }
+        for(auto& work : workers_)
+        {
+            if (work)
+            {
+               work.reset();
+               work = nullptr;
+            }
+            
+        }
+        workers_.clear();
     }
     bool RtcServer::start()
     {
-        RTC_LOG(LS_INFO) << "RtcServer::start() begin" ;
+        RTC_LOG(LS_INFO) << "RtcServer::start() begin";
         if (ev_thread_)
         {
             RTC_LOG(LS_WARNING) << "RtcServer::start() is running";
@@ -62,7 +84,7 @@ namespace lrtc
     // 实现线程里面的循环停止
     int RtcServer::stop()
     {
-        RTC_LOG(LS_INFO) << "RtcServer::stop() stop from other event  worker id " ;
+        RTC_LOG(LS_INFO) << "RtcServer::stop() stop from other event  worker id ";
         return _notify(RtcServer::MSG_QUIT);
     }
 
@@ -78,22 +100,21 @@ namespace lrtc
     {
         push_msg(rtc_msg);
 
-
         return _notify(MSG_RTC_MSG);
     }
     void RtcServer::push_msg(std::shared_ptr<LRtcMsg> rtc_msg)
     {
         std::unique_lock<std::mutex> lock(q_thread_mutex_);
         q_msgs_.push(rtc_msg);
-
     }
     const std::shared_ptr<LRtcMsg> RtcServer::pop_msg()
     {
         std::unique_lock<std::mutex> lock(q_thread_mutex_);
-        if(q_msgs_.empty())return nullptr;
+        if (q_msgs_.empty())
+            return nullptr;
         std::shared_ptr<LRtcMsg> msg = q_msgs_.front();
         q_msgs_.pop();
-        return  msg;
+        return msg;
     }
     int RtcServer::init(const char *conf_file)
     {
@@ -126,14 +147,23 @@ namespace lrtc
         notify_send_fd_ = fds[1];
         pipe_watcher_ = event_loop_->create_io_event(rtc_server_recv_notify, this);
         event_loop_->start_io_event(pipe_watcher_, notify_recv_fd_, EventLoop::READ);
+
+        for (int i = 0; i < options_.worker_num; i++)
+        {
+            if (_create_worker(i) != 0)
+            {
+                RTC_LOG(LS_ERROR) << "create worker failed";
+                return -1;
+            }
+        }
         return 0;
     }
 
     int RtcServer::_notify(int msg)
     {
         RTC_LOG(LS_INFO) << "signaling worker notify msg:" << msg;
-       int ret = write(notify_send_fd_, &msg, sizeof(msg));
-       return ret == sizeof(msg) ? 0 : -1;
+        int ret = write(notify_send_fd_, &msg, sizeof(msg));
+        return ret == sizeof(msg) ? 0 : -1;
     }
 
     void RtcServer::_process_notify(int msg)
@@ -141,7 +171,7 @@ namespace lrtc
         switch (msg)
         {
         case MSG_QUIT:
-             _stop();
+            _stop();
             break;
         case MSG_RTC_MSG:
             _process_rtc_msg();
@@ -152,7 +182,8 @@ namespace lrtc
             break;
         }
     }
-    void RtcServer::_stop(){
+    void RtcServer::_stop()
+    {
         RTC_LOG(LS_INFO) << "RtcServer::_stop() begin----";
         if (!ev_thread_)
         {
@@ -164,9 +195,16 @@ namespace lrtc
 
         close(notify_recv_fd_);
         close(notify_send_fd_);
+        for (auto &worker : workers_)
+        {
+            if (worker)
+            {
+                worker->stop();
+                worker->joined();
+            }
+        }
 
         RTC_LOG(LS_INFO) << "RtcServer::_stop() end";
-        
     }
 
     void RtcServer::_process_rtc_msg()
@@ -178,7 +216,31 @@ namespace lrtc
             return;
         }
         RTC_LOG(LS_INFO) << "rtc server recv rtc msg:" << rtc_msg->toString();
+    }
 
+    int RtcServer::_create_worker(int work_id)
+    {
+        RTC_LOG(LS_INFO) << "RtcServer::_create_worker() begin ,worker_id:" << work_id;
+        // 验证worker_id的有效性
+        if (work_id < 0)
+        {
+            RTC_LOG(LS_ERROR) << "Invalid worker_id: " << work_id;
+            return -1; // 使用具体的错误码可能更合适，这里保持为-1
+        }
+        std::unique_ptr<RtcWorker> worker = std::make_unique<RtcWorker>(work_id,options_);
+        if (worker->init() != 0)
+        { // 使用了更明确的判断条件
+            RTC_LOG(LS_ERROR) << "init worker error worker_id:" << work_id;
+            return -1;
+        }
+        if (!worker->start())
+        {
+            RTC_LOG(LS_ERROR) << "start worker error worker_id:" << work_id;
+            return -1;
+        }
+
+        workers_.push_back(std::move(worker));
+        return 0; // 成功时返回0
     }
 
 } // namespace lrtc

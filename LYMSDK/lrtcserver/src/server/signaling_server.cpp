@@ -248,12 +248,6 @@ namespace lrtc {
             RTC_LOG(LS_ERROR) << "Exception caught in _create_worker: " << e.what() << " worker_id:" << worker_id;
             return -1;
         }
-        catch (...)
-        { // 捕捉所有非标准异常
-            // 记录未知异常信息，返回错误
-            RTC_LOG(LS_ERROR) << "Unknown exception caught in _create_worker worker_id:" << worker_id;
-            return -1;
-        }
     }
     void SignalingServer::_dispatch_new_conn(int fd)
     {
