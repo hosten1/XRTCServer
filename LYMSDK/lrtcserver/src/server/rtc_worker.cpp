@@ -248,28 +248,23 @@ namespace lrtc
         }
     }
 
-    void RtcWorker::_read_query(int fd)
+    void RtcWorker::_read_query(int /*fd*/)
     {
     }
 
-    void RtcWorker::_close_connection(TcpConnection *conn)
+    void RtcWorker::_close_connection(TcpConnection */*conn*/)
     {
     }
 
-    void RtcWorker::_remove_connection(TcpConnection *conn)
+    void RtcWorker::_remove_connection(TcpConnection */*conn*/)
     {
     }
 
-    void RtcWorker::_process_timeout(TcpConnection *conn)
+    void RtcWorker::_process_timeout(TcpConnection */*conn*/)
     {
     }
 
-    int RtcWorker::_process_request_msg(TcpConnection *conn, Json::Value root, uint32_t log_id)
-    {
-        return 0;
-    }
-
-    int RtcWorker::_process_request_push_msg(TcpConnection *conn, int cmdno, Json::Value root, uint32_t log_id)
+    int RtcWorker::_process_request_msg(TcpConnection */*conn*/, Json::Value /*oot*/, uint32_t /*log_id*/)
     {
         return 0;
     }

@@ -99,7 +99,7 @@ namespace lrtc
                 return -1;
             }
             
-            if (body.length() < 0)
+            if (body.length() <= 0)
             {
                 return 0;
             }
@@ -230,6 +230,7 @@ namespace lrtc
                 return false;
             }
         }
+        return true;
         
     }
     // size_t TcpConnection::unpackageHeader(rtc::ArrayView<const uint8_t> package_frame,

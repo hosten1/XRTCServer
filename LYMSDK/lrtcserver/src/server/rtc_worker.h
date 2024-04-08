@@ -52,7 +52,6 @@ namespace lrtc
         void _remove_connection( TcpConnection *conn);
         void _process_timeout(TcpConnection *conn);
         int _process_request_msg(TcpConnection * conn, Json::Value root, uint32_t log_id);
-        int _process_request_push_msg(TcpConnection * conn,int cmdno, Json::Value root, uint32_t log_id);
 
     private:
         int work_id_;

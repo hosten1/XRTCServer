@@ -254,7 +254,7 @@ namespace lrtc
             conn_tcps_.reserve(fd * 2);
         }
         // 将conn移动到conn_tcps_容器中，使用fd作为键
-        if (fd >= conn_tcps_.size())
+        if ((size_t)fd >= conn_tcps_.size())
         {
             conn_tcps_.resize(fd + 1, nullptr); // 将多余的元素初始化为 nullptr
         }
@@ -389,7 +389,7 @@ namespace lrtc
             el_->delete_io_event(conn->io_watcher_);
             // conn_tcps_.erase(conn->get_fd());
             int index = conn->get_fd();
-            if (index < conn_tcps_.size())
+            if ((size_t)index < conn_tcps_.size())
             {
                 delete conn_tcps_[index]; // 如果需要，释放资源
                 conn_tcps_.erase(conn_tcps_.begin() + index);
