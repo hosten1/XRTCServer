@@ -47,7 +47,7 @@ echo "Running cmake..."
 cmake .. || { echo "CMake failed."; exit 1; }
 
 
-if test $# -gt 0 && test $1 = "clean"
+if  $1 = "clean"
 then 
     echo "make clean ..."
     make clean

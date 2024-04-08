@@ -247,6 +247,7 @@ namespace lrtc
         el_->start_timer_event(conn->timer_watcher_, 100000); // 100ms执行一次
         // 首次连接创建的时间
         conn->set_last_interaction_time(el_->now_time_usec());
+         RTC_LOG(LS_INFO) << "SignalingWork::_accept_new_connection last_interaction_time:"<<conn->last_interaction_time();
 
         if ((size_t)fd > conn_tcps_.size())
         {
@@ -421,7 +422,7 @@ namespace lrtc
     {
            // 接收到数据的时间
         conn->set_last_interaction_time(el_->now_time_usec());
-        RTC_LOG(LS_INFO)<<"SignalingWork::_process request_msg log_id:"<<log_id;
+        RTC_LOG(LS_INFO)<<"SignalingWork::_process request_msg last_interaction_time: "<< conn->last_interaction_time()<<"， log_id:"<<log_id;
         // 解析body {"cmdno":1,"uid":1234321,"stream_name":"lymRTest","audio":1,"video":1}
         int cmdNo = 0;
         try
@@ -691,14 +692,20 @@ namespace lrtc
             {
                 conn->cur_resp_pos += nwritten;
             }
+            uint32_t current_time = el_->now_time_usec();
             RTC_LOG(INFO) << "send_rtc_msg end: nwritten=" << nwritten
             << ", cur_resp_pos= " << conn->cur_resp_pos 
             << ", data_len:" << data_len 
-            << ", conn->reply_list.empty()="<<conn->reply_list.empty();
-            conn->set_last_interaction_time(el_->now_time_usec());
+            << ", conn->reply_list.empty()="<<conn->reply_list.empty()
+            << ", last_interaction_time="<<conn->last_interaction_time()
+            << ",all req ==>resp cast time = " << (current_time -conn->last_interaction_time());
+            conn->set_last_interaction_time(current_time);
+            RTC_LOG(INFO) << "send_rtc_msg end:,last_interaction_time=" << conn->last_interaction_time();
             if (conn->reply_list.empty())
             {
-
+                RTC_LOG(INFO) << "send_rtc_msg stop ev timer and io events,conn->io_watcher_=" << conn->io_watcher_
+                            <<"conn->timer_watcher_=" << conn->timer_watcher_
+                            <<"fd=" << conn->get_fd() << " ======>";
                 el_->stop_io_event(conn->io_watcher_, conn->get_fd(), EventLoop::WRITE);
                 el_->stop_timer_event(conn->timer_watcher_);
             }

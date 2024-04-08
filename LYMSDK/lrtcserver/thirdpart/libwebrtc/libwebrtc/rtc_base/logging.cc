@@ -72,6 +72,72 @@ const char* FilenameFromPath(const char* file) {
 CriticalSection g_log_crit;
 }  // namespace
 
+
+// lym begin
+#define NAMENUMBER 45
+std::string GetFuctionString(const char* file, int line) {
+  char tempName[NAMENUMBER] = {NULL};
+  tempName[0] = '[';
+  tempName[NAMENUMBER - 2] = ']';
+  tempName[NAMENUMBER - 1] = '\0';
+  const char* fileName = FilenameFromPath(file);
+ 
+  for (int i = 1; i < NAMENUMBER - 2; ++i) {
+    if (*fileName != '\0') {
+      tempName[i] = *fileName;
+      fileName++;
+    } else {
+      tempName[i] = ' ';
+    }
+  }
+ 
+  char tempLine[10] = {NULL};
+  sprintf(tempLine, "[%5d]", line);
+ 
+  return std::string(tempName) + std::string(tempLine);
+}
+ 
+#if defined(WEBRTC_WIN)
+#include <time.h>
+#include <windows.h>
+std::string GetSystemTimeString() {
+  SYSTEMTIME sys;
+  GetLocalTime(&sys);
+  char tmp[64] = {NULL};
+  sprintf(tmp, "[%4d-%02d-%02d %02d:%02d:%02d.%03d]", sys.wYear, sys.wMonth,
+          sys.wDay, sys.wHour, sys.wMinute, sys.wSecond, sys.wMilliseconds);
+  return std::string(tmp);
+}
+#else
+#include <sys/time.h>
+#include <unistd.h>
+std::string GetSystemTimeString() {
+  struct timeval now_time;
+  gettimeofday(&now_time, NULL);
+  time_t tt = now_time.tv_sec;
+  tm* temp = localtime(&tt);
+  char time_str[32] = {NULL};
+  sprintf(time_str, "[%04d-%02d-%02d %02d:%02d:%02d.%03ld]", temp->tm_year + 1900,
+          temp->tm_mon + 1, temp->tm_mday, temp->tm_hour, temp->tm_min,
+          temp->tm_sec, now_time.tv_usec / 1000);
+  return std::string(time_str);
+}
+#endif
+// 将枚举转换为字符串的函数
+static std::string LoggingSeverityToString(LoggingSeverity severity) {
+    switch (severity) {
+        case LS_VERBOSE: return "VERBOSE";
+        case LS_DEBUG: return "DEBUG";
+        case LS_INFO: return "INFO";
+        case LS_WARNING: return "WARNING";
+        case LS_ERROR: return "ERROR";
+        case LS_NONE: return "";
+        default: return ""; // 处理未知的枚举值
+    }
+}
+// lym end
+// lym end
+
 // Inefficient default implementation, override is recommended.
 void LogSink::OnLogMessage(const std::string& msg,
                            LoggingSeverity severity,
@@ -79,26 +145,13 @@ void LogSink::OnLogMessage(const std::string& msg,
   OnLogMessage(tag + (": " + msg), severity);
 }
 
-/**************** 新增修改  skx 2019-08-13*************************/
-std::string getTime() {
-  time_t timep;
-  time(&timep);
-  char tmp[64];
-  strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-  return tmp;
-}
+
 
 void LogSink::OnLogMessage(const std::string& msg,
                            LoggingSeverity /* severity */) {
 
 
-/**************** 新增修改  skx 2019-08-13*************************/
-  std::string str;
-  str = "[" + getTime() + "]" + msg;
-   OnLogMessage(str);
- /*****************************************/
-
- // OnLogMessage(msg);
+ OnLogMessage(msg);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -115,40 +168,7 @@ LogMessage::StreamList LogMessage::streams_ RTC_GUARDED_BY(g_log_crit);
 
 // Boolean options default to false (0)
 bool LogMessage::thread_, LogMessage::timestamp_;
-// lym 日志格式化输出 YYYY-MM-DD HH:MM:SS.mmm
-static std::string FormatTimestamp(int64_t milliseconds) 
-{
-    // 将毫秒转换为时间点
-    std::chrono::milliseconds duration(milliseconds);
-    std::chrono::system_clock::time_point tp(duration);
-    // 将时间转换为 time_t
-    std::time_t time = std::chrono::system_clock::to_time_t(tp);
-    
-    // 获取毫秒部分
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()) % 1000;
-    
-    // 使用 std::put_time 格式化时间
-    std::ostringstream oss;
-    oss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S");
-    
-    // 添加毫秒部分
-    oss << '.' << std::setfill('0') << std::setw(3) << ms.count();
-    
-    return oss.str();
-}
-// 将枚举转换为字符串的函数
-static std::string LoggingSeverityToString(LoggingSeverity severity) {
-    switch (severity) {
-        case LS_VERBOSE: return "VERBOSE";
-        case LS_DEBUG: return "DEBUG";
-        case LS_INFO: return "INFO";
-        case LS_WARNING: return "WARNING";
-        case LS_ERROR: return "ERROR";
-        case LS_NONE: return "";
-        default: return ""; // 处理未知的枚举值
-    }
-}
-// lym end
+
 LogMessage::LogMessage(const char* file, int line, LoggingSeverity sev)
     : LogMessage(file, line, sev, ERRCTX_NONE, 0) {}
 
@@ -158,8 +178,6 @@ LogMessage::LogMessage(const char* file,
                        LogErrorContext err_ctx,
                        int err)
     : severity_(sev) {
-   print_stream_ << LoggingSeverityToString(sev) 
-                <<" [" << FormatTimestamp(SystemTimeMillis()) << "] ";
   if (timestamp_) {
     // Use SystemTimeMillis so that even if tests use fake clocks, the timestamp
     // in log messages represents the real system time.
@@ -182,10 +200,14 @@ LogMessage::LogMessage(const char* file,
     tag_ = FilenameFromPath(file);
     print_stream_ << "(line " << line << "): ";
 #else
-    print_stream_ << "(" << FilenameFromPath(file) << ":" << line << "): ";
+    print_stream_ << LoggingSeverityToString(sev) 
+                  <<GetSystemTimeString()
+                  << "(" << FilenameFromPath(file) << ":" << line << "): ";
+    // print_stream_ << "(" << FilenameFromPath(file) << ":" << line << "): ";
 #endif
-  }
+  }else{
 
+  }
   if (err_ctx != ERRCTX_NONE) {
     char tmp_buf[1024];
     SimpleStringBuilder tmp(tmp_buf);
