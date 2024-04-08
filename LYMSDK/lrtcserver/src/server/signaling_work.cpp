@@ -79,7 +79,7 @@ namespace lrtc
         int fds[2];
         if (pipe(fds) == -1)
         {
-            RTC_LOG(LS_ERROR) << "create pipe eror :" << strerror(errno) << " ,errorno:" << errno;
+            RTC_LOG(LS_ERROR) << "create pipe eror :" << strerror(errno) << " ,errorno:" << errno << ",work_id:"<<work_id_;
             return -1;
         }
         notify_recv_fd_ = fds[0];
@@ -110,13 +110,13 @@ namespace lrtc
                 RTC_LOG(LS_INFO) << "signaling worker event loop stop , worker id :"<<work_id_;
             } catch (const std::exception& e) {
                 // 记录或处理异常
-                RTC_LOG(LS_ERROR) << "Event loop start failed: " << e.what();
+                RTC_LOG(LS_ERROR) << "Event loop start failed: " << e.what() << ",work_id:"<<work_id_;
             } });
         }
         catch (const std::exception &e)
         {
             // 处理线程创建异常
-            RTC_LOG(LS_ERROR) << "Thread creation failed: " << e.what();
+            RTC_LOG(LS_ERROR) << "Thread creation failed: " << e.what() << ",work_id:"<<work_id_;
             return false;
         }
 
@@ -194,7 +194,7 @@ namespace lrtc
             {
                 _accept_new_connection(fd);
             }
-            RTC_LOG(LS_INFO) << "signaling server on_recv_notify fd:" << fd << ", worker id :" << work_id_;;
+            RTC_LOG(LS_INFO) << "signaling server on_recv_notify fd:" << fd << ", worker id :" << work_id_;
             break;
         case MSG_RTC_MSG:
             _process_rtc_msg();
@@ -219,7 +219,7 @@ namespace lrtc
         close(notify_recv_fd_);
         close(notify_send_fd_);
 
-        RTC_LOG(LS_INFO) << "signaling server _stop end";
+        RTC_LOG(LS_INFO) << "signaling server _stop end"<< ",work_id:"<<work_id_;
     }
 
     void SignalingWork::_accept_new_connection(int fd)
@@ -247,7 +247,7 @@ namespace lrtc
         el_->start_timer_event(conn->timer_watcher_, 100000); // 100ms执行一次
         // 首次连接创建的时间
         conn->set_last_interaction_time(el_->now_time_usec());
-         RTC_LOG(LS_INFO) << "SignalingWork::_accept_new_connection last_interaction_time:"<<conn->last_interaction_time();
+         RTC_LOG(LS_INFO) << "SignalingWork::_accept_new_connection last_interaction_time:"<<conn->last_interaction_time()  << ",work_id:"<<work_id_;
 
         if ((size_t)fd > conn_tcps_.size())
         {
@@ -335,7 +335,7 @@ namespace lrtc
             {
                 if (L_HEADER_MAGIC_NUMBER != head->magic_num)
                 {
-                    RTC_LOG(LS_WARNING) << "invalid magic number:" << head->magic_num;
+                    RTC_LOG(LS_WARNING) << "invalid magic number:" << head->magic_num << ",work_id:"<<work_id_;
                     return -1;
                 }
                 conn->current_state_ = TcpConnection::STATE_BODY;
@@ -349,7 +349,7 @@ namespace lrtc
                 int ret = _process_request(conn, header, body);
                 if (-1 == ret)
                 {
-                    RTC_LOG(LS_ERROR) << "process request failed";
+                    RTC_LOG(LS_ERROR) << "process request failed" << ",work_id:"<<work_id_;
                     return -1;
                 }
                 // 假定是一个短连接处理 忽略其他数据
@@ -365,7 +365,7 @@ namespace lrtc
     {
         RTC_LOG(LS_INFO) << "SignalingWork::_process_request() fd:" << conn->fd_
                          << ", work_id : " << work_id_ << " header:" << header->data()
-                         << ", body:" << body->data();
+                         << ", body:" << body->data() << ",work_id:"<<work_id_;
         return 0;
     }
 #endif
@@ -413,7 +413,8 @@ namespace lrtc
             RTC_LOG(LS_INFO) << "SignalingWork::_process_timeout() fd:" << conn->get_fd()
                              << ", work_id : " << work_id_
                              << " timer cout sub = " << timer_sub
-                             << "  connect_timeout setting:" << (uint32_t)options_.connect_timeout * 1000;
+                             << "  connect_timeout setting:" << (uint32_t)options_.connect_timeout * 1000
+                             << ",work_id:"<<work_id_;
             _close_connection(conn);
         }
     }
@@ -422,7 +423,9 @@ namespace lrtc
     {
            // 接收到数据的时间
         conn->set_last_interaction_time(el_->now_time_usec());
-        RTC_LOG(LS_INFO)<<"SignalingWork::_process request_msg last_interaction_time: "<< conn->last_interaction_time()<<"， log_id:"<<log_id;
+        RTC_LOG(LS_INFO)<<"SignalingWork::_process request_msg last_interaction_time: "
+        << conn->last_interaction_time()<<"， log_id:"<<log_id  
+        << ",work_id:"<<work_id_;
         // 解析body {"cmdno":1,"uid":1234321,"stream_name":"lymRTest","audio":1,"video":1}
         int cmdNo = 0;
         try
@@ -481,9 +484,10 @@ namespace lrtc
         }
 
         RTC_LOG(LS_INFO) << "SignalingWork::_process_request_push_msg() fd:" << conn->get_fd()
-                         << ", work_id : " << work_id_ << " cmdno = " << cmdno << " [uid:" << uid
+                         << " cmdno = " << cmdno << " [uid:" << uid
                          << ", stream_name:" << stream_name << ", audio:" << audio
-                         << ", video:" << video << "]";
+                         << ", video:" << video << "]"
+                         << ",work_id:"<<work_id_;
         std::shared_ptr<lrtc::LRtcMsg> msg = std::make_shared<lrtc::LRtcMsg>();
         msg->cmdno = cmdno;
         msg->uid = uid;
@@ -492,6 +496,7 @@ namespace lrtc
         msg->video = video;
         msg->log_id = log_id;
         msg->signalingWorker = this;
+        msg->signalingWorkerId = 0;
         msg->signalingConn = conn;
         msg->fd = conn->get_fd();
 
@@ -500,13 +505,13 @@ namespace lrtc
 
     void SignalingWork::_process_rtc_msg()
     {
-        RTC_LOG(LS_INFO)<< "SignalingWork::_process_rtc_msg";
+        RTC_LOG(LS_INFO)<< "SignalingWork::_process_rtc_msg"<< ",work_id:"<<work_id_;
         std::shared_ptr<LRtcMsg> msg = pop_msg();
         if (!msg)
         {
             return;
         }
-        RTC_LOG(LS_INFO) << "SignalingWork::_process_rtc_msg cmdno:" << msg->cmdno;
+        RTC_LOG(LS_INFO) << "SignalingWork::_process_rtc_msg cmdno:" << msg->cmdno<< ",work_id:"<<work_id_;
         
         switch (msg->cmdno)
         {
@@ -516,34 +521,35 @@ namespace lrtc
 
         default:
             RTC_LOG(LS_WARNING) << "SignalingWork::_process_rtc_msg unknown cmdno"
-                                << msg->cmdno << ", log_id = " << msg->log_id;
+                                << msg->cmdno << ", log_id = " << msg->log_id << ",work_id:"<<work_id_;
             break;
         }
     }
 
     void SignalingWork::_response_server_offer(std::shared_ptr<LRtcMsg> rtc_msg)
     {
-        RTC_LOG(LS_INFO) << "SignalingWork::_response _server_offer offer:" << rtc_msg->sdp;
+        RTC_LOG(LS_INFO) << "SignalingWork::_response _server_offer offer:" << rtc_msg->sdp << ",work_id:"<<work_id_;
         TcpConnection *conn = (TcpConnection *)(rtc_msg->signalingConn);
         if (!conn)
         {
-            RTC_LOG(LS_ERROR) << "SignalingWork::_response _server_offer conn is null";
+            RTC_LOG(LS_ERROR) << "SignalingWork::_response _server_offer conn is null" << ",work_id:"<<work_id_;
             return;
         }
         int fd = rtc_msg->fd;
         RTC_LOG(LS_INFO) << "SignalingWork::_response _server_offer msg_fd:" << fd 
                           << ", peer fd:"<<conn->get_fd() 
                           << ", conn:"<<conn 
-                          << ", conn_tcps_:"<<conn_tcps_[fd];
+                          << ", conn_tcps_:"<<conn_tcps_[fd]
+                          << ",work_id:"<<work_id_;
 
         if (fd <= 0 || sizeof(fd) >= conn_tcps_.size())
         {
-            RTC_LOG(LS_ERROR) << "SignalingWork::_response server_offer fd == -1";
+            RTC_LOG(LS_ERROR) << "SignalingWork::_response server_offer fd == -1"<< ",work_id:"<<work_id_;
             return;
         }
         if (conn_tcps_[fd] != conn)
         {
-             RTC_LOG(LS_ERROR) << "SignalingWork::_response_ server_offer() peer and conn_tcps_[fd] not eque";
+             RTC_LOG(LS_ERROR) << "SignalingWork::_response_ server_offer() peer and conn_tcps_[fd] not eque" << ",work_id:"<<work_id_;
 
             return;
         }
@@ -555,7 +561,8 @@ namespace lrtc
         char *buf = (char *)zmalloc(L_HEADER_SIZE + MAX_RESP_BUFEER_SIZE);
         if (!buf)
         {
-            RTC_LOG(LS_ERROR) << "SignalingWork::_response_ server_offer zmalloc failed log_id:= " << h->log_id;
+            RTC_LOG(LS_ERROR) << "SignalingWork::_response_ server_offer zmalloc failed log_id:= " << h->log_id
+                                << ",work_id:"<<work_id_;
             ;
             return;
         }
@@ -580,15 +587,15 @@ namespace lrtc
         Json::StreamWriterBuilder write_builder;
         write_builder.settings_["indentation"] = "";
         std::string json_data = Json::writeString(write_builder, resp_root);
-        RTC_LOG(INFO) << "send_rtc_msg json_data:" << json_data << ", res_xh:"<< res_xh;
+        RTC_LOG(INFO) << "send_rtc_msg json_data:" << json_data << ", res_xh:"<< res_xh << ",work_id:"<<work_id_;
         if (res_xh == nullptr)
         {
-            RTC_LOG(INFO) << "res_xh is nullptr";
+            RTC_LOG(INFO) << "res_xh is nullptr"<< ",work_id:"<<work_id_;
             return;
         }
         
         res_xh->body_len = json_data.size();
-        RTC_LOG(INFO) << "send_rtc_msg lheader_t:" << res_xh->toString();
+        RTC_LOG(INFO) << "send_rtc_msg lheader_t:" << res_xh->toString() << ",work_id:"<<work_id_;
 #ifdef USE_SDS
         snprintf(buf + L_HEADER_SIZE, MAX_RESP_BUFEER_SIZE, "%s", json_data.c_str());
         rtc::Slice reply(buf, L_HEADER_SIZE + res_xh->body_len);
@@ -616,7 +623,8 @@ namespace lrtc
         {
            RTC_LOG(LS_ERROR)<<"add reply conn fd:"<<conn->get_fd()
                                     <<", worker_id:"<<work_id_
-                                    <<", io_watcher_:"<<conn->io_watcher_;
+                                    <<", io_watcher_:"<<conn->io_watcher_
+                                    << ",work_id:"<<work_id_;
            return;
         }
         
@@ -626,10 +634,10 @@ namespace lrtc
 
     void SignalingWork::_write_repaly(int fd)
     {
-        RTC_LOG(LS_INFO) << "SignalingWork::_write_repaly fd:" << fd;
+        RTC_LOG(LS_INFO) << "SignalingWork::_write_repaly fd:" << fd << ",work_id:"<<work_id_;
         if (fd <= 0 || (size_t)(fd) >= conn_tcps_.size())
         {
-            RTC_LOG(LS_ERROR) << "SignalingWork::_write_repaly fd:" << fd << " is invalid";
+            RTC_LOG(LS_ERROR) << "SignalingWork::_write_repaly fd:" << fd << " is invalid"<< ",work_id:"<<work_id_;
             return;
         }
 
@@ -683,7 +691,7 @@ namespace lrtc
                 conn->reply_list.pop_front();
 
                 conn->cur_resp_pos = 0;
-                RTC_LOG(INFO) << "send_rtc_msg: nwritten=" << nwritten << ", cur_resp_pos= " << conn->cur_resp_pos << ", data_len:" << data_len;
+                RTC_LOG(INFO) << "send_rtc_msg: nwritten=" << nwritten << ", cur_resp_pos= " << conn->cur_resp_pos << ", data_len:" << data_len << ",work_id:"<<work_id_;
                 //  replyWiter->Clear();
                 //  replyWiter = nullptr;
             }
@@ -698,14 +706,17 @@ namespace lrtc
             << ", data_len:" << data_len 
             << ", conn->reply_list.empty()="<<conn->reply_list.empty()
             << ", last_interaction_time="<<conn->last_interaction_time()
-            << ",all req ==>resp cast time = " << (current_time -conn->last_interaction_time());
+            << ",all req ==>resp cast time = " << (current_time -conn->last_interaction_time())
+            << ",work_id:"<<work_id_;
             conn->set_last_interaction_time(current_time);
-            RTC_LOG(INFO) << "send_rtc_msg end:,last_interaction_time=" << conn->last_interaction_time();
+            RTC_LOG(INFO) << "send_rtc_msg end:,last_interaction_time=" << conn->last_interaction_time() << ",work_id:"<<work_id_;
             if (conn->reply_list.empty())
             {
-                RTC_LOG(INFO) << "send_rtc_msg stop ev timer and io events,conn->io_watcher_=" << conn->io_watcher_
+                RTC_LOG(INFO) << "send_rtc_msg stop ev timer and io events,conn->io_watcher_=" << conn->io_watcher_ 
                             <<"conn->timer_watcher_=" << conn->timer_watcher_
-                            <<"fd=" << conn->get_fd() << " ======>";
+                            <<"fd=" << conn->get_fd() 
+                            << ",work_id:"<<work_id_
+                            << " ======>";
                 el_->stop_io_event(conn->io_watcher_, conn->get_fd(), EventLoop::WRITE);
                 el_->stop_timer_event(conn->timer_watcher_);
             }

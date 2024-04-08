@@ -34,6 +34,9 @@ namespace lrtc
         int stop();
         void joined();
         int notify_new_conn(int fd);
+         int get_work_id() const{
+            return work_id_;
+        }
 
         int send_rtc_msg(const std::shared_ptr<LRtcMsg> rtc_msg);
         void push_msg(std::shared_ptr<LRtcMsg> rtc_msg);

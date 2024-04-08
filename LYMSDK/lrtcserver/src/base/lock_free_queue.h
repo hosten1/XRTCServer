@@ -18,24 +18,23 @@ namespace lrtc
             Node(const T& value) : value(value), next(nullptr) {}
             Node(T&& value) : value(value), next(nullptr) {}
         };
-        Node *first_;
-        Node *divider_;
-        Node *last_;
-        std::atomic<int> size_;
+        alignas(64) std::atomic<Node *> first_;
+        alignas(64) std::atomic<Node *> divider_;
+        alignas(64) std::atomic<Node *> last_;
+        alignas(64) std::atomic<int> size_;
 
     public:
-        LockFreeQueue(/* args */){
-            first_ = last_ = divider_ = new Node(T());
+        LockFreeQueue(): first_(new Node(T())), divider_(first_.load()), last_(first_.load()){
+            // first_ = last_ = divider_ = new Node(T());
             size_ = 0;
         }
         ~LockFreeQueue(){
-            while (first_ != nullptr)
+           Node *current = first_.load();
+            while (current)
             {
-                Node *tmp = first_;
-                first_ = first_->next;
-                delete tmp;
-                size_--;
-
+                Node *temp = current;
+                current = current->next;
+                delete temp;
             }
             size_ = 0;
             
@@ -43,24 +42,26 @@ namespace lrtc
 
         void produce(const T &value){
             Node *node = new Node(value);
-            last_->next = node;
-            last_ = last_->next;
+            last_.load()->next = node;
+            last_.store(node);
             ++size_;
-            //如果在生产的时候发现有人消费了，则删除
-            while (divider_ != first_)
-            {
-                Node *tmp = first_;
-                first_ = first_->next;
-                delete tmp;
-            }
+            // //如果在生产的时候发现有人消费了，则删除
+            // while (divider_ != first_)
+            // {
+            //     Node *tmp = first_;
+            //     first_ = first_->next;
+            //     delete tmp;
+            // }
             
         }
         bool consumer(T *result){
-            if (divider_ != last_)
+            Node *current = divider_.load();
+            Node *next = current->next;
+            if (next)
             {
-                //这里可能有多个线程调用
-                *result = divider_->next->value;
-                divider_->next = divider_->next;
+                *result = next->value;
+                divider_.store(next);
+                delete current;
                 --size_;
                 return true;
             }
@@ -80,13 +81,14 @@ namespace lrtc
 
         void clear()
         {
-            while (first_ != nullptr)
+           Node *current = first_.load();
+            while (current)
             {
-                Node *tmp = first_;
-                first_ = first_->next;
-                delete tmp;
-                size_--;
+                Node *temp = current;
+                current = current->next;
+                delete temp;
             }
+            divider_ = last_ = first_.load();
             size_ = 0;
         }
     };// class LockFreeQueue end

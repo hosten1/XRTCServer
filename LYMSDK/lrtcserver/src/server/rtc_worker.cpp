@@ -217,6 +217,8 @@ namespace lrtc
        rtcmsg->sdp = offer;
        
        SignalingWork *signaling_work = (SignalingWork *)rtcmsg->signalingWorker;
+       RTC_LOG(LS_INFO)<<"RtcWorker::_process_push_rtcmsg,signaling_work.id:"<<signaling_work->get_work_id()
+       << " rtcmsg.signalingWorkerid:" << rtcmsg->signalingWorkerId;
        if (signaling_work)
        {
          signaling_work->send_rtc_msg(rtcmsg);

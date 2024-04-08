@@ -21,6 +21,7 @@ namespace lrtc {
     int video = 0;
     std::string log_id = "";
     void *signalingWorker = nullptr;
+    int signalingWorkerId = 0;
     void *signalingConn = nullptr;
     std::string sdp;
     int err_no = 0;
