@@ -317,11 +317,12 @@ namespace lrtc
             sdsIncrLen(conn->queryBuf_, nread);
         }
         int ret = _process_queue_buffer(conn);
+           // 接收到数据的时间
+        conn->set_last_interaction_time(el_->now_time_usec());
 
 #endif // !        #ifdef USE_SDS
 
-        // 接收到数据的时间
-        conn->set_last_interaction_time(el_->now_time_usec());
+     
     }
 #ifdef USE_SDS
     int SignalingWork::_process_queue_buffer(const TcpConnection *conn)
@@ -418,6 +419,8 @@ namespace lrtc
 
     int SignalingWork::_process_request_msg(TcpConnection *conn, Json::Value root, uint32_t log_id)
     {
+           // 接收到数据的时间
+        conn->set_last_interaction_time(el_->now_time_usec());
         RTC_LOG(LS_INFO)<<"SignalingWork::_process request_msg log_id:"<<log_id;
         // 解析body {"cmdno":1,"uid":1234321,"stream_name":"lymRTest","audio":1,"video":1}
         int cmdNo = 0;
