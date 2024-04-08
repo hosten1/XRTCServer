@@ -214,6 +214,7 @@ namespace lrtc
     void RtcWorker::_process_push_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg)
     {
        std::string offer = "offer";
+       rtcmsg->sdp = offer;
        
        SignalingWork *signaling_work = (SignalingWork *)rtcmsg->signalingWorker;
        if (signaling_work)

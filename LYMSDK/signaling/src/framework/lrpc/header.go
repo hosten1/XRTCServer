@@ -43,6 +43,19 @@ func (h *Header) Marshal(buf []byte) error {
 
 	
 }
+func (h *Header) Unmarshal(buf []byte)(err error) {
+	if len(buf) < HEADER_SIZE {
+		return errors.New("header buf too short")
+	}
+	h.Id = binary.LittleEndian.Uint16(buf[0:2])
+	h.Version = binary.LittleEndian.Uint16(buf[2:4])
+	h.LogId = binary.LittleEndian.Uint32(buf[4:8])
+	copy(h.Provider[:], buf[8:24])
+	h.MagicNum = binary.LittleEndian.Uint32(buf[24:28])
+	h.Reserved = binary.LittleEndian.Uint32(buf[28:32])
+	h.BodyLen = binary.LittleEndian.Uint32(buf[32:36])
+	return nil
+}
 func (h *Header) Write(w io.Writer) (int, error) {
 	// 将 Header 的字段逐个写入到 Writer 中
 	var buf [HEADER_SIZE]byte
@@ -51,4 +64,14 @@ func (h *Header) Write(w io.Writer) (int, error) {
 	}
 	// 将 buf 中的数据写入到 Writer
 	return w.Write(buf[:])
+}
+func (h *Header)  ReadHeader(r io.Reader)(n int,err error){
+	var buf [HEADER_SIZE]byte
+	if n,err = io.ReadFull(r,buf[:]);err != nil{
+		return 0,err
+	}
+	if err := h.Unmarshal(buf[:]); err != nil {
+		return 0, err
+	}
+	return n ,nil
 }

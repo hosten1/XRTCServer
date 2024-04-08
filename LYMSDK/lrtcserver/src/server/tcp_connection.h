@@ -27,14 +27,12 @@ namespace lrtc
     class TcpConnection
     {
     public:
-#ifdef USE_SDS
         enum
         {
             STATE_HEAD = 0,
             STATE_BODY = 1,
             STATE_DONE
         };
-#endif // USE_SDS
 
         TcpConnection(int fd, const char *ip, int port);
         TcpConnection(int fd);
@@ -68,7 +66,7 @@ namespace lrtc
         TimerWatcher *timer_watcher_ = nullptr;
 
 #ifdef USE_SDS
-        int current_state_ = STATE_HEAD;
+       
         std::list<rtc::Slice> reply_list;
 #else
         std::list<std::unique_ptr<rtc::ByteBufferWriter>> reply_list;
@@ -79,7 +77,8 @@ namespace lrtc
     private:
         int _recv(char *buf, int len, std::function<void( Json::Value, uint32_t)> callback);
 
-        bool _parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header, std::string &body);
+        bool _parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header);
+        bool _parseDataOfBodyJson(const char *data, size_t data_size,size_t  body_len,std::string &body);
 
     private:
         int fd_;
@@ -87,8 +86,11 @@ namespace lrtc
         int port_;
 
         size_t bytes_processed_ = 0;
+        int current_state_ = STATE_HEAD;
 #ifdef USE_SDS
         sds queryBuf_;
+#else
+       rtc::BufferT<char> queryBuf_;
 #endif
         size_t bytes_expected_ = L_HEADER_SIZE;
 

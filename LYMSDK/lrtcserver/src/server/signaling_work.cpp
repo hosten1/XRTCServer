@@ -418,6 +418,7 @@ namespace lrtc
 
     int SignalingWork::_process_request_msg(TcpConnection *conn, Json::Value root, uint32_t log_id)
     {
+        RTC_LOG(LS_INFO)<<"SignalingWork::_process request_msg log_id:"<<log_id;
         // 解析body {"cmdno":1,"uid":1234321,"stream_name":"lymRTest","audio":1,"video":1}
         int cmdNo = 0;
         try
@@ -455,7 +456,9 @@ namespace lrtc
     }
 
     int SignalingWork::_process_request_push_msg(TcpConnection *conn, int cmdno, Json::Value root, uint32_t log_id)
-    {
+    {  
+        // 暂时停止读事件
+        el_->stop_io_event(conn->io_watcher_,conn->get_fd(),EventLoop::READ);
         uint64_t uid = 0;
         std::string stream_name;
         int audio;
@@ -619,71 +622,84 @@ namespace lrtc
 
     void SignalingWork::_write_repaly(int fd)
     {
-        RTC_LOG(LS_INFO) << "SignalingWork::_write_repaly fd:"<<fd;
+        RTC_LOG(LS_INFO) << "SignalingWork::_write_repaly fd:" << fd;
         if (fd <= 0 || (size_t)(fd) >= conn_tcps_.size())
         {
-            RTC_LOG(LS_ERROR) << "SignalingWork::_write_repaly fd:"<<fd<<" is invalid";
+            RTC_LOG(LS_ERROR) << "SignalingWork::_write_repaly fd:" << fd << " is invalid";
             return;
         }
 
         TcpConnection *conn = conn_tcps_[fd];
-//         while (!conn->reply_list.empty())
-//         {
-//             int nwritten = 0;
-// #ifdef USE_SDS
-//             rtc::Slice reply = conn->reply_list.front();
-//              nwritten = sock_write_data(conn->get_fd(), reply->data() + conn->cur_resp_pos, reply->size() - conn->cur_resp_pos);
+        while (!conn->reply_list.empty())
+        {
+            int nwritten = 0;
+#ifdef USE_SDS
+            rtc::Slice reply = conn->reply_list.front();
+            nwritten = sock_write_data(conn->get_fd(), reply->data() + conn->cur_resp_pos, reply->size() - conn->cur_resp_pos);
 
-// #else
-//             rtc::ByteBufferWriter *reply = conn->reply_list.front().get();
-//             nwritten = sock_write_data(conn->get_fd(), reply->Data() + conn->cur_resp_pos, reply->Length() - conn->cur_resp_pos);
+#else
+            rtc::ByteBufferWriter *replyWiter = conn->reply_list.front().get();
+            const size_t data_len = replyWiter->Length();
+            char *dataBuff = static_cast<char *>(malloc(data_len));
+            if (dataBuff == nullptr)
+            {
+                // 内存分配失败，处理错误
+                // 可以抛出异常或者返回错误码
+                // 例如：
+                throw std::runtime_error("Failed to allocate memory");
+            }
+            memset(dataBuff, 0, data_len);
+            memcpy(dataBuff, replyWiter->Data(), data_len);
+            nwritten = sock_write_data(conn->get_fd(), dataBuff + conn->cur_resp_pos, data_len - conn->cur_resp_pos);
 
-// #endif
-//            if (-1 == nwritten)
-//            {
-//                 _close_connection(conn);
-            
-//            }else if (0 == nwritten)
-//            {
-//                 RTC_LOG(LS_WARNING)<<"Write zero bytes,fd: "<<conn->get_fd()
-//                                 <<", worker_id:"<<work_id_;
-// #ifdef USE_SDS  
-//            }
-//            else if ((nwritten + conn->cur_resp_pos) >= reply.size())
-//            {
-//              conn->reply_list.pop_front();
+#endif
+            if (-1 == nwritten)
+            {
+                _close_connection(conn);
+            }
+            else if (0 == nwritten)
+            {
+                RTC_LOG(LS_WARNING) << "Write zero bytes,fd: " << conn->get_fd()
+                                    << ", worker_id:" << work_id_;
+#ifdef USE_SDS
+            }
+            else if ((nwritten + conn->cur_resp_pos) >= reply.size())
+            {
+                conn->reply_list.pop_front();
 
-//              zfree((void*)read.data());
-//              conn->cur_resp_pos = 0;
-//             RTC_LOG(LS_WARNING)<<"Write all bytes,fd: "<<conn->get_fd()
-//                                 <<", worker_id:"<<work_id_;
+                zfree((void *)read.data());
+                conn->cur_resp_pos = 0;
+                RTC_LOG(LS_WARNING) << "Write all bytes,fd: " << conn->get_fd()
+                                    << ", worker_id:" << work_id_;
+            }
+#else
+            }
+            else if ((nwritten + conn->cur_resp_pos) >= data_len)
+            {
+                conn->reply_list.pop_front();
 
-//            }
-// #else
-//             }
-//             else if ((nwritten + conn->cur_resp_pos) >= reply->Length())
-//             {
-//              conn->reply_list.pop_front();
+                conn->cur_resp_pos = 0;
+                RTC_LOG(INFO) << "send_rtc_msg: nwritten=" << nwritten << ", cur_resp_pos= " << conn->cur_resp_pos << ", data_len:" << data_len;
+                //  replyWiter->Clear();
+                //  replyWiter = nullptr;
+            }
+#endif
+            else
+            {
+                conn->cur_resp_pos += nwritten;
+            }
+            RTC_LOG(INFO) << "send_rtc_msg end: nwritten=" << nwritten
+            << ", cur_resp_pos= " << conn->cur_resp_pos 
+            << ", data_len:" << data_len 
+            << ", conn->reply_list.empty()="<<conn->reply_list.empty();
+            conn->set_last_interaction_time(el_->now_time_usec());
+            if (conn->reply_list.empty())
+            {
 
-//              reply->Clear();
-//              conn->cur_resp_pos = 0;
-//              reply = nullptr;
-//              RTC_LOG(INFO) << "send_rtc_msg: " << nwritten << " " << conn->cur_resp_pos << " " << reply->Length();
-//            }
-// #endif
-//            else
-//            {
-//              conn->cur_resp_pos += nwritten;
-//            }
-//            conn->set_last_interaction_time(el_->now_time_usec());
-//            if (conn->reply_list.empty())
-//            {
-
-//             el_->stop_io_event(conn->io_watcher_,conn->get_fd(),EventLoop::WRITE);
-//            }
-           
-
-        // }
+                el_->stop_io_event(conn->io_watcher_, conn->get_fd(), EventLoop::WRITE);
+                el_->stop_timer_event(conn->timer_watcher_);
+            }
+        }
     }
 
 } // namespace lrtc

@@ -24,6 +24,12 @@ pushBtn.addEventListener("click", () => {
       (data,textStatus)=>{
         // 请求完成后重新启用按钮
         pushBtn.disabled = false;
+        console.log("push response:"+JSON.stringify(data));
+        if("success" == textStatus && 0 == data.errNo){
+            $("#tips1").html("<font color='blue'>推流请求成功</font")
+        }else{
+            $("#tips1").html("<font color='red'>推流请求失败</font")
+        }
 
       },
       "json")

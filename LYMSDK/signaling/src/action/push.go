@@ -1,8 +1,9 @@
 package action
 
 import (
-	// "fmt"
+	"fmt"
 	"strconv"
+  "encoding/json"
 	"test/src/framework"
 	"test/src/commonErrors"
 	"net/http"
@@ -24,8 +25,12 @@ type LRtcPushReq struct {
 }
 type LRtcPushResp struct {
   ErrorNo int `json:"err_no"`
-  ErrorMsg int `json:"err_msg"`
-  Offer int `json:"offer"`
+  ErrorMsg string `json:"err_msg"`
+  Offer string `json:"offer"`
+}
+type pushData struct {
+   Type string `json:"type"`
+   Sdp  string `json:"sdp"`
 }
 
 func (*PushAction) Execute(w http.ResponseWriter, cr *framework.CommonRequest){
@@ -86,11 +91,28 @@ func (*PushAction) Execute(w http.ResponseWriter, cr *framework.CommonRequest){
     Video:video,
   }
   var resp LRtcPushResp 
-  err = framework.Call("lrtc",req,resp,cr.LogId)
+  err = framework.Call("lrtc",req,&resp,cr.LogId)
+  // fmt.Printf( "Execute resp:%+v\n",resp)
   if err != nil {
     cerr := commonErrors.New(commonErrors.NetworkErr,"backend process error: " + err.Error())
     writeJsonErrorResponse(cerr,w,cr)
     return
   }
+  if resp.ErrorNo != 0 {
+    cerr := commonErrors.New(commonErrors.NetworkErr,fmt.Sprintf("backend process error: %d",resp.ErrorNo))
+    writeJsonErrorResponse(cerr,w,cr)
+    return
+  } 
+  httpResp := &CommonHttpResp{
+    ErrNo: 0,
+    ErrMsg: "success",
+    Data: pushData{
+      Type: "offer",
+      Sdp : resp.Offer,
+    },
+  }
+  b,_ := json.Marshal(httpResp)
+  cr.Logger.AddNotice("resp",string(b))
+  w.Write(b)
 
 }
