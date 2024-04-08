@@ -28,8 +28,26 @@ namespace lrtc
     {
 #ifdef USE_SDS
         sdsfree(queryBuf_);
+        while (!reply_list.empty())
+        {
+           rtc::Slice reply = reply_list.front();
+           zfree((void*)reply.data());
+           reply_list.pop_front();
+        }
+        
+#else
+   while (!reply_list.empty())
+   {
+       std::unique_ptr<rtc::ByteBufferWriter> reply = std::move(reply_list.front());
+       reply_list.pop_front();
+       reply.reset();
+       reply = nullptr;
+   }
+   
+        
 #endif
-    }
+    reply_list.clear();
+}
 
     int TcpConnection::read(int fd, 
                             std::function<void( Json::Value, uint32_t)> callback)
