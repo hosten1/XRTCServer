@@ -48,6 +48,7 @@ set(SOURCES
     "libwebrtc/rtc_base/message_queue.cc"
     "libwebrtc/rtc_base/net_helper.cc"
     "libwebrtc/rtc_base/net_helpers.cc"
+    "libwebrtc/rtc_base/network.cc"
     "libwebrtc/rtc_base/network_monitor.cc"
     "libwebrtc/rtc_base/null_socket_server.cc"
     "libwebrtc/rtc_base/openssl_digest.cc"
@@ -134,6 +135,7 @@ include_directories(
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if(ANDROID)
     MESSAGE(STATUS "current platform: Android")
+    add_definitions(-DWEBRTC_ANDROID)
     # 向 SOURCES 变量追加新的源文件
      list(APPEND SOURCES 
             "libwebrtc/rtc_base/strings/ifaddrs_android.cc"

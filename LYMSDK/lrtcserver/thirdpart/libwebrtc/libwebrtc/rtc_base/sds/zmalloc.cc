@@ -10,6 +10,7 @@
 // #include "rtc_base/sds/fmacros.h"
 // #include "rtc_base/sds/config.h"
 #include "rtc_base/sds/solarisfixes.h"
+#include "rtc_base/sds/zmalloc_define.h"
 
 #include <stdio.h>
 #include <stdlib.h>
