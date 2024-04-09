@@ -113,7 +113,7 @@ include_directories(
     "libwebrtc"
     "../abseil-cpp"
     "./json/single_include/nlohmann"
-    "./deps/openssl/include"
+    "./deps/openssl/install/include"
 )
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
@@ -158,7 +158,7 @@ link_directories(
     "./out/deps/abseil-cpp/absl/base"
     "./out/deps/abseil-cpp/absl/container"
     "./out/deps/abseil-cpp/absl/container"
-    "./deps/openssl"
+    "./deps/openssl/install/lib"
     )
 
 # add_subdirectory("./deps/abseil-cpp")
