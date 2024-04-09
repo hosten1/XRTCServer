@@ -47,15 +47,15 @@ echo "Running cmake..."
 cmake .. || { echo "CMake failed."; exit 1; }
 
 
-if test $# -gt 0 && test $1 = "clean"
-then 
+if [ "$1" == "clean" ] || [ "$1" == "-c" ]; then
     echo "make clean ..."
     make clean
-else
-    echo "make ..."
-    # 执行 make 命令
-    make -j$(($cpu_cores * 2))
 fi
+ echo "make ..."
+    # 获取CPU核心数量
+    cpu_cores=$(nproc --all)
+    # 执行 make 命令
+    make -j$((cpu_cores * 2))
 
 cd ../
 # 检查是否传递了第二个参数，如果是 "-run"，则执行目标运行文件

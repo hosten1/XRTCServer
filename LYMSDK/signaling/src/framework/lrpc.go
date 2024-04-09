@@ -96,9 +96,13 @@ func Call(serviceName string, request interface{} ,response interface{},logId ui
 	if err != nil {
 		return err
 	}
-
 	
-	fmt.Println(resp)
+	err = json.Unmarshal(resp.Body,response)
+	fmt.Println("Call resp:",resp,response,err)
+	if err != nil {
+		return err
+	}
+	
 
 
 	return nil

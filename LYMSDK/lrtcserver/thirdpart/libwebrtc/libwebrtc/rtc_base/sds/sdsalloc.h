@@ -17,7 +17,11 @@
 #ifndef __SDS_ALLOC_H__
 #define __SDS_ALLOC_H__
 
-#include "rtc_base/sds/zmalloc.h"
+
+#define LYM_RTC_USE_ZMALLIC
+
+#ifdef LYM_RTC_USE_ZMALLIC
+ #include "rtc_base/sds/zmalloc.h"
 #define s_malloc zmalloc
 #define s_realloc zrealloc
 #define s_trymalloc ztrymalloc
@@ -28,5 +32,18 @@
 #define s_trymalloc_usable ztrymalloc_usable
 #define s_tryrealloc_usable ztryrealloc_usable
 #define s_free_usable zfree_usable
+#else
+#define s_malloc malloc
+#define s_realloc realloc
+// #define s_trymalloc ztrymalloc
+// #define s_tryrealloc ztryrealloc
+#define s_free free
+// #define s_malloc_usable zmalloc_usable
+// #define s_realloc_usable zrealloc_usable
+// #define s_trymalloc_usable ztrymalloc_usable
+// #define s_tryrealloc_usable ztryrealloc_usable
+// #define s_free_usable zfree_usable
+#endif // DEBUG
+
 
 #endif

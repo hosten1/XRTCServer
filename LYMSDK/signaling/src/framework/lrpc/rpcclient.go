@@ -70,7 +70,15 @@ func (c *Client) Do(req *Request) (*Resopnse, error){
 	if err := rw.Writer.Flush(); err != nil {
 		return nil, err
 	}
+	// 读取响应结果
+	resp,err := ReadResponse(rw)
+	if err != nil{
+		return nil,err
+	}
+	// fmt.Println("ReadResponse resp:",resp)
+	// fmt.Println("ReadResponse err:",err)
+	nc.Close()
 
 
-	return nil,nil
+	return resp,err
 }

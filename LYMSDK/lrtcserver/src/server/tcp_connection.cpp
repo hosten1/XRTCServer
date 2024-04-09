@@ -1,6 +1,7 @@
 #include "server/tcp_connection.h"
 #include <cstring>
 #include <unistd.h> // 包含 close 函数的头文件
+#include <algorithm> // 包含 std::max 函数的头文件
 
 #include "base/socket.h"
 #include "tcp_connection.h"
@@ -27,45 +28,70 @@ namespace lrtc
     {
 #ifdef USE_SDS
         sdsfree(queryBuf_);
+        while (!reply_list.empty())
+        {
+           rtc::Slice reply = reply_list.front();
+           zfree((void*)reply.data());
+           reply_list.pop_front();
+        }
+        
+#else
+   while (!reply_list.empty())
+   {
+       std::unique_ptr<rtc::ByteBufferWriter> reply = std::move(reply_list.front());
+       reply_list.pop_front();
+       reply.reset();
+       reply = nullptr;
+   }
+   
+        
 #endif
-    }
+    reply_list.clear();
+}
 
     int TcpConnection::read(int fd, 
                             std::function<void( Json::Value, uint32_t)> callback)
     {
         // 本次实际上读取的大小
+        // int nread = 0;
+        // const int read_len =  bytes_expected_;
+        // int ensure_len = std::max((int)read_len, (int)(read_len + queryBuf_.size()));
+        // queryBuf_.EnsureCapacity(ensure_len);
+        // nread = sock_read_data(fd, queryBuf_.data() + read_len, read_len);
+        //    read_len;
+        // int size_r = queryBuf_.size() + read_len;
+        // queryBuf_.SetSize(size_r);
         int nread = 0;
-        const int read_len = L_HEADER_SIZE * 4;
+        const int read_len = bytes_expected_;
+        RTC_LOG(LS_INFO) << "TcpConnection::read() begin. read_len:"<< read_len
+                         <<", fd:" << fd << " ip:" << ip_ << " port:" << port_;
+
 
         char readBuffer[read_len];
         memset(readBuffer, 0, read_len);
         nread = sock_read_data(fd, readBuffer, read_len);
+        // queryBuf_.AppendData(readBuffer,nread);
+
         RTC_LOG(LS_INFO) << "TcpConnection::read _on_recv_notify fd:" << fd
-                         << " nread:" << nread;
+                         << ", nread:" << nread
+                         <<", queryBuf_.size():" <<queryBuf_.size();
         if (-1 == nread)
         {
             // _close_connection(fd);
             return -1;
         }
-        else if (nread > 0)
+        else if (nread > 0 )
         {
-            // // 创建二进制数据并分配足够的内存
-            // char *data = new char[sizeof(lheader_t)];
+            try
+            {
+                queryBuf_.AppendData(readBuffer, nread);
+            }
+            catch (const std::exception &e)
+            {
+                RTC_LOG(LS_ERROR) << "queryBuf_.AppendData error";
+            }
 
-            // // 填充 lheader_t 的实例 t 的数据
-            // lheader_t t;
-            // t.id = 1234;
-            // t.version = 1;
-            // t.log_id = 5678;
-            // std::strcpy(t.provider, "Provider"); // 使用 strcpy 将字符串复制到 provider 中
-            // t.magic_num = 0xfb202404;
-            // t.reserved = 0;
-            // t.body_len = 1024;
-
-            // // 使用 memcpy 将 t 的数据复制到 data 中
-            // memcpy(data, &t, sizeof(lheader_t));
-
-            _recv(readBuffer, nread,callback);
+            if(queryBuf_.size() >= L_HEADER_SIZE)_recv(queryBuf_.data(), nread,callback);
             // delete[] data;
         }
 
@@ -74,25 +100,49 @@ namespace lrtc
     int TcpConnection::_recv(char *buf, int len, 
                             std::function<void(Json::Value, uint32_t)> callback)
     {
-        lheader_t header;
-        std::string body;
-        _parseDataIntoLHeader(buf, len, header, body);
-         // 现在可以访问结构体的字段了
-        RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << header.toString()
-                         << ", \nbody:" << body
-                         << "\nprovider: " << std::string(header.provider, sizeof(header.provider));
-        Json::CharReaderBuilder buildr;
-        std::unique_ptr<Json::CharReader> reader(buildr.newCharReader());
-        Json::Value root;
-        JSONCPP_STRING errs;
-        reader->parse(body.c_str(), body.c_str() + body.size(), &root, &errs);
-        if(!errs.empty())
+        if (current_state_ == STATE_HEAD)
         {
-            RTC_LOG(LS_WARNING) << "parse body json err : " << errs << ",log_id:" << header.log_id;
-            return -1;
-
+            _parseDataIntoLHeader(buf, len, req_header_);
+            // req_header_
+                RTC_LOG(LS_INFO) << "TcpConnection::recv header:" << req_header_.toString();
+                return 0;
         }
-        if (callback)callback(root,header.log_id);
+        if (current_state_ == STATE_BODY)
+        {
+            std::string body;
+           bool retBool =  _parseDataOfBodyJson(buf+L_HEADER_SIZE, len, req_header_.body_len, body);
+            if (!retBool)
+            {
+                RTC_LOG(LS_WARNING) << "parse body json err : " << "log_id:" << req_header_.log_id;
+                return -1;
+            }
+            
+            if (body.length() <= 0)
+            {
+                return 0;
+            }
+
+            Json::CharReaderBuilder buildr;
+            std::unique_ptr<Json::CharReader> reader(buildr.newCharReader());
+            Json::Value root;
+            JSONCPP_STRING errs;
+            reader->parse(body.c_str(), body.c_str() + body.size(), &root, &errs);
+            if (!errs.empty())
+            {
+                RTC_LOG(LS_WARNING) << "parse body json err : " << errs << ",log_id:" << req_header_.log_id;
+                return -1;
+            }
+            RTC_LOG(LS_INFO) << "TcpConnection::recv parse body success!! body:" << body;
+            if (callback)
+                callback(root, req_header_.log_id);
+        }
+       
+        
+
+        
+       
+        
+       
 
         //   RTC_LOG(LS_INFO) << "id: " << header.id;
         //     RTC_LOG(LS_INFO) << "version: " << header.version;
@@ -120,9 +170,35 @@ namespace lrtc
         close(fd_);
         return 0;
     }
-    // Function to parse data into lheader_t structure
-    bool TcpConnection::_parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header, std::string &body)
+    void TcpConnection::writerHeaderDataToBuffer(const lheader_t& header, rtc::ByteBufferWriter &writer)
     {
+        // 将 id 写入 ByteBufferWriter
+        writer.WriteUInt16(header.id);
+
+        // 将 version 写入 ByteBufferWriter
+        writer.WriteUInt16(header.version);
+
+        // 将 log_id 写入 ByteBufferWriter
+        writer.WriteUInt32(header.log_id);
+
+       writer.WriteBytes(header.provider, sizeof(header.provider));
+        // 将 magic_num 写入 ByteBufferWriter
+        writer.WriteUInt32(header.magic_num);
+
+        // 将 reserved 写入 ByteBufferWriter
+        writer.WriteUInt32(header.reserved);
+
+        // 将 body_len 写入 ByteBufferWriter
+        writer.WriteUInt32(header.body_len);
+    }
+    // Function to parse data into lheader_t structure
+    bool TcpConnection::_parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header)
+    {
+        if (current_state_!= STATE_HEAD)
+        {
+            return false;
+        }
+        
         // Check if data size is at least the size of the header
         if (data_size < sizeof(lheader_t))
         {
@@ -141,21 +217,39 @@ namespace lrtc
         reader.ReadUInt32(&header.body_len);
         if (L_HEADER_MAGIC_NUMBER != header.magic_num)
         {
+            current_state_ = STATE_HEAD;
+            bytes_expected_ = L_HEADER_SIZE;
             RTC_LOG(LS_WARNING) << "invalid magic number:" << header.magic_num
                                 << ", L_HEADER_MAGIC_NUMBER=" << L_HEADER_MAGIC_NUMBER;
             return false;
+        
         }
-
-        if (reader.Length() > 0 && reader.Length() >= header.body_len)
-        {
-            reader.ReadString(&body, header.body_len);
-        }
-        else
-        {
-            RTC_LOG(LS_ERROR) << "lym body_len:" << header.body_len << ", reader.Length():" << reader.Length();
-        }
+        current_state_ = STATE_BODY;
+        bytes_expected_ = header.body_len;
+        
+        
 
         return true; // Parsing successful
+    }
+    bool TcpConnection::_parseDataOfBodyJson(const char *data, size_t data_size,size_t  body_len,std::string &body)
+    {
+        if (current_state_ == STATE_BODY)
+        {
+            if (data_size > 0 && data_size >= body_len)
+            {
+                rtc::ByteBufferReader reader(data, data_size, rtc::ByteBuffer::ORDER_HOST);
+
+                reader.ReadString(&body, body_len);
+                return true;
+            }
+            else
+            {
+                RTC_LOG(LS_ERROR) << "lym body_len:" << body_len << ", data_size:" << data_size;
+                return false;
+            }
+        }
+        return true;
+        
     }
     // size_t TcpConnection::unpackageHeader(rtc::ArrayView<const uint8_t> package_frame,
     //                                                  uint8_t version[4],

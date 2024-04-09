@@ -84,7 +84,7 @@ namespace lrtc
         if (ev_is_active(io))
         {
             int active_events = TRANS_FROM_EV_MASK(io->events);
-            int events = active_events | (~mask);
+            int events = active_events & (~mask);
             if (events == active_events)
             {
                 return; // 没有事件变化不需要处理
@@ -110,7 +110,7 @@ namespace lrtc
         if (ev_is_active(io))
         {
             int active_events = TRANS_FROM_EV_MASK(io->events);
-            int events = active_events | (~mask);
+            int events = active_events & (~mask);
             if (events == active_events)
             {
                 return; // 没有事件变化不需要处理
@@ -131,7 +131,7 @@ namespace lrtc
         ev_io_stop(loop_, io);
         delete watcher;
     }
-    void EventLoop::destroy_io_event(IOWatcher *watcher,int fd,int mask)
+    void EventLoop::destroy_io_event(IOWatcher *watcher,int /*fd*/,int /*mask*/)
     {
         struct  ev_io *io = &(watcher->io_);
         ev_io_stop(loop_, io);
@@ -156,7 +156,7 @@ namespace lrtc
        bool need_repeat_;
    };
 
-    static void genric_timer_cb(struct ev_loop */*loop*/, struct ev_timer* timer,int events){
+    static void genric_timer_cb(struct ev_loop */*loop*/, struct ev_timer* timer,int /*events*/){
         TimerWatcher *watcher = (TimerWatcher *)(timer->data);
         watcher->cb_(watcher->el_,watcher,watcher->data_);
         if (watcher->need_repeat_)

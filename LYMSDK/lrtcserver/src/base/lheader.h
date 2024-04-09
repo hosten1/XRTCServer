@@ -36,16 +36,27 @@ namespace lrtc
             reserved = 0;
             body_len = 0;
         }
+        // 复制构造函数
+        lheader_t(const lheader_t &other)
+        {
+            id = other.id;
+            version = other.version;
+            log_id = other.log_id;
+            memcpy(provider, other.provider, sizeof(provider));
+            magic_num = other.magic_num;
+            reserved = other.reserved;
+            body_len = other.body_len;
+        }
         std::string toString()
         {
-           std::string magicStr = getMagicNumFormatted();
-                return "id: " + std::to_string(id) +
-                       ", version: " + std::to_string(version) +
-                       ", log_id: " + std::to_string(log_id) +
-                       ", provider: " + std::string(provider) +
-                       ", magic_num: " + magicStr +
-                       ", reserved: " + std::to_string(reserved) +
-                       ", body_len: " + std::to_string(body_len);
+            std::string magicStr = getMagicNumFormatted();
+            return "id: " + std::to_string(id) +
+                   ", version: " + std::to_string(version) +
+                   ", log_id: " + std::to_string(log_id) +
+                   ", provider: " + std::string(provider) +
+                   ", magic_num: " + magicStr +
+                   ", reserved: " + std::to_string(reserved) +
+                   ", body_len: " + std::to_string(body_len);
         }
         std::string getMagicNumFormatted() const
         {

@@ -9,7 +9,7 @@
 namespace lrtc
 {
     void rtc_server_recv_notify(EventLoop * /*el*/, IOWatcher * /*w*/,
-                                int fd, int events, void *data)
+                                int fd, int /*events*/, void *data)
     {
         int msg;
         if (read(fd, &msg, sizeof(int)) != sizeof(int))
@@ -206,6 +206,22 @@ namespace lrtc
 
         RTC_LOG(LS_INFO) << "RtcServer::_stop() end";
     }
+    RtcWorker* RtcServer::_get_worker(const std::string stream_name)
+    {
+       if (!workers_.size() || workers_.size() != (size_t)options_.worker_num)
+       {
+         RTC_LOG(LS_WARNING) << "rtc server get worker workers_.size(): " << workers_.size();
+
+         return nullptr;
+       }
+       
+        uint32_t num = rtc::ComputeCrc32(stream_name);
+        size_t index = num % options_.worker_num;
+        RTC_LOG(LS_INFO) << "rtc server get worker index:" << index;
+        return workers_[index].get();
+
+    }
+
 
     void RtcServer::_process_rtc_msg()
     {
@@ -216,7 +232,15 @@ namespace lrtc
             return;
         }
         RTC_LOG(LS_INFO) << "rtc server recv rtc msg:" << rtc_msg->toString();
+        RtcWorker *worker = _get_worker(rtc_msg->stream_name);
+        if (worker)
+        {
+            worker->send_rtc_msg(rtc_msg);
+        }else{
+            RTC_LOG(LS_ERROR) << "rtc server get worker is null";
+        }
     }
+
 
     int RtcServer::_create_worker(int work_id)
     {

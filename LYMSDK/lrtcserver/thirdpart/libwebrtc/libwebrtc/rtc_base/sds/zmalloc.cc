@@ -7,8 +7,8 @@
  * (RSALv2) or the Server Side Public License v1 (SSPLv1).
  */
 
-#include "rtc_base/sds/fmacros.h"
-#include "rtc_base/sds/config.h"
+// #include "rtc_base/sds/fmacros.h"
+// #include "rtc_base/sds/config.h"
 #include "rtc_base/sds/solarisfixes.h"
 
 #include <stdio.h>
@@ -30,8 +30,8 @@ void zlibc_free(void *ptr) {
 }
 
 #include <string.h>
-#include "zmalloc.h"
-// #include "atomicvar.h"
+#include "rtc_base/sds/zmalloc.h"
+#include "rtc_base/sds/atomicvar.h"
 
 #define UNUSED(x) ((void)(x))
 
@@ -382,7 +382,7 @@ void zfree_usable(void *ptr, size_t *usable) {
 
 char *zstrdup(const char *s) {
     size_t l = strlen(s)+1;
-    char *p = zmalloc(l);
+    char *p = static_cast<char *>(zmalloc(l));
 
     memcpy(p,s,l);
     return p;

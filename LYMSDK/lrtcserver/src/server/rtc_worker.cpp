@@ -4,7 +4,9 @@
 
 #include <rtc_base/logging.h>
 #include "base/socket.h"
-
+#include "rtc_worker.h"
+#include "server/signaling_work.h"
+#include "server/tcp_connection.h"
 
 
 namespace lrtc
@@ -136,14 +138,37 @@ namespace lrtc
         }
     }
 
+    void RtcWorker::push_msg(std::shared_ptr<LRtcMsg> rtc_msg)
+    {
+        q_msg_.produce(rtc_msg);
+    }
+
+    bool RtcWorker::pop_msg(std::shared_ptr<LRtcMsg> *rtc_msg)
+    {
+        if (q_msg_.consumer(rtc_msg))
+        {
+            return true;
+        }
+        return false;
+    }
+
     int RtcWorker::notify_new_conn(int fd)
     {
             //使用队列存储消息的内容
         RTC_LOG(LS_INFO) << "RtcWorker Work::notify_new_conn() notify new conn fd:" << fd;
-        notify_queue_.produce(fd);
-       return _notify(RtcWorker::MSG_NEW_CONN);
+    //     notify_queue_.produce(fd);
+    //    return _notify(RtcWorker::MSG_NEW_CONN);
+        return 0;
     }
 
+    int RtcWorker::send_rtc_msg(const std::shared_ptr<LRtcMsg> rtc_msg)
+    {
+        // 将消息 放到 worker队列
+        push_msg(rtc_msg);
+        return _notify(RtcWorker::MSG_RTC_MSG);
+
+        return 0;
+    }
     int RtcWorker::_notify(int msg)
     {
         RTC_LOG(LS_INFO) << "RtcWorker worker notify msg:" << msg;
@@ -159,14 +184,8 @@ namespace lrtc
         case RtcWorker::MSG_QUIT:
             _stop();
             break;
-        case RtcWorker::MSG_NEW_CONN:
-             int fd;
-             if (notify_queue_.consumer(&fd))
-             {
-                _accept_new_connection(fd);
-
-             }
-             RTC_LOG(LS_INFO)<<"RtcWorker server _accept_new_connection fd:"<<fd << ", worker id :"<<work_id_;;
+        case RtcWorker::MSG_RTC_MSG:
+             _process_rtc_msg();
             break;
 
         default:
@@ -192,33 +211,60 @@ namespace lrtc
 
         RTC_LOG(LS_INFO) << "RtcWorker server _stop end , worker id :"<<work_id_;
     }
+    void RtcWorker::_process_push_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg)
+    {
+       std::string offer = "offer";
+       rtcmsg->sdp = offer;
+       
+       SignalingWork *signaling_work = (SignalingWork *)rtcmsg->signalingWorker;
+       RTC_LOG(LS_INFO)<<"RtcWorker::_process_push_rtcmsg,signaling_work.id:"<<signaling_work->get_work_id()
+       << " rtcmsg.signalingWorkerid:" << rtcmsg->signalingWorkerId;
+       if (signaling_work)
+       {
+         signaling_work->send_rtc_msg(rtcmsg);
+       }
+       
+       // 将结果返回给client
 
-    void RtcWorker::_accept_new_connection(const int fd)
+    }
+    void RtcWorker::_process_rtc_msg()
+    {
+        std::shared_ptr<LRtcMsg> rtcmsg;
+        if (!pop_msg(&rtcmsg))
+        {
+            return;
+        }
+        RTC_LOG(LS_INFO) << "RtcWorker server _process_rtc_msg begin worker id :"<<work_id_
+                        << " msg:" << rtcmsg->toString();
+        switch (rtcmsg->cmdno)
+        {
+        case CMDNUM_PUSH:
+           _process_push_rtcmsg(rtcmsg);
+            break;
+        
+        default:
+            RTC_LOG(LS_WARNING) << "RtcWorker server _process_rtc_msg unknown msg:" << rtcmsg->toString();
+            break;
+        }
+    }
+
+    void RtcWorker::_read_query(int /*fd*/)
     {
     }
 
-    void RtcWorker::_read_query(int fd)
+    void RtcWorker::_close_connection(TcpConnection */*conn*/)
     {
     }
 
-    void RtcWorker::_close_connection(TcpConnection *conn)
+    void RtcWorker::_remove_connection(TcpConnection */*conn*/)
     {
     }
 
-    void RtcWorker::_remove_connection(TcpConnection *conn)
+    void RtcWorker::_process_timeout(TcpConnection */*conn*/)
     {
     }
 
-    void RtcWorker::_process_timeout(TcpConnection *conn)
-    {
-    }
-
-    int RtcWorker::_process_request_msg(TcpConnection *conn, Json::Value root, uint32_t log_id)
-    {
-        return 0;
-    }
-
-    int RtcWorker::_process_request_push_msg(TcpConnection *conn, int cmdno, Json::Value root, uint32_t log_id)
+    int RtcWorker::_process_request_msg(TcpConnection */*conn*/, Json::Value /*oot*/, uint32_t /*log_id*/)
     {
         return 0;
     }

@@ -8,6 +8,7 @@
 #include <queue>
 #include <mutex>
 
+#include "rtc_base/crc32.h"
 #include "base/event_loop.h"
 #include "base/lrtc_server_def.h"
 #include  "json/json.h"
@@ -46,6 +47,8 @@ namespace lrtc {
        void _stop();
        void _process_rtc_msg();
        int _create_worker(int work_id);
+        RtcWorker* _get_worker(const std::string stream_name);
+
 
    private:
        std::unique_ptr<EventLoop> event_loop_{nullptr};

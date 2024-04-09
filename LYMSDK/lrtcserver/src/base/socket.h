@@ -10,6 +10,7 @@ int sock_setnonblock(int sock);
 int sock_setnodelay(int sock);
 int sock_peet_to_string(int sock,char *host,int *port);
 int sock_read_data(int sock,char *buf,int len);
+int sock_write_data(int sock,const char *buf,const int len);
 
 }  // namespace lrtc
 

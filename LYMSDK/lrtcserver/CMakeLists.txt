@@ -5,7 +5,7 @@ set(PROJECT_VERSION_MAJOR 1)
 set(PROJECT_VERSION_MINOR 0)
 
 add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX -DWEBRTC_LINUX")
-
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 # add_subdirectory("./thirdpart/librtcbase")
 # add_subdirectory("./thirdpart/yaml-cpp")
 # add_subdirectory("./thirdpart/abseil-cpp")
@@ -35,6 +35,8 @@ file(GLOB all_src
     "./src/base/*.cpp"
     # "./src/base/handles/*.cpp"
     "./src/server/*.cpp"
+    "./src/stream/*.cpp"
+    "./src/pc/*.cpp"
    )    
 
 add_executable(lrtcserver ${all_src})

@@ -1,21 +1,25 @@
 #ifndef __LYMSDK_LRTCSERVER_SRC_SERVER_TCP_CONNECTION_H_
 #define __LYMSDK_LRTCSERVER_SRC_SERVER_TCP_CONNECTION_H_
 
+// #define USE_SDS
+
 #include <string>
 #include <functional>
+#include <list>
 #include "base/event_loop.h"
 #include "base/lheader.h"
 #include "rtc_base/byte_buffer.h"
 //第三方库 jsoncpp
 #include "json/json.h"
-
 #include "base/lrtc_server_def.h"
 
-// #define USE_SDS
+
 #ifdef USE_SDS
+#include <rtc_base/zmalloc.h>
 extern "C"
 {
 #include "rtc_base/sds/sds.h"
+#include "rtc_base/sds/slice.h"
 }
 #endif
 
@@ -24,14 +28,12 @@ namespace lrtc
     class TcpConnection
     {
     public:
-#ifdef USE_SDS
         enum
         {
             STATE_HEAD = 0,
             STATE_BODY = 1,
             STATE_DONE
         };
-#endif // USE_SDS
 
         TcpConnection(int fd, const char *ip, int port);
         TcpConnection(int fd);
@@ -40,6 +42,8 @@ namespace lrtc
         int read(int fd, std::function<void( Json::Value, uint32_t)> callback);
         int send(const char *buf, int len);
         int close_conn();
+
+        void writerHeaderDataToBuffer(const lheader_t& header,rtc::ByteBufferWriter &writer);
 
         int get_fd() const { return fd_; }
         const char *get_ip() const { return ip_; }
@@ -53,18 +57,29 @@ namespace lrtc
         {
             return last_interaction_time_;
         }
+         
+        lheader_t*  req_header()
+         {
+            return &req_header_;
+         }
 
         IOWatcher *io_watcher_ = nullptr;
         TimerWatcher *timer_watcher_ = nullptr;
 
 #ifdef USE_SDS
-        int current_state_ = STATE_HEAD;
+       
+        std::list<rtc::Slice> reply_list;
+#else
+        std::list<std::unique_ptr<rtc::ByteBufferWriter>> reply_list;
 #endif
+// 记录写入的位置i
+       size_t cur_resp_pos = 0;
 
     private:
         int _recv(char *buf, int len, std::function<void( Json::Value, uint32_t)> callback);
 
-        bool _parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header, std::string &body);
+        bool _parseDataIntoLHeader(const char *data, size_t data_size, lheader_t &header);
+        bool _parseDataOfBodyJson(const char *data, size_t data_size,size_t  body_len,std::string &body);
 
     private:
         int fd_;
@@ -72,8 +87,11 @@ namespace lrtc
         int port_;
 
         size_t bytes_processed_ = 0;
+        int current_state_ = STATE_HEAD;
 #ifdef USE_SDS
         sds queryBuf_;
+#else
+       rtc::BufferT<char> queryBuf_;
 #endif
         size_t bytes_expected_ = L_HEADER_SIZE;
 
@@ -84,6 +102,7 @@ namespace lrtc
         int recv_buf_len_;
         char *recv_buf_;
         char *send_buf_;
+        lheader_t  req_header_;
     };
 
 }; // namespace lrtc

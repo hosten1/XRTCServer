@@ -70,6 +70,7 @@ int init_rtc_server(const char *filename)
     {
         return -1;
     }
+    return 0;
 }
 static void process_signal(int sig)
 {
