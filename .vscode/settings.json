@@ -69,6 +69,7 @@
         "typeindex": "cpp",
         "*.inc": "cpp",
         "cerrno": "cpp",
-        "string.h": "c"
+        "string.h": "c",
+        "features.h": "c"
     }
 }

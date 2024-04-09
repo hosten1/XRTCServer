@@ -36,6 +36,7 @@ file(GLOB all_src
     # "./src/base/handles/*.cpp"
     "./src/server/*.cpp"
     "./src/stream/*.cpp"
+    "./src/pc/*.cpp"
    )    
 
 add_executable(lrtcserver ${all_src})
