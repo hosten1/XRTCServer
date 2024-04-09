@@ -28,6 +28,7 @@ set(SOURCES
     "libwebrtc/rtc_base/bit_buffer.cc"
     "libwebrtc/rtc_base/byte_buffer.cc"
     "libwebrtc/rtc_base/checks.cc"
+    "libwebrtc/rtc_base/checks1.cc"
     "libwebrtc/rtc_base/logging.cc"
     "libwebrtc/rtc_base/copy_on_write_buffer.cc"
     "libwebrtc/rtc_base/cpu_time.cc"
@@ -39,12 +40,15 @@ set(SOURCES
     "libwebrtc/rtc_base/string_encode.cc"
     "libwebrtc/rtc_base/string_to_number.cc"
     "libwebrtc/rtc_base/string_utils.cc"
+#   这个是absl下的
     "libwebrtc/rtc_base/string_view.cc"
     "libwebrtc/rtc_base/time_utils.cc"
     "libwebrtc/rtc_base/zero_memory.cc"
     "libwebrtc/rtc_base/strings/string_builder.cc"
     "libwebrtc/rtc_base/synchronization/sequence_checker.cc"
     "libwebrtc/rtc_base/strings/audio_format_to_string.cc"
+    "libwebrtc/rtc_base/third_party/base64/base64.cc"
+    "libwebrtc/rtc_base/third_party/sigslot/sigslot.cc"
     "libwebrtc/rtc_base/sds/sds.cc"
     "libwebrtc/rtc_base/sds/zmalloc.cc"    
 

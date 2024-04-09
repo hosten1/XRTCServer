@@ -33,7 +33,7 @@
 #define LAST_SYSTEM_ERROR (errno)
 #endif  // WEBRTC_WIN
 
-#include "rtc_base/checks.h"
+#include "checks.h"
 
 namespace {
 #if defined(__GNUC__)
@@ -97,8 +97,8 @@ bool ParseArg(va_list* args, const CheckArgType** fmt, std::string* s) {
       s->append(*va_arg(*args, const std::string*));
       break;
     case CheckArgType::kStringView: {
-      const absl::string_view sv = *va_arg(*args, const absl::string_view*);
-      s->append(sv.data(), sv.size());
+      // const std::string_view sv = *va_arg(*args, const std::string_view*);
+      // s->append(sv.data(), sv.size());
       break;
     }
     case CheckArgType::kVoidP:

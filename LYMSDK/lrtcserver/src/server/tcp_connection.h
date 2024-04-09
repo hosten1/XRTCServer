@@ -15,8 +15,8 @@
 
 
 #ifdef USE_SDS
-extern "C"
 #include <rtc_base/zmalloc.h>
+extern "C"
 {
 #include "rtc_base/sds/sds.h"
 #include "rtc_base/sds/slice.h"
