@@ -1,5 +1,5 @@
 
-#include <stringstream>
+#include <sstream>
 
 #include "pc/session_description.h"
 
@@ -30,7 +30,7 @@ namespace lrtc
         ss << "t=0 0\r\n";
         //  BUNDLE
 
-        ss<< "a=msid-semantic: WMS\r\n"
+        ss<< "a=msid-semantic: WMS\r\n";
         //RFC 4566
         // audio
 
