@@ -22,6 +22,9 @@ set(SOURCES
 
     "libwebrtc/rtc_base/async_resolver_interface.cc"
     "libwebrtc/rtc_base/async_socket.cc"
+    "libwebrtc/rtc_base/async_packet_socket.cc"
+    "libwebrtc/rtc_base/async_tcp_socket.cc"
+    "libwebrtc/rtc_base/async_udp_socket.cc"
     "libwebrtc/rtc_base/bit_buffer.cc"
     "libwebrtc/rtc_base/byte_buffer.cc"
     "libwebrtc/rtc_base/checks.cc"
@@ -39,6 +42,7 @@ set(SOURCES
     "libwebrtc/rtc_base/logging.cc"
     "libwebrtc/rtc_base/message_handler.cc"
     "libwebrtc/rtc_base/message_queue.cc"
+    "libwebrtc/rtc_base/net_helper.cc"
     "libwebrtc/rtc_base/net_helpers.cc"
     "libwebrtc/rtc_base/null_socket_server.cc"
     "libwebrtc/rtc_base/platform_thread_types.cc"
