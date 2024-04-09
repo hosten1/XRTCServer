@@ -37,27 +37,35 @@ set(SOURCES
     "libwebrtc/rtc_base/data_rate_limiter.cc"
     "libwebrtc/rtc_base/event.cc"
     "libwebrtc/rtc_base/flags.cc"
+    "libwebrtc/rtc_base/http_common.cc"
+    "libwebrtc/rtc_base/ifaddrs_converter.cc"
     "libwebrtc/rtc_base/ip_address.cc"
     "libwebrtc/rtc_base/location.cc"
     "libwebrtc/rtc_base/logging.cc"
+    "libwebrtc/rtc_base/message_digest.cc"
     "libwebrtc/rtc_base/message_handler.cc"
     "libwebrtc/rtc_base/message_queue.cc"
     "libwebrtc/rtc_base/net_helper.cc"
     "libwebrtc/rtc_base/net_helpers.cc"
     "libwebrtc/rtc_base/network_monitor.cc"
     "libwebrtc/rtc_base/null_socket_server.cc"
+    "libwebrtc/rtc_base/openssl_digest.cc"
     "libwebrtc/rtc_base/platform_thread_types.cc"
+    "libwebrtc/rtc_base/platform_thread.cc"
     "libwebrtc/rtc_base/physical_socket_server.cc"
     "libwebrtc/rtc_base/rate_statistics.cc"
     "libwebrtc/rtc_base/random.cc"
+    "libwebrtc/rtc_base/stream.cc"
     "libwebrtc/rtc_base/string_encode.cc"
     "libwebrtc/rtc_base/string_to_number.cc"
     "libwebrtc/rtc_base/string_utils.cc"
 #   这个是absl下的
     "libwebrtc/rtc_base/signal_thread.cc"
     "libwebrtc/rtc_base/socket.cc"
-    "libwebrtc/rtc_base/socket.cc"
+    "libwebrtc/rtc_base/socket_stream.cc"
     "libwebrtc/rtc_base/socket_address.cc"
+    "libwebrtc/rtc_base/socket_adapters.cc"
+    "libwebrtc/rtc_base/socket_address_pair.cc"
     "libwebrtc/rtc_base/time_utils.cc"
     "libwebrtc/rtc_base/zero_memory.cc"
     "libwebrtc/rtc_base/thread.cc"
@@ -105,34 +113,43 @@ include_directories(
     "libwebrtc"
     "../abseil-cpp"
     "./json/single_include/nlohmann"
+    "./deps/openssl/include"
 )
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
-
-# 添加条件定义
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    MESSAGE(STATUS "current platform: Darwin ")
-    add_definitions(-DWEBRTC_MAC)
-    add_definitions(-DWEBRTC_POSIX)
-    #add_definitions(-DNDEBUG)
-elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    MESSAGE(STATUS "current platform: Linux ")
-    add_definitions(-DWEBRTC_LINUX)
-    add_definitions(-DWEBRTC_POSIX)
-    add_definitions(-DUSE_MEDIASOUP_ClASS)
-    #add_definitions(-DNDEBUG)
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    MESSAGE(STATUS "current platform: Windows ")
-    add_definitions(-DWEBRTC_WIN)
-    #add_definitions(-DNDEBUG)
-endif()
-
-include(TestBigEndian)
-test_big_endian(WORDS_BIGENDIAN)
-if(WORDS_BIGENDIAN)
-    add_definitions(-DMS_BIG_ENDIAN)
+if(ANDROID)
+    MESSAGE(STATUS "current platform: Android")
+    # 向 SOURCES 变量追加新的源文件
+     list(APPEND SOURCES 
+            "libwebrtc/rtc_base/strings/ifaddrs_android.cc"
+         
+          )
 else()
-    add_definitions(-DMS_LITTLE_ENDIAN)
+    # 添加条件定义
+    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        MESSAGE(STATUS "current platform: Darwin ")
+        add_definitions(-DWEBRTC_MAC)
+        add_definitions(-DWEBRTC_POSIX)
+        #add_definitions(-DNDEBUG)
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        MESSAGE(STATUS "current platform: Linux ")
+        add_definitions(-DWEBRTC_LINUX)
+        add_definitions(-DWEBRTC_POSIX)
+        add_definitions(-DUSE_MEDIASOUP_ClASS)
+        #add_definitions(-DNDEBUG)
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
+        MESSAGE(STATUS "current platform: Windows ")
+        add_definitions(-DWEBRTC_WIN)
+        #add_definitions(-DNDEBUG)
+    endif()
+
+    include(TestBigEndian)
+    test_big_endian(WORDS_BIGENDIAN)
+    if(WORDS_BIGENDIAN)
+        add_definitions(-DMS_BIG_ENDIAN)
+    else()
+        add_definitions(-DMS_LITTLE_ENDIAN)
+    endif()
 endif()
 
 # 链接库路径
@@ -140,7 +157,8 @@ link_directories(
     "./out/deps/abseil-cpp/absl/strings"
     "./out/deps/abseil-cpp/absl/base"
     "./out/deps/abseil-cpp/absl/container"
-    # "./out/deps/abseil-cpp/absl/container"
+    "./out/deps/abseil-cpp/absl/container"
+    "./deps/openssl"
     )
 
 # add_subdirectory("./deps/abseil-cpp")
@@ -155,6 +173,8 @@ target_link_libraries(libwebrtc
                     pthread
                     absl_strings
                     absl_strerror
+                    crypto
+                    ssl
 )
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/install)  # 设置安装目录
 install(TARGETS libwebrtc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
