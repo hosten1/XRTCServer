@@ -7,6 +7,8 @@
 #include "base/log.h"
 #include "server/signaling_server.h"
 #include "server/rtc_server.h"
+#include <p2p/base/basic_packet_socket_factory.h>
+
 
 lrtc::GeneralConf *g_conf = nullptr;
 lrtc::LrtcLog *g_log = nullptr;
