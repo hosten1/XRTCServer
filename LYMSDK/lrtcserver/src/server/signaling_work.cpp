@@ -74,19 +74,26 @@ namespace lrtc
 
     int SignalingWork::init()
     {
-        RTC_LOG(LS_INFO) << "signaling worker init worker id :" << work_id_;
-        // 创建管道 用于线程间通讯
-        int fds[2];
-        if (pipe(fds) == -1)
+        network_thread_ = rtc::Thread::CreateWithSocketServer();
+        default_socket_factory_.reset(
+            new rtc::BasicPacketSocketFactory(network_thread_.get()));
+        if (!default_socket_factory_)
         {
-            RTC_LOG(LS_ERROR) << "create pipe eror :" << strerror(errno) << " ,errorno:" << errno << ",work_id:"<<work_id_;
-            return -1;
+            return false;
         }
-        notify_recv_fd_ = fds[0];
-        notify_send_fd_ = fds[1];
-        // 将线程通讯的notifi_recv_fd添加到事件循环里，进行管理
-        pipe_watcher_ = el_->create_io_event(signaling_server_recv_notify, this);
-        el_->start_io_event(pipe_watcher_, notify_recv_fd_, EventLoop::READ);
+        // RTC_LOG(LS_INFO) << "signaling worker init worker id :" << work_id_;
+        // // 创建管道 用于线程间通讯
+        // int fds[2];
+        // if (pipe(fds) == -1)
+        // {
+        //     RTC_LOG(LS_ERROR) << "create pipe eror :" << strerror(errno) << " ,errorno:" << errno << ",work_id:"<<work_id_;
+        //     return -1;
+        // }
+        // notify_recv_fd_ = fds[0];
+        // notify_send_fd_ = fds[1];
+        // // 将线程通讯的notifi_recv_fd添加到事件循环里，进行管理
+        // pipe_watcher_ = el_->create_io_event(signaling_server_recv_notify, this);
+        // el_->start_io_event(pipe_watcher_, notify_recv_fd_, EventLoop::READ);
         return 0;
     }
 

@@ -61,6 +61,7 @@ set(SOURCES
     "libwebrtc/rtc_base/openssl_utility.cc"
     "libwebrtc/rtc_base/platform_thread_types.cc"
     "libwebrtc/rtc_base/platform_thread.cc"
+    "libwebrtc/rtc_base/proxy_info.cc"
     "libwebrtc/rtc_base/physical_socket_server.cc"
     "libwebrtc/rtc_base/rate_statistics.cc"
     "libwebrtc/rtc_base/rtc_certificate.cc"
@@ -75,6 +76,7 @@ set(SOURCES
     "libwebrtc/rtc_base/socket.cc"
     "libwebrtc/rtc_base/socket_stream.cc"
     "libwebrtc/rtc_base/socket_address.cc"
+    "libwebrtc/rtc_base/socket_adapters.cc"
     "libwebrtc/rtc_base/ssl_adapter.cc"
     "libwebrtc/rtc_base/ssl_certificate.cc"
     "libwebrtc/rtc_base/ssl_fingerprint.cc"
@@ -91,7 +93,7 @@ set(SOURCES
     "libwebrtc/rtc_base/synchronization/rw_lock_posix.cc"
     # "libwebrtc/rtc_base/synchronization/rw_lock_win.cc"
     "libwebrtc/rtc_base/synchronization/sequence_checker.cc"
-    "libwebrtc/rtc_base/synchronization/yield_policy.h"
+    "libwebrtc/rtc_base/synchronization/yield_policy.cc"
     "libwebrtc/rtc_base/strings/audio_format_to_string.cc"
     "libwebrtc/rtc_base/third_party/base64/base64.cc"
     "libwebrtc/rtc_base/third_party/sigslot/sigslot.cc"
@@ -122,6 +124,12 @@ set(SOURCES
     "libwebrtc/api/video/video_content_type.cc"
     "libwebrtc/api/video/video_timing.cc"
     "libwebrtc/api/rtp_packet_info.cc"
+    "libwebrtc/p2p/base/async_stun_tcp_socket.cc"
+    "libwebrtc/p2p/base/basic_async_resolver_factory.cc"
+    "libwebrtc/p2p/base/basic_packet_socket_factory.cc"
+    "libwebrtc/p2p/base/packet_socket_factory.cc"
+    "libwebrtc/p2p/base/stun.cc"
+
 )
 
 # 添加头文件路径
@@ -150,13 +158,23 @@ else()
         #add_definitions(-DNDEBUG)
     elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
         MESSAGE(STATUS "current platform: Linux ")
-        add_definitions(-DWEBRTC_LINUX)
-        add_definitions(-DWEBRTC_POSIX)
+        # add_definitions(-DWEBRTC_LINUX)
+        # add_definitions(-DWEBRTC_POSIX)
         add_definitions(-DUSE_MEDIASOUP_ClASS)
+        add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX
+    -DWEBRTC_LINUX -DNDEBUG -Wno-unused-parameter -DWEBRTC_APM_DEBUG_DUMP=0 -mfma -DWEBRTC_EXTERNAL_JSON=0
+    ")
         #add_definitions(-DNDEBUG)
     elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
         MESSAGE(STATUS "current platform: Windows ")
-        add_definitions(-DWEBRTC_WIN)
+        add_definitions(-DUNICODE -D_UNICODE -DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN 
+        -DNOMINMAX 
+        -D_WINDOWS
+        -D_USE_MATH_DEFINES
+        -DWEBRTC_WIN
+        -DWEBRTC_INCLUDE_INTERNAL_AUDIO_DEVICE
+        -DWEBRTC_EXTERNAL_JSON
+        -DWEBRTC_APM_DEBUG_DUMP)
         #add_definitions(-DNDEBUG)
     endif()
 
@@ -180,19 +198,52 @@ link_directories(
 
 # add_subdirectory("./deps/abseil-cpp")
 # add_subdirectory("./deps/abseil-cpp")
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    add_library(libwebrtc STATIC
+        ${SOURCES}
+        ${rtc_base_win}
+        ${api_win}
+        ${audio_device_win}
+        ${video_capture_win}
 
-# 添加依赖库
-add_library(libwebrtc STATIC ${SOURCES})
-
-# 查找 pthread 库
-# find_package(Threads REQUIRED)
-target_link_libraries(libwebrtc 
-                    pthread
-                    absl_strings
-                    absl_strerror
-                    crypto
-                    ssl
+    install(TARGETS libwebrtc ARCHIVE DESTINATION lib)
 )
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    file(GLOB exclude_src
+        "./src/rtc_base/win32.cc"
+        "./src/rtc_base/task_queue_win.cc"
+        "./src/api/task_queue/default_task_queue_factory_win.cc"
+        "./src/rtc_base/system/warn_current_thread_is_deadlocked.cc"
+    )
+    list(REMOVE_ITEM all_src ${exclude_src})
+    add_library(libwebrtc 
+        ${SOURCES}
+    )
+endif()
+
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/install)  # 设置安装目录
 install(TARGETS libwebrtc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/libwebrtc/src/rtc_base 
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/api
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/p2p/base
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/system_wrappers
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/modules
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/common_audio
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/common_video
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/media
+    DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h"
+)
+
+# 查找 pthread 库
+# find_package(Threads REQUIRED)
+target_link_libraries(libwebrtc  pthread
+                    libabsl_strings.a 
+                    libabsl_throw_delegate.a
+                    libabsl_strerror.a
+                    libabsl_bad_optional_access.a
+                    libssl.a
+                    libcrypto.a
+)

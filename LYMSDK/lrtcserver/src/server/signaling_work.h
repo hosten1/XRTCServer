@@ -13,6 +13,9 @@
 #include "server/tcp_connection.h"
 #include "server/signaling_server_options.h"
 
+#include <p2p/base/basic_packet_socket_factory.h>
+#include <rtc_base/thread.h>
+
 namespace lrtc
 {
     class SignalingWork
@@ -89,6 +92,9 @@ namespace lrtc
         // std::vector<TcpConnection*> conns_;
         std::queue<std::shared_ptr<LRtcMsg>> q_msg_;
         std::mutex q_mtx_;
+
+        std::unique_ptr<rtc::BasicPacketSocketFactory> default_socket_factory_;
+        std::unique_ptr<rtc::Thread> network_thread_;
 
     };
 
