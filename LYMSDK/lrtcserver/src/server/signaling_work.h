@@ -13,7 +13,6 @@
 #include "server/tcp_connection.h"
 #include "server/signaling_server_options.h"
 
-#include <rtc_base/thread.h>
 
 namespace lrtc
 {
