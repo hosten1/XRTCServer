@@ -94,6 +94,15 @@ class AsyncPacketSocket : public sigslot::has_slots<> {
   // TODO: Remove SetError().
   virtual int GetError() const = 0;
   virtual void SetError(int error) = 0;
+//lym add
+  void setNotProcessInput(bool notUseProcess)
+  {
+   notProcessInput_ = notUseProcess;
+  }
+  bool notProcessInput()
+  {
+   return notProcessInput_;
+  }
 
   // Emitted each time a packet is read. Used only for UDP and
   // connected TCP sockets.
@@ -131,6 +140,8 @@ class AsyncPacketSocket : public sigslot::has_slots<> {
 
  private:
   RTC_DISALLOW_COPY_AND_ASSIGN(AsyncPacketSocket);
+  bool notProcessInput_ = false;
+
 };
 
 void CopySocketInformationToPacketInfo(size_t packet_size_bytes,

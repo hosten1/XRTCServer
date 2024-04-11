@@ -70,7 +70,6 @@ AsyncTCPSocketBase::AsyncTCPSocketBase(AsyncSocket* socket,
     // Listening sockets don't send/receive data, so they don't need buffers.
     inbuf_.EnsureCapacity(kMinimumRecvSize);
   }
-
   RTC_DCHECK(socket_.get() != nullptr);
   socket_->SignalConnectEvent.connect(this,
                                       &AsyncTCPSocketBase::OnConnectEvent);
@@ -188,7 +187,7 @@ void AsyncTCPSocketBase::OnConnectEvent(AsyncSocket* socket) {
 
 void AsyncTCPSocketBase::OnReadEvent(AsyncSocket* socket) {
   RTC_DCHECK(socket_.get() == socket);
-
+  RTC_LOG(LS_VERBOSE) <<"luoyongmeng AsyncTCPSocketBase::OnReadEvent=" << listen_;
   if (listen_) {
     rtc::SocketAddress address;
     rtc::AsyncSocket* new_socket = socket->Accept(&address);
@@ -221,11 +220,14 @@ void AsyncTCPSocketBase::OnReadEvent(AsyncSocket* socket) {
         if (!socket_->IsBlocking()) {
           RTC_LOG(LS_ERROR) << "Recv() returned error: " << socket_->GetError();
         }
+        RTC_LOG(LS_VERBOSE) << "[luoyongmeng] Recv() len: " << len;
         break;
       }
 
       total_recv += len;
       inbuf_.SetSize(inbuf_.size() + len);
+      RTC_LOG(LS_VERBOSE) << "[luoyongmeng] Recv() total_recv: " << total_recv;
+
       if (!len || static_cast<size_t>(len) < free_size) {
         break;
       }
@@ -313,12 +315,20 @@ int AsyncTCPSocket::Send(const void* pv,
 
 void AsyncTCPSocket::ProcessInput(char* data, size_t* len) {
   SocketAddress remote_addr(GetRemoteAddress());
-
+ if (notProcessInput() == true)
+ {
+    SignalReadPacket(this, data, *len, remote_addr,
+                     TimeMicros());
+    return;
+ 
+ }
+ 
   while (true) {
     if (*len < kPacketLenSize)
       return;
-
     PacketLength pkt_len = rtc::GetBE16(data);
+    RTC_LOG(LS_VERBOSE) << "[luoyongmeng] ProcessInput() GetBE16 pkt_len: " << pkt_len;
+
     if (*len < kPacketLenSize + pkt_len)
       return;
 
@@ -333,6 +343,7 @@ void AsyncTCPSocket::ProcessInput(char* data, size_t* len) {
 }
 
 void AsyncTCPSocket::HandleIncomingConnection(AsyncSocket* socket) {
+  RTC_LOG(LS_VERBOSE) <<"luoyongmeng AsyncTCPSocket::HandleIncomingConnection";
   SignalNewConnection(this, new AsyncTCPSocket(socket, false));
 }
 

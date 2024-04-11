@@ -36,11 +36,11 @@ namespace lrtc
         // void OnSocketClose(rtc::AsyncPacketSocket *socket, int error);
 
         // // Called when a packet is received on this socket.
-        // void OnReadPacket(rtc::AsyncPacketSocket *socket,
-        //                   const char *data,
-        //                   size_t size,
-        //                   const rtc::SocketAddress &remote_addr,
-        //                   const int64_t &packet_time_us);
+        void OnReadPacket(rtc::AsyncPacketSocket *socket,
+                          const char *data,
+                          size_t size,
+                          const rtc::SocketAddress &remote_addr,
+                          const int64_t &packet_time_us);
 
         // void OnSentPacket(rtc::AsyncPacketSocket *socket,
         //                   const rtc::SentPacket &sent_packet);
@@ -52,6 +52,7 @@ namespace lrtc
         SignalingServerOptions options_;
         std::unique_ptr<rtc::BasicPacketSocketFactory> default_socket_factory_;   
         std::unique_ptr<rtc::AsyncPacketSocket> async_socket_;
+        rtc::AsyncPacketSocket* async_socket_client_;
         std::unique_ptr<rtc::Thread> network_thread_;
     };
 

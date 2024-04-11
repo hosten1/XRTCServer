@@ -464,6 +464,8 @@ int PhysicalSocket::RecvFrom(void* buffer,
 
 int PhysicalSocket::Listen(int backlog) {
   int err = ::listen(s_, backlog);
+  RTC_LOG(LS_VERBOSE) << "[luoyongmeng] -- listen() with backlog = "<<backlog << ", err:" << strerror(errno) << ",wsa_code=" << errno;
+
   UpdateLastError();
   if (err == 0) {
     state_ = CS_CONNECTING;
@@ -484,6 +486,8 @@ AsyncSocket* PhysicalSocket::Accept(SocketAddress* out_addr) {
   socklen_t addr_len = sizeof(addr_storage);
   sockaddr* addr = reinterpret_cast<sockaddr*>(&addr_storage);
   SOCKET s = DoAccept(s_, addr, &addr_len);
+   RTC_LOG(LS_VERBOSE) << "[luoyongmeng] -- Accept() with backlog: " << ", err:" << strerror(errno) << ",wsa_code=" << errno;
+
   UpdateLastError();
   if (s == INVALID_SOCKET)
     return nullptr;
@@ -664,6 +668,26 @@ bool SocketDispatcher::Initialize() {
   int value = 1;
   ::setsockopt(s_, SOL_SOCKET, SO_NOSIGPIPE, &value, sizeof(value));
 #endif
+  // 设置 SO_REUSEADDR 选项 也就是地址重复使用
+  // 获取当前 SO_REUSEADDR 选项的值
+  int optval;
+  socklen_t optlen = sizeof(optval);
+  if (::getsockopt(s_, SOL_SOCKET, SO_REUSEADDR, &optval, &optlen) == -1)
+  {
+       RTC_LOG(LS_ERROR) << "[luoyongmeng] SocketDispatcher::Initialize getsockopt with SO_REUSEADDR err:" << strerror(errno) << ",wsa_code=" << errno;
+  }
+
+  // 如果当前值不是1，则设置 SO_REUSEADDR 选项
+  if (optval != 1)
+  {
+    optval = 1;
+    if (::setsockopt(s_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+    {
+        RTC_LOG(LS_ERROR) << "[luoyongmeng] SocketDispatcher::Initialize setsockopt with SO_REUSEADDR err:" << strerror(errno) << ",wsa_code=" << errno;
+
+    }
+  }
+
   ss_->Add(this);
   return true;
 }
