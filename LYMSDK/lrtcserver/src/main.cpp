@@ -9,11 +9,13 @@
 #include "server/rtc_server.h"
 #include <p2p/base/basic_packet_socket_factory.h>
 
+#include "server/singnaling_server_rtcthreat.h"
 
 lrtc::GeneralConf *g_conf = nullptr;
 lrtc::LrtcLog *g_log = nullptr;
 lrtc::SignalingServer *g_sig_nal = nullptr;
 std::unique_ptr<lrtc::RtcServer> g_rtc_server{nullptr};
+lrtc::SignalingServerRtcThread *g_sig_nal_rtc_ = nullptr;
 
 int init_general_conf(const char *filename)
 {
@@ -74,6 +76,22 @@ int init_rtc_server(const char *filename)
     }
     return 0;
 }
+
+int init_singnaling_server_rtc(const char *filename)
+{
+    if (!filename)
+    {
+        RTC_LOG(LS_ERROR) << "ilename is nullptr\n";
+        return -1;
+    }
+    g_sig_nal_rtc_ = new lrtc::SignalingServerRtcThread();
+    int ret = g_sig_nal_rtc_->init(filename);
+    if (ret != 0)
+    {
+        return -1;
+    }
+    return 0;
+}
 static void process_signal(int sig)
 {
     RTC_LOG(LS_INFO) << "process_signal sig=" << sig;
@@ -93,6 +111,11 @@ static void process_signal(int sig)
         {
             g_rtc_server->stop();
         }
+        if (g_sig_nal_rtc_)
+        {
+           g_sig_nal_rtc_->stop();
+        }
+        
         
     }
 }
@@ -122,14 +145,25 @@ int main(int /*argc*/, const char ** /*argv*/)
     ret = init_singnaling_server("./conf/singnaling_server.yaml");
     if (ret != 0)
     {
+        printf("init_singnaling_server failed\n");
+        
         return -1;
     }
 
     ret = init_rtc_server("./conf/rtc_server.yaml");
     if (ret != 0)
     {
+        printf("init_rtc_server failed\n");
         return -1;
     }
+
+
+    // ret = init_singnaling_server_rtc("./conf/singnaling_server.yaml");
+    // if (ret != 0)
+    // {
+    //     printf("init_singnaling_server_rtc failed\n");
+    //     return -1;
+    // }
     // 捕获系统中断事件
     // 设置信号处理程序
     signal(SIGINT, process_signal);
@@ -137,7 +171,7 @@ int main(int /*argc*/, const char ** /*argv*/)
 
     g_sig_nal->start();
     g_rtc_server->start();
-    g_sig_nal->joined();
+    // g_sig_nal_rtc_->start();
     g_log->join();
     g_rtc_server->joined();
     return 0;

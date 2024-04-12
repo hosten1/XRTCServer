@@ -8,6 +8,14 @@
 #include <rtc_base/logging.h>
 #include "base/socket.h"
 
+
+#include "api/task_queue/task_queue_factory.h"
+#include "api/task_queue/default_task_queue_factory.h"
+
+#include "rtc_base/task_queue.h"
+#include "rtc_base/task_utils/repeating_task.h"
+#include "rtc_base/time_utils.h"
+
 namespace lrtc {
     void accep_new_conn(EventLoop */*el*/, IOWatcher */*w*/, int fd, int /*events*/, void *data)
     {
@@ -37,9 +45,19 @@ namespace lrtc {
         SignalingServer *server = (SignalingServer*)data;
         server->on_recv_notify(msg);
     }
-    SignalingServer::SignalingServer():loop_(std::make_unique<EventLoop>(this))
+    SignalingServer::SignalingServer()
+        :loop_(std::make_unique<EventLoop>(this)),
+        task_queue_factory_(webrtc::CreateDefaultTaskQueueFactory())
     {
         RTC_LOG(LS_INFO) << "signaling server constructor";
+        task_queue_ =
+            absl::make_unique<rtc::TaskQueue>(task_queue_factory_->CreateTaskQueue(
+                "TestAudioDeviceModuleImpl", webrtc::TaskQueueFactory::Priority::NORMAL));
+        // repHanler_ = webrtc::RepeatingTaskHandle::Start(task_queue_->Get(), [=]()
+        //             { 
+        //                 RTC_LOG(LS_INFO) << "signaling server repHanler_";
+        //                 return webrtc::TimeDelta::ms(100); 
+        //             });
     }
 
     SignalingServer::~SignalingServer()

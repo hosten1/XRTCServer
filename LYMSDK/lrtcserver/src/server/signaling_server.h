@@ -10,6 +10,13 @@
 
 #include "server/signaling_server_options.h"
 
+#include "api/task_queue/task_queue_factory.h"
+#include "api/task_queue/default_task_queue_factory.h"
+
+#include <rtc_base/task_queue.h>
+#include <rtc_base/task_utils/repeating_task.h>
+#include <rtc_base/task_utils/to_queued_task.h>
+
 
 namespace lrtc
 {
@@ -58,6 +65,13 @@ namespace lrtc
    
     std::vector<std::unique_ptr<SignalingWork>> workers_;
     size_t next_works_index_ = 0;
+
+
+    std::unique_ptr< webrtc::TaskQueueFactory>  task_queue_factory_;
+
+//    rtc::CriticalSection lock_;
+    std::unique_ptr<rtc::TaskQueue> task_queue_;
+    // webrtc::RepeatingTaskHandle repHanler_;
   };
 
 } // namespace lrtc
