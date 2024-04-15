@@ -192,8 +192,9 @@ else()
     # 添加条件定义
     if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         MESSAGE(STATUS "current platform: Darwin ")
-        add_definitions(-DWEBRTC_MAC)
-        add_definitions(-DWEBRTC_POSIX)
+        add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX
+        -DWEBRTC_MAC  -Wno-unused-parameter -DWEBRTC_APM_DEBUG_DUMP=0 -mfma -DWEBRTC_EXTERNAL_JSON=0
+        ")
         #add_definitions(-DNDEBUG)
     elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
         MESSAGE(STATUS "current platform: Linux ")
@@ -201,7 +202,7 @@ else()
         # add_definitions(-DWEBRTC_POSIX)
         add_definitions(-DUSE_MEDIASOUP_ClASS)
         add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX
-    -DWEBRTC_LINUX -DNDEBUG -Wno-unused-parameter -DWEBRTC_APM_DEBUG_DUMP=0 -mfma -DWEBRTC_EXTERNAL_JSON=0
+    -DWEBRTC_LINUX  -Wno-unused-parameter -DWEBRTC_APM_DEBUG_DUMP=0 -mfma -DWEBRTC_EXTERNAL_JSON=0
     ")
         #add_definitions(-DNDEBUG)
     elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")

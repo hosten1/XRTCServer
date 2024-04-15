@@ -196,3 +196,15 @@ LYMSDK/lrtcserver/thirdpart/libwebrtc/deps/opensslLYMSDK/lrtcserver/thirdpart/li
 
 # Windows manifest files
 LYMSDK/lrtcserver/thirdpart/libwebrtc/deps/opensslLYMSDK/lrtcserver/thirdpart/libwebrtc/deps/openssl/*.manifest
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/out/
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/*.s
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/*.o
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/*.obj
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/*.swp
+
+
+
+
+
+
+

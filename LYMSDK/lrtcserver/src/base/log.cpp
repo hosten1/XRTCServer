@@ -17,7 +17,7 @@ namespace lrtc {
 
         // 使用put_time函数将时间转换为字符串
         std::stringstream ss;
-        ss << std::put_time(std::localtime(&currentTime), "%Y-%m-%d-%H-%M");
+        ss << std::put_time(std::localtime(&currentTime), "%Y-%m-%d-%H");
         
         return ss.str();
     }

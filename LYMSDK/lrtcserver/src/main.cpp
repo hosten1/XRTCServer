@@ -172,7 +172,7 @@ int main(int /*argc*/, const char ** /*argv*/)
     g_sig_nal->start();
     g_rtc_server->start();
     // g_sig_nal_rtc_->start();
-    g_log->join();
     g_rtc_server->joined();
+    g_log->join();
     return 0;
 }
