@@ -10,6 +10,15 @@
 
 namespace lrtc
 {
+    struct RTCOfferAnswerOptions {
+    bool send_audio = true;
+    bool send_video = true;
+    bool recv_audio = true;
+    bool recv_video = true;
+    bool use_rtp_mux = true;
+    bool use_rtcp_mux = true;
+    bool dtls_on = true;
+};
     class PeerConnection
     {
 
@@ -17,7 +26,7 @@ namespace lrtc
         PeerConnection(EventLoop *el);
         ~PeerConnection();
 
-        std::string create_offer_sdp();
+        std::string create_offer_sdp(const RTCOfferAnswerOptions& options);
     private:
         EventLoop *el_;
         std::unique_ptr<SessionDescription> local_session_description_;
