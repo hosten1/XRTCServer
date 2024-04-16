@@ -3,16 +3,17 @@
 
 #include <string>
 namespace lrtc {
+     enum SdpType {
+            kOffer  = 0,
+            kAnswer = -1,
+            kPranswer,
+            kRollback
+    };
     class SessionDescription
     {
 
     public:
-        enum SdpType {
-            kOffer,
-            kAnswer,
-            kPranswer,
-            kRollback
-        };
+
         SessionDescription(SdpType type);
         ~SessionDescription();
 

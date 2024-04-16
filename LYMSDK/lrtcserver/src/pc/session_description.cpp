@@ -34,7 +34,7 @@ namespace lrtc
         //RFC 4566
         // audio
 
-        return std::string();
+        return ss.str();
     }
 
 } // namespace lrtc

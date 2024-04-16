@@ -9,7 +9,8 @@ namespace lrtc
           stream_name_(stream_name),
           audio_(audio),
           video_(video),
-          log_id_(log_id)
+          log_id_(log_id),
+          pc_(new PeerConnection(el))
     {
         RTC_LOG(LS_INFO) << "RtcStream::RtcStream()";
     }

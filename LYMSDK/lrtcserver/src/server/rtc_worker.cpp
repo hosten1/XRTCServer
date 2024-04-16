@@ -43,8 +43,9 @@ namespace lrtc
 
     RtcWorker::RtcWorker(int work_id, const struct rtcServerOptions& option) :
         work_id_(work_id),
-                                                el_(std::make_unique<EventLoop>(this)), 
-                                                options_(option)
+        el_(std::make_unique<EventLoop>(this)), 
+        options_(option),
+        rtp_stream_manager_(new RTPStreamManager(el_.get()))
     {
 
     }
@@ -214,6 +215,8 @@ namespace lrtc
     void RtcWorker::_process_push_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg)
     {
        std::string offer = "offer";
+       int ret = rtp_stream_manager_->create_push_stream(rtcmsg->uid,rtcmsg->stream_name,rtcmsg->audio,rtcmsg->video,rtcmsg->log_id,offer);
+       RTC_LOG(LS_INFO) << "RtcWorker server _process_push_rtcmsg create_push_stream ret:" << ret << ",offer:"<<offer;
        rtcmsg->sdp = offer;
        
        SignalingWork *signaling_work = (SignalingWork *)rtcmsg->signalingWorker;

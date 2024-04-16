@@ -3,8 +3,10 @@
 
 #include <string>
 #include <stdint.h>
+#include <memory>
 
 #include "base/event_loop.h"
+#include "pc/session_description.h"
 
 namespace lrtc
 {
@@ -12,10 +14,13 @@ namespace lrtc
     {
 
     public:
-        PeerConnection(EventLoop *ev);
+        PeerConnection(EventLoop *el);
         ~PeerConnection();
+
+        std::string create_offer_sdp();
     private:
-        EventLoop *ev_;
+        EventLoop *el_;
+        std::unique_ptr<SessionDescription> local_session_description_;
     };
     
 

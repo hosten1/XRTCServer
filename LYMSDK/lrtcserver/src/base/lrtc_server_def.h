@@ -10,6 +10,9 @@
 
 #define MAX_RESP_BUFEER_SIZE 4096
 
+#include <stdint.h>
+#include <string>
+
 namespace lrtc {
 
  struct LRtcMsg
@@ -19,7 +22,7 @@ namespace lrtc {
     std::string stream_name = "";
     int audio = 0;
     int video = 0;
-    std::string log_id = "";
+    uint32_t log_id = 0;
     void *signalingWorker = nullptr;
     int signalingWorkerId = 0;
     void *signalingConn = nullptr;
@@ -37,7 +40,7 @@ namespace lrtc {
                    " stream_name:" + stream_name +
                    " audio:" + std::to_string(audio) +
                    " video:" + std::to_string(video) +
-                   " log_id:" + log_id;
+                   " log_id:" + std::to_string(log_id);
         }
  };
  
