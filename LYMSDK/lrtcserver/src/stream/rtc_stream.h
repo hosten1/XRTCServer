@@ -1,3 +1,11 @@
+/*
+ * @Author: L yongmeng
+ * @Date: 2024-04-08 18:07:54
+ * @LastEditTime: 2024-04-16 17:28:35
+ * @LastEditors: L yongmeng
+ * @Description:
+ * Software:VSCode,env:
+ */
 #ifndef __LYMSDK_LRTCSERVER_SRC_BASE_RTC_STREAM_H_
 #define __LYMSDK_LRTCSERVER_SRC_BASE_RTC_STREAM_H_
 
@@ -32,7 +40,7 @@ namespace lrtc
     // virtual void on_rtcp_packet_received(RtcStream *stream, const char *data, size_t len) = 0;
     // virtual void on_stream_exception(RtcStream *stream) = 0;
   };
-  class RtcStream : public sigslot::has_slots<> 
+  class RtcStream : public sigslot::has_slots<>
   {
 
   public:
@@ -42,6 +50,9 @@ namespace lrtc
     virtual ~RtcStream();
     virtual std::string create_offer_sdp() = 0;
 
+  public:
+    int start(rtc::RTCCertificate *certificate);
+
   protected:
     EventLoop *el_;
     uint64_t uid_;
@@ -50,6 +61,10 @@ namespace lrtc
     bool video_;
     uint32_t log_id_;
     std::unique_ptr<PeerConnection> pc_;
+    TimerWatcher *ice_timeout_watcher_ = nullptr;
+
+    friend class RtcStreamManager;
+    friend void ice_timeout_cb(EventLoop *el, TimerWatcher *w, void *data);
   };
 
 } // namespace lrtc

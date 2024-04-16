@@ -1,7 +1,7 @@
 /*
  * @Author: L yongmeng
  * @Date: 2024-04-09 09:36:18
- * @LastEditTime: 2024-04-16 16:40:47
+ * @LastEditTime: 2024-04-16 17:46:46
  * @LastEditors: L yongmeng
  * @Description:
  * Software:VSCode,env:
@@ -43,9 +43,34 @@ namespace lrtc
     {
     }
 
+    int PeerConnection::init(rtc::RTCCertificate *certificate)
+    {
+        certificate_ = certificate;
+        // transport_controller_->set_local_certificate(certificate);
+        return 0;
+    }
+
+    void PeerConnection::destroy()
+    {
+        if (destroy_timer_)
+        {
+            el_->delete_timer_event(destroy_timer_);
+            destroy_timer_ = nullptr;
+        }
+
+        // destroy_timer_ = el_->create_timer_event(destroy_timer_cb, this, false);
+        // el_->start_timer_event(destroy_timer_, 10000); // 10ms
+    }
+
     std::string PeerConnection::create_offer_sdp(const RTCOfferAnswerOptions &options)
     {
-        RTC_LOG(LS_INFO) << "create_offer_sdp";
+        RTC_LOG(LS_INFO) << "create_offer_sdp certificate_:" << certificate_;
+        if (options.dtls_on && !certificate_)
+        {
+            RTC_LOG(LS_ERROR) << "create_offer_sdp: certificate is null";
+            return "";
+        }
+
         local_session_description_ = std::make_unique<SessionDescription>(SdpType::kOffer);
 
         IceParameters ice_param = IceCredentials::create_random_ice_credentials();
@@ -56,7 +81,7 @@ namespace lrtc
             audio->set_direction(get_direction(options.send_audio, options.recv_audio));
             audio->set_rtcp_mux(options.use_rtcp_mux);
             local_session_description_->add_content(audio);
-            local_session_description_->add_transport_info(audio->mid(), ice_param);
+            local_session_description_->add_transport_info(audio->mid(), ice_param, certificate_);
         }
         if (options.recv_video)
         {
@@ -64,7 +89,7 @@ namespace lrtc
             video->set_direction(get_direction(options.send_video, options.recv_video));
             video->set_rtcp_mux(options.use_rtcp_mux);
             local_session_description_->add_content(video);
-            local_session_description_->add_transport_info(video->mid(), ice_param);
+            local_session_description_->add_transport_info(video->mid(), ice_param, certificate_);
         }
         if (options.use_rtp_mux)
         {

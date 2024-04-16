@@ -14,8 +14,8 @@
 #include <rtc_base/logging.h>
 #include "stream/push_stream.h"
 
-
-namespace lrtc {
+namespace lrtc
+{
     class EventLoop;
     class PushStream;
     class PortAllocator;
@@ -23,21 +23,20 @@ namespace lrtc {
 
     class RTPStreamManager
     {
-  
+
     public:
         RTPStreamManager(EventLoop *event_loop);
         ~RTPStreamManager();
 
-        int create_push_stream(uint64_t uid,const std::string& stream_name, 
-                            bool audio,bool video,uint32_t log_id,std::string& sdp);
-        PushStream* find_push_stream(const std::string& stream_name);
-     private:
+        int create_push_stream(uint64_t uid, const std::string &stream_name,
+                               bool audio, bool video, uint32_t log_id, rtc::RTCCertificate *certificate, std::string &sdp);
+        PushStream *find_push_stream(const std::string &stream_name);
+
+    private:
         EventLoop *el_;
-        std::unordered_map<std::string,PushStream*> push_stream_map_;
+        std::unordered_map<std::string, PushStream *> push_stream_map_;
     };
-    
-  
 
-}  // namespace lrtc
+} // namespace lrtc
 
-#endif  // __LYMSDK_LRTCSERVER_SRC_STREAM_RTP_STREAM_MANAGER_H_
+#endif // __LYMSDK_LRTCSERVER_SRC_STREAM_RTP_STREAM_MANAGER_H_

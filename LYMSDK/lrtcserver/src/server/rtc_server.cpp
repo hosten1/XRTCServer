@@ -3,11 +3,16 @@
 #include <unistd.h>
 
 #include <yaml-cpp/yaml.h>
-#include "rtc_base/logging.h"
+#include <rtc_base/logging.h>
+#include <rtc_base/rtc_certificate_generator.h>
+#include <rtc_base/crc32.h>
 #include "rtc_server.h"
 
 namespace lrtc
 {
+
+    const uint64_t k_year_in_ms = 365 * 24 * 3600 * 1000L;
+
     void rtc_server_recv_notify(EventLoop * /*el*/, IOWatcher * /*w*/,
                                 int fd, int /*events*/, void *data)
     {
@@ -31,22 +36,21 @@ namespace lrtc
         RTC_LOG(LS_INFO) << "rtc server destructor";
         if (event_loop_)
         {
-             event_loop_.reset();
-             event_loop_ = nullptr;
+            event_loop_.reset();
+            event_loop_ = nullptr;
         }
         if (ev_thread_)
         {
             ev_thread_.reset();
-             ev_thread_ = nullptr;
+            ev_thread_ = nullptr;
         }
-        for(auto& work : workers_)
+        for (auto &work : workers_)
         {
             if (work)
             {
-               work.reset();
-               work = nullptr;
+                work.reset();
+                work = nullptr;
             }
-            
         }
         workers_.clear();
     }
@@ -135,6 +139,11 @@ namespace lrtc
             RTC_LOG(LS_ERROR) << "rtc server load conf file failed, " << e.what();
             return -1;
         }
+        // 生成证书
+        if (_generate_and_check_certificate() != 0)
+        {
+            return -1;
+        }
 
         // 创建管道 用于线程间通讯
         int fds[2];
@@ -206,22 +215,44 @@ namespace lrtc
 
         RTC_LOG(LS_INFO) << "RtcServer::_stop() end";
     }
-    RtcWorker* RtcServer::_get_worker(const std::string stream_name)
+    RtcWorker *RtcServer::_get_worker(const std::string stream_name)
     {
-       if (!workers_.size() || workers_.size() != (size_t)options_.worker_num)
-       {
-         RTC_LOG(LS_WARNING) << "rtc server get worker workers_.size(): " << workers_.size();
+        if (!workers_.size() || workers_.size() != (size_t)options_.worker_num)
+        {
+            RTC_LOG(LS_WARNING) << "rtc server get worker workers_.size(): " << workers_.size();
 
-         return nullptr;
-       }
-       
+            return nullptr;
+        }
+
         uint32_t num = rtc::ComputeCrc32(stream_name);
         size_t index = num % options_.worker_num;
         RTC_LOG(LS_INFO) << "rtc server get worker index:" << index;
         return workers_[index].get();
-
     }
 
+    int RtcServer::_generate_and_check_certificate()
+    {
+        if (!certificate_ || certificate_->HasExpired(time(NULL) * 1000))
+        {
+            rtc::KeyParams key_params;
+            RTC_LOG(LS_INFO) << "dtls enabled, key type: " << key_params.type();
+            certificate_ = rtc::RTCCertificateGenerator::GenerateCertificate(key_params, k_year_in_ms);
+            if (certificate_)
+            {
+                rtc::RTCCertificatePEM pem = certificate_->ToPEM();
+                RTC_LOG(LS_INFO) << "rtc certificate: \n"
+                                 << pem.certificate();
+            }
+        }
+
+        if (!certificate_)
+        {
+            RTC_LOG(LS_WARNING) << "get certificate error";
+            return -1;
+        }
+
+        return 0;
+    }
 
     void RtcServer::_process_rtc_msg()
     {
@@ -231,16 +262,23 @@ namespace lrtc
             RTC_LOG(LS_ERROR) << "rtc server recv rtc msg is null";
             return;
         }
+        if (_generate_and_check_certificate() != 0)
+        {
+            return;
+        }
+
+        rtc_msg->certificate = certificate_.get();
         RTC_LOG(LS_INFO) << "rtc server recv rtc msg:" << rtc_msg->toString();
         RtcWorker *worker = _get_worker(rtc_msg->stream_name);
         if (worker)
         {
             worker->send_rtc_msg(rtc_msg);
-        }else{
+        }
+        else
+        {
             RTC_LOG(LS_ERROR) << "rtc server get worker is null";
         }
     }
-
 
     int RtcServer::_create_worker(int work_id)
     {
@@ -251,7 +289,7 @@ namespace lrtc
             RTC_LOG(LS_ERROR) << "Invalid worker_id: " << work_id;
             return -1; // 使用具体的错误码可能更合适，这里保持为-1
         }
-        std::unique_ptr<RtcWorker> worker = std::make_unique<RtcWorker>(work_id,options_);
+        std::unique_ptr<RtcWorker> worker = std::make_unique<RtcWorker>(work_id, options_);
         if (worker->init() != 0)
         { // 使用了更明确的判断条件
             RTC_LOG(LS_ERROR) << "init worker error worker_id:" << work_id;

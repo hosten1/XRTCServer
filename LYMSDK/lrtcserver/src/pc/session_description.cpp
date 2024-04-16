@@ -210,22 +210,23 @@ namespace lrtc
     }
 
     bool SessionDescription::add_transport_info(const std::string &mid,
-                                                const IceParameters &ice_param)
+                                                const IceParameters &ice_param,
+                                                rtc::RTCCertificate *certificate)
     {
         auto desc = std::make_shared<TransportDescription>();
         desc->mid = mid;
         desc->ice_ufrag = ice_param.ice_ufrag;
         desc->ice_pwd = ice_param.ice_pwd;
 
-        // if (certificate)
-        // {
-        //     desc->identity_fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*certificate);
-        //     if (!desc->identity_fingerprint)
-        //     {
-        //         RTC_LOG(LS_WARNING) << "get fingerprint failed";
-        //         return false;
-        //     }
-        // }
+        if (certificate)
+        {
+            desc->identity_fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*certificate);
+            if (!desc->identity_fingerprint)
+            {
+                RTC_LOG(LS_WARNING) << "get fingerprint failed";
+                return false;
+            }
+        }
 
         if (SdpType::kOffer == sdp_type_)
         {
