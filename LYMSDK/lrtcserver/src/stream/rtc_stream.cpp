@@ -24,14 +24,15 @@ namespace lrtc
         // }
     }
 
-    RtcStream::RtcStream(EventLoop *el, uint64_t uid, const std::string &stream_name, bool audio, bool video, uint32_t log_id)
+    RtcStream::RtcStream(EventLoop *el, PortAllocator *allocator, const std::shared_ptr<LRtcMsg> &msg)
         : el_(el),
-          uid_(uid),
-          stream_name_(stream_name),
-          audio_(audio),
-          video_(video),
-          log_id_(log_id),
-          pc_(new PeerConnection(el))
+          uid_(msg->uid),
+          stream_name_(msg->stream_name),
+          audio_(msg->audio),
+          video_(msg->video),
+          dtls_on_(msg->dtls_on),
+          log_id_(msg->log_id),
+          pc_(new PeerConnection(el, allocator, dtls_on_))
     {
         RTC_LOG(LS_INFO) << "RtcStream::RtcStream()";
     }

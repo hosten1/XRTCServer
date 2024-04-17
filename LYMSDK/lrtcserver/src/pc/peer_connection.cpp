@@ -34,19 +34,47 @@ namespace lrtc
         }
     }
 
-    PeerConnection::PeerConnection(EventLoop *el)
-        : el_(el)
+    PeerConnection::PeerConnection(EventLoop *el, PortAllocator *allocator, bool dtls_on) : el_(el),
+                                                                                            transport_controller_(new TransportController(el, allocator, dtls_on)),
+                                                                                            clock_(webrtc::Clock::GetRealTimeClock())
     {
+        // transport_controller_->signal_candidate_allocate_done.connect(this,
+        //                                                               &PeerConnection::_on_candidate_allocate_done);
+        // transport_controller_->signal_connection_state.connect(this,
+        //                                                        &PeerConnection::_on_connection_state);
+        // transport_controller_->signal_rtp_packet_received.connect(this,
+        //                                                           &PeerConnection::_on_rtp_packet_received);
+        // transport_controller_->signal_rtcp_packet_received.connect(this,
+        //                                                            &PeerConnection::_on_rtcp_packet_received);
     }
 
     PeerConnection::~PeerConnection()
     {
+        if (destroy_timer_)
+        {
+            // el_->delete_timer(destroy_timer_);
+            // destroy_timer_ = nullptr;
+        }
+
+        // if (video_recv_stream_)
+        // {
+        //     delete video_recv_stream_;
+        //     video_recv_stream_ = nullptr;
+        // }
+
+        // if (audio_recv_stream_)
+        // {
+        //     delete audio_recv_stream_;
+        //     audio_recv_stream_ = nullptr;
+        // }
+
+        RTC_LOG(LS_INFO) << "PeerConnection destroy";
     }
 
     int PeerConnection::init(rtc::RTCCertificate *certificate)
     {
         certificate_ = certificate;
-        // transport_controller_->set_local_certificate(certificate);
+        transport_controller_->set_local_certificate(certificate);
         return 0;
     }
 
@@ -103,6 +131,8 @@ namespace lrtc
                 local_session_description_->add_group(offer_bundle);
             }
         }
+
+        transport_controller_->set_local_description(local_session_description_.get());
 
         return local_session_description_->to_string(false);
     }

@@ -31,6 +31,7 @@ namespace lrtc
         std::string stream_name = "";
         int audio = 0;
         int video = 0;
+        bool dtls_on = true;
         uint32_t log_id = 0;
         void *signalingWorker = nullptr;
         int signalingWorkerId = 0;

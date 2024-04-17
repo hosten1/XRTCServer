@@ -6,31 +6,35 @@
  * @Description:
  * Software:VSCode,env:
  */
+#include <rtc_base/logging.h>
 
+#include "base/event_loop.h"
 #include "stream/push_stream.h"
 #include "stream/rtp_stream_manager.h"
+#include "ice/port_allocator.h"
 
 namespace lrtc
 {
     RTPStreamManager::RTPStreamManager(EventLoop *event_loop)
-        : el_(event_loop)
+        : el_(event_loop),
+          port_allocator_(new PortAllocator)
     {
     }
     RTPStreamManager::~RTPStreamManager()
     {
     }
 
-    int RTPStreamManager::create_push_stream(uint64_t uid, const std::string &stream_name, bool audio, bool video, uint32_t log_id, rtc::RTCCertificate *certificate, std::string &sdp)
+    int RTPStreamManager::create_push_stream(const std::shared_ptr<LRtcMsg> &msg, std::string &sdp)
     {
-        PushStream *stream = find_push_stream(stream_name);
+        PushStream *stream = find_push_stream(msg->stream_name);
         if (stream)
         {
-            push_stream_map_.erase(stream_name);
+            push_stream_map_.erase(msg->stream_name);
             delete stream;
         }
 
-        stream = new PushStream(el_, uid, stream_name, audio, video, log_id);
-        stream->start(certificate);
+        stream = new PushStream(el_, port_allocator_.get(), msg);
+        stream->start((rtc::RTCCertificate *)msg->certificate);
         sdp = stream->create_offer_sdp();
 
         return 0;

@@ -12,8 +12,7 @@ namespace lrtc
     // class PullStream : public RtcStream
     // {
     // public:
-    //     PullStream(EventLoop *el, PortAllocator *allocator, uint64_t uid, const std::string &stream_name,
-    //                bool audio, bool video, bool dtls_on, uint32_t log_id);
+    //     PullStream(EventLoop *el, PortAllocator *allocator, const std::shared_ptr<LRtcMsg> &msg);
     //     ~PullStream();
 
     // public:

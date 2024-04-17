@@ -19,6 +19,7 @@
 #include <rtc_base/logging.h>
 #include "base/event_loop.h"
 #include "pc/peer_connection.h"
+#include "base/lrtc_server_def.h"
 
 namespace lrtc
 {
@@ -44,9 +45,7 @@ namespace lrtc
   {
 
   public:
-    RtcStream(EventLoop *el, uint64_t uid,
-              const std::string &stream_name,
-              bool audio, bool video, uint32_t log_id);
+    RtcStream(EventLoop *el, PortAllocator *allocator, const std::shared_ptr<LRtcMsg> &msg);
     virtual ~RtcStream();
     virtual std::string create_offer_sdp() = 0;
 
@@ -59,6 +58,7 @@ namespace lrtc
     std::string stream_name_;
     bool audio_;
     bool video_;
+    bool dtls_on_;
     uint32_t log_id_;
     std::unique_ptr<PeerConnection> pc_;
     TimerWatcher *ice_timeout_watcher_ = nullptr;

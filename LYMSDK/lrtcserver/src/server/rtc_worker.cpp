@@ -211,7 +211,7 @@ namespace lrtc
     void RtcWorker::_process_push_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg)
     {
         std::string offer = "offer";
-        int ret = rtp_stream_manager_->create_push_stream(rtcmsg->uid, rtcmsg->stream_name, rtcmsg->audio, rtcmsg->video, rtcmsg->log_id, (rtc::RTCCertificate *)(rtcmsg->certificate), offer);
+        int ret = rtp_stream_manager_->create_push_stream(rtcmsg, offer);
         RTC_LOG(LS_INFO) << "RtcWorker server _process_push_rtcmsg create_push_stream ret:" << ret << ",offer:" << offer;
         rtcmsg->sdp = offer;
 

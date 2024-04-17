@@ -13,12 +13,14 @@
 #include <stdint.h>
 #include <memory>
 #include <rtc_base/rtc_certificate.h>
+#include <system_wrappers/include/clock.h>
 #include <rtc_base/third_party/sigslot/sigslot.h>
 #include <rtc_base/copy_on_write_buffer.h>
 #include "ice/ice_def.h"
 
 #include "base/event_loop.h"
 #include "pc/session_description.h"
+#include "pc/transport_controller.h"
 
 namespace lrtc
 {
@@ -36,7 +38,7 @@ namespace lrtc
     {
 
     public:
-        PeerConnection(EventLoop *el);
+        PeerConnection(EventLoop *el, PortAllocator *allocator, bool dtls_on);
         ~PeerConnection();
         int init(rtc::RTCCertificate *certificate);
         void destroy();
@@ -48,6 +50,10 @@ namespace lrtc
         TimerWatcher *destroy_timer_ = nullptr;
         rtc::RTCCertificate *certificate_ = nullptr;
         std::unique_ptr<SessionDescription> local_session_description_;
+
+        std::unique_ptr<TransportController> transport_controller_;
+
+        webrtc::Clock *clock_;
     };
 
 } // namespace lrtc

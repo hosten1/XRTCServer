@@ -7,12 +7,7 @@
 #include <memory>
 
 #include <rtc_base/rtc_certificate.h>
-
-#include "base/lrtc_server_def.h"
-
-#include "base/event_loop.h"
-#include <rtc_base/logging.h>
-#include "stream/push_stream.h"
+#include "stream/rtc_stream.h"
 
 namespace lrtc
 {
@@ -28,13 +23,14 @@ namespace lrtc
         RTPStreamManager(EventLoop *event_loop);
         ~RTPStreamManager();
 
-        int create_push_stream(uint64_t uid, const std::string &stream_name,
-                               bool audio, bool video, uint32_t log_id, rtc::RTCCertificate *certificate, std::string &sdp);
+        int create_push_stream(const std::shared_ptr<LRtcMsg> &msg, std::string &sdp);
         PushStream *find_push_stream(const std::string &stream_name);
 
     private:
         EventLoop *el_;
         std::unordered_map<std::string, PushStream *> push_stream_map_;
+        std::unordered_map<std::string, PullStream *> pull_streams_;
+        std::unique_ptr<PortAllocator> port_allocator_;
     };
 
 } // namespace lrtc
