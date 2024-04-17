@@ -67,10 +67,10 @@ namespace lrtc
 
             ice_agent_->create_channel(el_, mid, IceCandidateComponent::RTP);
             std::shared_ptr<TransportDescription> td = desc->get_transport_info(mid);
-            // if (td)
-            // {
-            //     ice_agent_->set_ice_params(mid, IceCandidateComponent::RTP, IceParameters(td->ice_ufrag, td->ice_pwd));
-            // }
+            if (td)
+            {
+                ice_agent_->set_ice_params(mid, IceCandidateComponent::RTP, IceParameters(td->ice_ufrag, td->ice_pwd));
+            }
 
             // if (dtls_on_)
             // {

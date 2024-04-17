@@ -2,6 +2,9 @@
 
 #include <unistd.h>
 
+#include "base/event_loop.h"
+#include "stream/rtp_stream_manager.h"
+
 #include <rtc_base/logging.h>
 #include <rtc_base/rtc_certificate.h>
 #include "base/socket.h"
@@ -40,7 +43,7 @@ namespace lrtc
         worker->_process_timeout(conn);
     }
 
-    RtcWorker::RtcWorker(int work_id, const struct rtcServerOptions &option) : work_id_(work_id),
+    RtcWorker::RtcWorker(int work_id, const struct RtcServerOptions &option) : work_id_(work_id),
                                                                                el_(std::make_unique<EventLoop>(this)),
                                                                                options_(option),
                                                                                rtp_stream_manager_(new RTPStreamManager(el_.get()))

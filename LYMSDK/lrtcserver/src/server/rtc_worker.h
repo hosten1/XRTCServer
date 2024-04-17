@@ -6,17 +6,20 @@
 #include <vector>
 #include <unordered_map>
 
-#include "base/event_loop.h"
 #include "base/lock_free_queue.h"
-#include "server/tcp_connection.h"
-#include "server/rtc_server_options.h"
 #include "base/lock_free_queue.h"
 #include "base/lrtc_server_def.h"
-#include "stream/rtp_stream_manager.h"
-
+#include "json/json.h"
+#include "server/settings.h"
 
 namespace lrtc
 {
+    class EventLoop;
+    class TimerWatcher;
+    class IOWatcher;
+    class RTPStreamManager;
+    class TcpConnection;
+
     class RtcWorker
     {
     public:
@@ -25,7 +28,7 @@ namespace lrtc
             MSG_QUIT = 0,
             MSG_RTC_MSG = 1,
         };
-        RtcWorker(int work_id, const struct rtcServerOptions& option);
+        RtcWorker(int work_id, const struct RtcServerOptions &option);
         ~RtcWorker();
         int init();
         bool start();
@@ -37,9 +40,9 @@ namespace lrtc
         int send_rtc_msg(const std::shared_ptr<LRtcMsg> rtc_msg);
 
         friend void rtc_worker_recv_notify(EventLoop *el, IOWatcher *w, int fd,
-                                                 int events, void *data);
+                                           int events, void *data);
         friend void rtc_worker_conn_io_cb(EventLoop * /*el*/, IOWatcher * /*w*/,
-                               int fd, int events, void *data);
+                                          int fd, int events, void *data);
         friend void rtc_worker_conn_timer_cb(EventLoop *el, TimerWatcher * /*w*/, void *data);
 
     private:
@@ -49,10 +52,10 @@ namespace lrtc
         void _process_rtc_msg();
         void _process_push_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg);
         void _read_query(int fd);
-        void _close_connection( TcpConnection *conn);
-        void _remove_connection( TcpConnection *conn);
+        void _close_connection(TcpConnection *conn);
+        void _remove_connection(TcpConnection *conn);
         void _process_timeout(TcpConnection *conn);
-        int _process_request_msg(TcpConnection * conn, Json::Value root, uint32_t log_id);
+        int _process_request_msg(TcpConnection *conn, Json::Value root, uint32_t log_id);
 
     private:
         int work_id_;
@@ -65,9 +68,9 @@ namespace lrtc
         int notify_recv_fd_ = -1;
         int notify_send_fd_ = -1;
 
-         struct rtcServerOptions options_;
+        struct RtcServerOptions options_;
 
-         std::unique_ptr<RTPStreamManager> rtp_stream_manager_;
+        std::unique_ptr<RTPStreamManager> rtp_stream_manager_;
     };
 
 } // namespace lrtc

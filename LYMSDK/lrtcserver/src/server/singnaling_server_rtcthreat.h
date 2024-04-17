@@ -8,7 +8,7 @@
 #include <rtc_base/network/sent_packet.h>
 #include <rtc_base/thread.h>
 #include <api/scoped_refptr.h>
-#include "server/signaling_server_options.h"
+#include "server/settings.h"
 
 namespace lrtc
 {
@@ -22,15 +22,15 @@ namespace lrtc
         bool start();
         int stop();
         // Accepts incoming TCP connection.
-      void OnNewConnection(rtc::AsyncPacketSocket* socket,
-                       rtc::AsyncPacketSocket* new_socket);
+        void OnNewConnection(rtc::AsyncPacketSocket *socket,
+                             rtc::AsyncPacketSocket *new_socket);
 
     protected:
-       /// @brief 
-       /// @param socket 
-       /// @param address 
-       void OnAddressReady(rtc::AsyncPacketSocket* socket,
-                      const rtc::SocketAddress& address);
+        /// @brief
+        /// @param socket
+        /// @param address
+        void OnAddressReady(rtc::AsyncPacketSocket *socket,
+                            const rtc::SocketAddress &address);
         // // Called when a TCP connection is established or fails
         // void OnSocketConnect(rtc::AsyncPacketSocket *socket);
         // void OnSocketClose(rtc::AsyncPacketSocket *socket, int error);
@@ -50,9 +50,9 @@ namespace lrtc
 
     private:
         SignalingServerOptions options_;
-        std::unique_ptr<rtc::BasicPacketSocketFactory> default_socket_factory_;   
+        std::unique_ptr<rtc::BasicPacketSocketFactory> default_socket_factory_;
         std::unique_ptr<rtc::AsyncPacketSocket> async_socket_;
-        rtc::AsyncPacketSocket* async_socket_client_;
+        rtc::AsyncPacketSocket *async_socket_client_;
         std::unique_ptr<rtc::Thread> network_thread_;
     };
 

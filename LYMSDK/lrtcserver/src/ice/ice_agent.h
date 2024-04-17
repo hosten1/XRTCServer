@@ -36,12 +36,12 @@ namespace lrtc
         // int send_unencrypted_rtcp(const std::string &transport_name, IceCandidateComponent component,
         //                           const char *buf, size_t size);
 
-        // void set_ice_params(const std::string &transport_name,
-        //                     IceCandidateComponent component,
-        //                     const IceParameters &ice_params);
-        // void set_remote_ice_params(const std::string &transport_name,
-        //                            IceCandidateComponent component,
-        //                            const IceParameters &ice_params);
+        void set_ice_params(const std::string &transport_name,
+                            IceCandidateComponent component,
+                            const IceParameters &ice_params);
+        void set_remote_ice_params(const std::string &transport_name,
+                                   IceCandidateComponent component,
+                                   const IceParameters &ice_params);
 
         void gathering_candidate();
 

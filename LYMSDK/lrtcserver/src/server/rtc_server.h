@@ -17,14 +17,16 @@
 
 #include <rtc_base/rtc_certificate.h>
 
-#include "base/event_loop.h"
 #include "base/lrtc_server_def.h"
 #include "json/json.h"
-#include "server/rtc_worker.h"
-#include "server/rtc_server_options.h"
+
+#include "server/settings.h"
 
 namespace lrtc
 {
+    class EventLoop;
+    class IOWatcher;
+    class RtcWorker;
 
     class RtcServer
     {
@@ -37,7 +39,7 @@ namespace lrtc
 
         RtcServer();
         ~RtcServer();
-        int init(const char *conf_file);
+        int init(const RtcServerOptions &options);
         bool start();
         int stop();
         void joined();
@@ -60,7 +62,7 @@ namespace lrtc
 
     private:
         std::unique_ptr<EventLoop> event_loop_{nullptr};
-        rtcServerOptions options_;
+        struct RtcServerOptions options_;
         IOWatcher *pipe_watcher_{nullptr};
         std::unique_ptr<std::thread> ev_thread_;
 

@@ -186,15 +186,14 @@ namespace lrtc
         {
             if (host)
             {
-                host[0]='?';
-                host[1]='\0';
+                host[0] = '?';
+                host[1] = '\0';
             }
             if (port)
             {
-               *port = 0;
+                *port = 0;
             }
-            
-            
+
             RTC_LOG(LS_ERROR) << "getsockname failed, errno:" << strerror(errno) << " errno:" << errno;
             return -1;
         }
@@ -206,59 +205,192 @@ namespace lrtc
         {
             *port = ntohs(addr.sin_port);
         }
-        
-        
+
         return 0;
     }
 
     int sock_read_data(int sock, char *buf, int len)
     {
-        RTC_LOG(LS_INFO) << "sock_read_data sockFd:"<<sock;
+        RTC_LOG(LS_INFO) << "sock_read_data sockFd:" << sock;
         int nread = read(sock, buf, len);
         if (-1 == nread)
         {
             if (EAGAIN == errno)
             {
-               nread = 0;
-
-            }else{
+                nread = 0;
+            }
+            else
+            {
                 RTC_LOG(LS_WARNING) << "sock read failed, errno:" << strerror(errno) << " errno:" << errno;
                 return -1;
             }
-            
-        }else if (0 == nread){
-            RTC_LOG(LS_WARNING)<<"sock read 0 bytes, errno:" << strerror(errno) << " errno:" << errno;
-                return -1;
-        }else{
+        }
+        else if (0 == nread)
+        {
+            RTC_LOG(LS_WARNING) << "sock read 0 bytes, errno:" << strerror(errno) << " errno:" << errno;
+            return -1;
+        }
+        else
+        {
             return nread;
         }
-        
+
         return 0;
     }
     int sock_write_data(int sock, const char *buf, const int len)
     {
-        RTC_LOG(LS_INFO) << "sock_write_data sockFd:"<<sock << ", len = "<< len;
+        RTC_LOG(LS_INFO) << "sock_write_data sockFd:" << sock << ", len = " << len;
 
-        int nwritten = write(sock,buf,len);
+        int nwritten = write(sock, buf, len);
         if (-1 == nwritten)
         {
             if (EAGAIN == errno)
             {
-               nwritten = 0;
-
-            }else{
+                nwritten = 0;
+            }
+            else
+            {
                 RTC_LOG(LS_WARNING) << "sock write failed, errno:" << strerror(errno) << " errno:" << errno;
                 return -1;
             }
-            
-        }else if (0 == nwritten){
-            RTC_LOG(LS_WARNING)<<"sock write 0 bytes, errno:" << strerror(errno) << " errno:" << errno;
-                return -1;
-        }else{
+        }
+        else if (0 == nwritten)
+        {
+            RTC_LOG(LS_WARNING) << "sock write 0 bytes, errno:" << strerror(errno) << " errno:" << errno;
+            return -1;
+        }
+        else
+        {
             return nwritten;
         }
 
         return 0;
     }
 
-} //namespace lrtc
+    int create_udp_socket(int family)
+    {
+        int sock = socket(family, SOCK_DGRAM, 0);
+        if (-1 == sock)
+        {
+            RTC_LOG(LS_WARNING) << "create udp socket error: " << strerror(errno)
+                                << ", errno: " << errno;
+            return -1;
+        }
+
+        return sock;
+    }
+
+    int sock_bind(int sock, struct sockaddr *addr, socklen_t len, int min_port, int max_port)
+    {
+        int ret = -1;
+        if (0 == min_port && 0 == max_port)
+        {
+            // 让操作系统自动选择一个port
+            ret = bind(sock, addr, len);
+        }
+        else
+        {
+            struct sockaddr_in *addr_in = (struct sockaddr_in *)addr;
+            for (int port = min_port; port <= max_port && ret != 0; ++port)
+            {
+                addr_in->sin_port = htons(port);
+                ret = bind(sock, addr, len);
+            }
+        }
+
+        if (ret != 0)
+        {
+            RTC_LOG(LS_WARNING) << "sock bind error: " << strerror(errno) << ", errno: " << errno;
+        }
+
+        return ret;
+    }
+
+    int sock_get_address(int sock, char *ip, int *port)
+    {
+        struct sockaddr_in addr_in;
+        socklen_t len = sizeof(sockaddr);
+        int ret = getsockname(sock, (struct sockaddr *)&addr_in, &len);
+        if (ret != 0)
+        {
+            RTC_LOG(LS_WARNING) << "getsockname error: " << strerror(errno) << ", errno: " << errno;
+            return -1;
+        }
+
+        if (ip)
+        {
+            strcpy(ip, inet_ntoa(addr_in.sin_addr));
+        }
+
+        if (port)
+        {
+            *port = ntohs(addr_in.sin_port);
+        }
+
+        return 0;
+    }
+
+    int sock_recv_from(int sock, char *buf, size_t len, struct sockaddr *addr, socklen_t addr_len)
+    {
+        int received = recvfrom(sock, buf, len, 0, addr, &addr_len);
+        if (received < 0)
+        {
+            if (EAGAIN == errno)
+            {
+                received = 0;
+            }
+            else
+            {
+                RTC_LOG(LS_WARNING) << "recv from error: " << strerror(errno)
+                                    << ", errno: " << errno;
+                return -1;
+            }
+        }
+        else if (0 == received)
+        {
+            RTC_LOG(LS_WARNING) << "recv 0 bytes, error: " << strerror(errno)
+                                << ", errno: " << errno;
+            return -1;
+        }
+
+        return received;
+    }
+
+    int64_t sock_get_recv_timestamp(int sock)
+    {
+        struct timeval time;
+        int ret = ioctl(sock, SIOCGSTAMP, &time);
+        if (ret != 0)
+        {
+            return -1;
+        }
+
+        return time.tv_sec * 1000000 + time.tv_usec;
+    }
+
+    int sock_send_to(int sock, const char *buf, size_t len, int flag,
+                     struct sockaddr *addr, socklen_t addr_len)
+    {
+        int sent = sendto(sock, buf, len, flag, addr, addr_len);
+        if (sent < 0)
+        {
+            if (EAGAIN == errno)
+            {
+                sent = 0;
+            }
+            else
+            {
+                RTC_LOG(LS_WARNING) << "sendto error: " << strerror(errno) << ", errno: " << errno;
+                return -1;
+            }
+        }
+        else if (0 == sent)
+        {
+            RTC_LOG(LS_WARNING) << "sendto error: " << strerror(errno) << ", errno: " << errno;
+            return -1;
+        }
+
+        return sent;
+    }
+
+} // namespace lrtc

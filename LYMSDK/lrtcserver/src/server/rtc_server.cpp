@@ -2,11 +2,14 @@
 
 #include <unistd.h>
 
+#include "server/rtc_worker.h"
+#include "base/event_loop.h"
 #include <yaml-cpp/yaml.h>
 #include <rtc_base/logging.h>
 #include <rtc_base/rtc_certificate_generator.h>
 #include <rtc_base/crc32.h>
 #include "rtc_server.h"
+#include "json/json.h"
 
 namespace lrtc
 {
@@ -120,25 +123,9 @@ namespace lrtc
         q_msgs_.pop();
         return msg;
     }
-    int RtcServer::init(const char *conf_file)
+    int RtcServer::init(const RtcServerOptions &options)
     {
-        // 空指针判断
-        if (!conf_file)
-        {
-            RTC_LOG(LS_ERROR) << "rtc server conf file is null";
-            return -1;
-        }
-        try
-        {
-            YAML::Node conf = YAML::LoadFile(conf_file);
-            RTC_LOG(LS_INFO) << "rtc server option conf:" << conf;
-            options_.worker_num = conf["worker_num"].as<int>();
-        }
-        catch (const YAML::Exception &e)
-        {
-            RTC_LOG(LS_ERROR) << "rtc server load conf file failed, " << e.what();
-            return -1;
-        }
+        options_ = options;
         // 生成证书
         if (_generate_and_check_certificate() != 0)
         {

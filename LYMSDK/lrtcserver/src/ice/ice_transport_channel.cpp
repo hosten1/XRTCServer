@@ -2,7 +2,7 @@
 #include <rtc_base/time_utils.h>
 
 #include "ice/ice_transport_channel.h"
-// #include "ice/ice_connection.h"
+#include "ice/ice_connection.h"
 // #include "ice/ice_controller.h"
 
 namespace lrtc
@@ -52,71 +52,71 @@ namespace lrtc
         // RTC_LOG(LS_INFO) << to_string() << ": IceTransportChannel destroy";
     }
 
-    // void IceTransportChannel::set_ice_params(const IceParameters &ice_params)
-    // {
-    //     RTC_LOG(LS_INFO) << "set ICE param, transport_name: " << transport_name_
-    //                      << ", component: " << component_
-    //                      << ", ufrag: " << ice_params.ice_ufrag
-    //                      << ", pwd: " << ice_params.ice_pwd;
-    //     ice_params_ = ice_params;
-    // }
+    void IceTransportChannel::set_ice_params(const IceParameters &ice_params)
+    {
+        RTC_LOG(LS_INFO) << "set ICE param, transport_name: " << transport_name_
+                         << ", component: " << component_
+                         << ", ufrag: " << ice_params.ice_ufrag
+                         << ", pwd: " << ice_params.ice_pwd;
+        ice_params_ = ice_params;
+    }
 
-    // void IceTransportChannel::set_remote_ice_params(const IceParameters &ice_params)
-    // {
-    //     RTC_LOG(LS_INFO) << "set remote ICE param, transport_name: " << transport_name_
-    //                      << ", component: " << component_
-    //                      << ", ufrag: " << ice_params.ice_ufrag
-    //                      << ", pwd: " << ice_params.ice_pwd;
+    void IceTransportChannel::set_remote_ice_params(const IceParameters &ice_params)
+    {
+        RTC_LOG(LS_INFO) << "set remote ICE param, transport_name: " << transport_name_
+                         << ", component: " << component_
+                         << ", ufrag: " << ice_params.ice_ufrag
+                         << ", pwd: " << ice_params.ice_pwd;
 
-    //     remote_ice_params_ = ice_params;
+        remote_ice_params_ = ice_params;
 
-    //     for (auto conn : ice_controller_->connections())
-    //     {
-    //         conn->maybe_set_remote_ice_params(ice_params);
-    //     }
+        // for (auto conn : ice_controller_->connections())
+        // {
+        //     conn->maybe_set_remote_ice_params(ice_params);
+        // }
 
-    //     _sort_connections_and_update_state();
-    // }
+        // _sort_connections_and_update_state();
+    }
 
     void IceTransportChannel::gathering_candidate()
     {
         RTC_LOG(LS_INFO) << "gathering candidate, transport_name: " << transport_name_
                          << ", component: " << component_;
-        // // 1、先检查ice_ufrag和ice_pwd
-        // if (ice_params_.ice_ufrag.empty() || ice_params_.ice_pwd.empty())
-        // {
-        //     RTC_LOG(LS_WARNING) << "cannot gathering candidate because ICE param is empty"
-        //                         << ", transport_name: " << transport_name_
-        //                         << ", component: " << component_
-        //                         << ", ufrag: " << ice_params_.ice_ufrag
-        //                         << ", pwd: " << ice_params_.ice_pwd;
-        //     return;
-        // }
+        // 1、先检查ice_ufrag和ice_pwd
+        if (ice_params_.ice_ufrag.empty() || ice_params_.ice_pwd.empty())
+        {
+            RTC_LOG(LS_WARNING) << "cannot gathering candidate because ICE param is empty"
+                                << ", transport_name: " << transport_name_
+                                << ", component: " << component_
+                                << ", ufrag: " << ice_params_.ice_ufrag
+                                << ", pwd: " << ice_params_.ice_pwd;
+            return;
+        }
 
-        // // 2、获取所有网络接口信息，每个网络信息都创建UDPPort
-        // auto network_list = port_allocator_->get_networks();
-        // if (network_list.empty())
-        // {
-        //     RTC_LOG(LS_WARNING) << "cannot gathering candidate because network_list is empty"
-        //                         << ", transport_name: " << transport_name_
-        //                         << ", component: " << component_;
-        //     return;
-        // }
+        // 2、获取所有网络接口信息，每个网络信息都创建UDPPort
+        auto network_list = port_allocator_->get_networks();
+        if (network_list.empty())
+        {
+            RTC_LOG(LS_WARNING) << "cannot gathering candidate because network_list is empty"
+                                << ", transport_name: " << transport_name_
+                                << ", component: " << component_;
+            return;
+        }
 
-        // for (auto network : network_list)
-        // {
-        //     UDPPort *port = new UDPPort(el_, transport_name_, component_, ice_params_);
-        //     port->signal_unknown_address.connect(this, &IceTransportChannel::_on_unknown_address);
-        //     ports_.push_back(port);
-        //     Candidate c;
-        //     int ret = port->create_ice_candidate(network, port_allocator_->min_port(), port_allocator_->max_port(), c);
-        //     if (ret != 0)
-        //     {
-        //         continue;
-        //     }
+        for (auto network : network_list)
+        {
+            UDPPort *port = new UDPPort(el_, transport_name_, component_, ice_params_);
+            // port->signal_unknown_address.connect(this, &IceTransportChannel::_on_unknown_address);
+            ports_.push_back(port);
+            Candidate c;
+            int ret = port->create_ice_candidate(network, port_allocator_->min_port(), port_allocator_->max_port(), c);
+            if (ret != 0)
+            {
+                continue;
+            }
 
-        //     local_candidates_.push_back(c);
-        // }
+            local_candidates_.push_back(c);
+        }
 
         // signal_candidate_allocate_done(this, local_candidates_);
     }

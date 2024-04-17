@@ -17,7 +17,11 @@
 
 #include "base/event_loop.h"
 #include "ice/ice_def.h"
+#include "ice/ice_credentials.h"
 #include "ice/port_allocator.h"
+#include "ice/candidate.h"
+#include "ice/stun.h"
+#include "ice/udp_port.h"
 
 namespace lrtc
 {
@@ -53,8 +57,8 @@ namespace lrtc
         bool receiving() const { return receiving_; }
         IceTransportState state() { return state_; }
 
-        // void set_ice_params(const IceParameters &ice_params);
-        // void set_remote_ice_params(const IceParameters &ice_params);
+        void set_ice_params(const IceParameters &ice_params);
+        void set_remote_ice_params(const IceParameters &ice_params);
         void gathering_candidate();
         // void on_check_and_ping();
         // int send_packet(const char *data, size_t len);
@@ -94,16 +98,16 @@ namespace lrtc
         PortAllocator *port_allocator_ = nullptr;
         std::string transport_name_;
         IceCandidateComponent component_;
-        // IceParameters ice_params_;
-        // IceParameters remote_ice_params_;
-        // std::vector<Candidate> local_candidates_;
-        // std::vector<UDPPort *> ports_;
+        IceParameters ice_params_;
+        IceParameters remote_ice_params_;
+        std::vector<Candidate> local_candidates_;
+        std::vector<UDPPort *> ports_;
         // std::unique_ptr<IceController> ice_controller_;
         bool start_pinging_ = false;
         TimerWatcher *ping_watcher_ = nullptr;
         int cur_ping_interval_ = WEAK_PING_INTERVAL;
         int64_t last_ping_sent_ms_ = 0;
-        // IceConnection *selected_connection_ = nullptr;
+        IceConnection *selected_connection_ = nullptr;
         bool receiving_ = false;
         bool writable_ = false;
         IceTransportState state_ = IceTransportState::k_new;

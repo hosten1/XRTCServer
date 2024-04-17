@@ -7,7 +7,7 @@
 #include <yaml-cpp/yaml.h>
 #include <rtc_base/logging.h>
 #include "base/socket.h"
-
+#include "server/signaling_work.h"
 
 #include "api/task_queue/task_queue_factory.h"
 #include "api/task_queue/default_task_queue_factory.h"
@@ -16,48 +16,41 @@
 #include "rtc_base/task_utils/repeating_task.h"
 #include "rtc_base/time_utils.h"
 
-namespace lrtc {
-    void accep_new_conn(EventLoop */*el*/, IOWatcher */*w*/, int fd, int /*events*/, void *data)
+namespace lrtc
+{
+    void accep_new_conn(EventLoop * /*el*/, IOWatcher * /*w*/, int fd, int /*events*/, void *data)
     {
-        RTC_LOG(LS_INFO) << "accept new client";        
+        RTC_LOG(LS_INFO) << "accept new client";
         int cfd = 0;
         char cip[128] = {0};
         int cport = 0;
-        cfd = tcp_accept_client(fd,cip,&cport);
+        cfd = tcp_accept_client(fd, cip, &cport);
         if (-1 == cfd)
         {
             return;
         }
         RTC_LOG(LS_VERBOSE) << "accept new client:" << cip << ":" << cport;
-        SignalingServer *server = (SignalingServer*)data;
+        SignalingServer *server = (SignalingServer *)data;
         server->_dispatch_new_conn(cfd);
         // server->accept_cb(fd);
     }
-    void signaling_server_recv_notifi_cb(EventLoop */*el*/, IOWatcher */*w*/, int fd, int /*events*/, void *data)
+    void signaling_server_recv_notifi_cb(EventLoop * /*el*/, IOWatcher * /*w*/, int fd, int /*events*/, void *data)
     {
         RTC_LOG(LS_INFO) << "signaling server recv notify";
         int msg;
         if (read(fd, &msg, sizeof(msg)) != sizeof(int))
         {
-            RTC_LOG(LS_WARNING) << "read from pipe error :"<< strerror(errno) << " ,errorno:"<< errno;;
+            RTC_LOG(LS_WARNING) << "read from pipe error :" << strerror(errno) << " ,errorno:" << errno;
+            ;
             return;
         }
-        SignalingServer *server = (SignalingServer*)data;
+        SignalingServer *server = (SignalingServer *)data;
         server->on_recv_notify(msg);
     }
     SignalingServer::SignalingServer()
-        :loop_(std::make_unique<EventLoop>(this)),
-        task_queue_factory_(webrtc::CreateDefaultTaskQueueFactory())
+        : loop_(std::make_unique<EventLoop>(this))
     {
         RTC_LOG(LS_INFO) << "signaling server constructor";
-        task_queue_ =
-            absl::make_unique<rtc::TaskQueue>(task_queue_factory_->CreateTaskQueue(
-                "TestAudioDeviceModuleImpl", webrtc::TaskQueueFactory::Priority::NORMAL));
-        // repHanler_ = webrtc::RepeatingTaskHandle::Start(task_queue_->Get(), [=]()
-        //             { 
-        //                 RTC_LOG(LS_INFO) << "signaling server repHanler_";
-        //                 return webrtc::TimeDelta::ms(100); 
-        //             });
     }
 
     SignalingServer::~SignalingServer()
@@ -65,90 +58,61 @@ namespace lrtc {
         RTC_LOG(LS_INFO) << "signaling server destructor";
         if (loop_)
         {
-             loop_.reset();
-             loop_ = nullptr;
+            loop_.reset();
+            loop_ = nullptr;
         }
         if (ev_thread_)
         {
             ev_thread_.reset();
-             ev_thread_ = nullptr;
+            ev_thread_ = nullptr;
         }
-        for(auto& work : workers_)
+        for (auto &work : workers_)
         {
             if (work)
             {
-               work.reset();
-               work = nullptr;
+                work.reset();
+                work = nullptr;
             }
-            
         }
         workers_.clear();
-        
-        
-        
-        
     }
-    int SignalingServer::init(const char *conf_file)
+    int SignalingServer::init(const SignalingServerOptions &options)
     {
         RTC_LOG(LS_INFO) << "signaling server init";
-        if (!conf_file)
+        options_ = options;
+        // 创建管道 用于线程间通讯
+        int fds[2];
+        if (pipe(fds) == -1)
         {
-           RTC_LOG(LS_WARNING) << "signaling server conf_file is null";
-           return -1;
-        }
-        try
-        {
-            YAML::Node config = YAML::LoadFile(conf_file);
-            options_.host = config["host"].as<std::string>();
-            options_.port = config["port"].as<int>();
-            options_.worker_num = config["worker_num"].as<int>();
-            options_.connect_timeout = config["connection_timeout"].as<int>();
-            RTC_LOG(LS_INFO) << "signaling server conf = " << config
-                             << " options_.host = " << options_.host
-                             << " options_.port = " << options_.port;
-
-        }
-        catch(const YAML::Exception& e)
-        {
-            RTC_LOG(LS_ERROR) << "catch a YAML::Exeption,err: " << e.what()
-                              << " line : " << e.mark.line + 1 << " col:" << e.mark.column + 1
-                              << '\n';
-
+            RTC_LOG(LS_ERROR) << "create pipe eror :" << strerror(errno) << " ,errorno:" << errno;
             return -1;
-         }
-         //创建管道 用于线程间通讯
-         int fds[2];
-         if (pipe(fds) == -1)
-         {
-             RTC_LOG(LS_ERROR) << "create pipe eror :" << strerror(errno) << " ,errorno:"<< errno;
-             return -1;
-         }
-         notify_recv_fd_ = fds[0];
-         notify_send_fd_ = fds[1];
+        }
+        notify_recv_fd_ = fds[0];
+        notify_send_fd_ = fds[1];
 
-         //将线程通讯的notifi_recv_fd添加到事件循环里，进行管理
-         pipe_watcher_ = loop_->create_io_event(signaling_server_recv_notifi_cb,this);
-         loop_->start_io_event(pipe_watcher_,notify_recv_fd_,EventLoop::READ);
-         // 创建tcp socket server
-         listen_fd_ = Create_tcp_server(options_.host.c_str(),options_.port);
-         if (-1 == listen_fd_)
-         {
-           return -1;
-         }
-         
-         io_watcher_ = loop_->create_io_event(accep_new_conn,this);
-         loop_->start_io_event(io_watcher_,listen_fd_,EventLoop::READ);
-         // 创建work 
-         for (int i = 0; i < options_.worker_num; i++)
-         {
-            if(_create_worker(i) != 0){
+        // 将线程通讯的notifi_recv_fd添加到事件循环里，进行管理
+        pipe_watcher_ = loop_->create_io_event(signaling_server_recv_notifi_cb, this);
+        loop_->start_io_event(pipe_watcher_, notify_recv_fd_, EventLoop::READ);
+        // 创建tcp socket server
+        listen_fd_ = Create_tcp_server(options_.host.c_str(), options_.port);
+        if (-1 == listen_fd_)
+        {
+            return -1;
+        }
+
+        io_watcher_ = loop_->create_io_event(accep_new_conn, this);
+        loop_->start_io_event(io_watcher_, listen_fd_, EventLoop::READ);
+        // 创建work
+        for (int i = 0; i < options_.worker_num; i++)
+        {
+            if (_create_worker(i) != 0)
+            {
                 RTC_LOG(LS_ERROR) << "create worker error";
                 return -1;
             }
-         }
-         
-         return 0;
+        }
 
+        return 0;
     }
     bool SignalingServer::start()
     {
@@ -185,7 +149,7 @@ namespace lrtc {
     int SignalingServer::stop()
     {
         RTC_LOG(LS_INFO) << "signaling server stop from other event";
-       return notify(SignalingServer::MSG_QUIT);
+        return notify(SignalingServer::MSG_QUIT);
     }
     int SignalingServer::notify(int msg)
     {
@@ -195,17 +159,17 @@ namespace lrtc {
     }
     void SignalingServer::on_recv_notify(int msg)
     {
-      RTC_LOG(LS_INFO) << "signaling server notify msg:" << msg;
-       switch (msg)
-       {
-       case SignalingServer::MSG_QUIT:
-        _stop();
-        break;
-       
-       default:
-       RTC_LOG(LS_WARNING) << "signaling server recv unknown msg:" << msg;
-        break;
-       }
+        RTC_LOG(LS_INFO) << "signaling server notify msg:" << msg;
+        switch (msg)
+        {
+        case SignalingServer::MSG_QUIT:
+            _stop();
+            break;
+
+        default:
+            RTC_LOG(LS_WARNING) << "signaling server recv unknown msg:" << msg;
+            break;
+        }
     }
     void SignalingServer::_stop()
     {
@@ -245,7 +209,7 @@ namespace lrtc {
 
         try
         {
-            std::unique_ptr<SignalingWork> worker = std::make_unique<SignalingWork>(worker_id,options_);
+            std::unique_ptr<SignalingWork> worker = std::make_unique<SignalingWork>(worker_id, options_);
             if (worker->init() != 0)
             { // 使用了更明确的判断条件
                 RTC_LOG(LS_ERROR) << "init worker error worker_id:" << worker_id;
@@ -269,7 +233,7 @@ namespace lrtc {
     }
     void SignalingServer::_dispatch_new_conn(int fd)
     {
-        RTC_LOG(LS_INFO)<<"signaling server dispatch new conn fd:"<<fd;
+        RTC_LOG(LS_INFO) << "signaling server dispatch new conn fd:" << fd;
         size_t idx = next_works_index_;
         next_works_index_++;
         if (next_works_index_ >= workers_.size())
@@ -278,8 +242,6 @@ namespace lrtc {
         }
         SignalingWork *worker = workers_[idx].get();
         worker->notify_new_conn(fd);
-        
-
     }
     void SignalingServer::joined()
     {

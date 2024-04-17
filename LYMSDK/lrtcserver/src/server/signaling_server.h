@@ -6,20 +6,20 @@
 #include <vector>
 
 #include "base/event_loop.h"
-#include "server/signaling_work.h"
 
-#include "server/signaling_server_options.h"
+// #include "server/signaling_server_options.h"
 
-#include "api/task_queue/task_queue_factory.h"
-#include "api/task_queue/default_task_queue_factory.h"
+// #include "api/task_queue/task_queue_factory.h"
+// #include "api/task_queue/default_task_queue_factory.h"
 
-#include <rtc_base/task_queue.h>
-#include <rtc_base/task_utils/repeating_task.h>
-#include <rtc_base/task_utils/to_queued_task.h>
-
+// #include <rtc_base/task_queue.h>
+// #include <rtc_base/task_utils/repeating_task.h>
+// #include <rtc_base/task_utils/to_queued_task.h>
+#include "server/settings.h"
 
 namespace lrtc
 {
+  class SignalingWork;
 
   class SignalingServer
   {
@@ -29,19 +29,18 @@ namespace lrtc
     {
       MSG_QUIT = 0,
     };
-    SignalingServer(/* args */);
+    SignalingServer();
     ~SignalingServer();
-    int init(const char *conf_file);
+    int init(const SignalingServerOptions &options);
     bool start();
     int stop();
     int notify(int msg);
     void joined();
 
-    friend void signaling_server_recv_notifi_cb(EventLoop *el,IOWatcher *w,
+    friend void signaling_server_recv_notifi_cb(EventLoop *el, IOWatcher *w,
                                                 int fd, int events, void *data);
-    friend void accep_new_conn(EventLoop *el, IOWatcher *w, 
-                                  int fd, int events, void *data);
-
+    friend void accep_new_conn(EventLoop *el, IOWatcher *w,
+                               int fd, int events, void *data);
 
   private:
     void on_recv_notify(int msg);
@@ -61,17 +60,9 @@ namespace lrtc
     int listen_fd_ = -1;
     int notify_recv_fd_ = -1;
     int notify_send_fd_ = -1;
-   
-   
+
     std::vector<std::unique_ptr<SignalingWork>> workers_;
     size_t next_works_index_ = 0;
-
-
-    std::unique_ptr< webrtc::TaskQueueFactory>  task_queue_factory_;
-
-//    rtc::CriticalSection lock_;
-    std::unique_ptr<rtc::TaskQueue> task_queue_;
-    // webrtc::RepeatingTaskHandle repHanler_;
   };
 
 } // namespace lrtc
