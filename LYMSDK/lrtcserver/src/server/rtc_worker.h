@@ -12,6 +12,7 @@
 #include "server/rtc_server_options.h"
 #include "base/lock_free_queue.h"
 #include "base/lrtc_server_def.h"
+#include "stream/rtp_stream_manager.h"
 
 
 namespace lrtc
@@ -65,6 +66,8 @@ namespace lrtc
         int notify_send_fd_ = -1;
 
          struct rtcServerOptions options_;
+
+         std::unique_ptr<RTPStreamManager> rtp_stream_manager_;
     };
 
 } // namespace lrtc

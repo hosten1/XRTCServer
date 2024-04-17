@@ -2,16 +2,32 @@
 
 #include <iostream>
 #include <sys/stat.h>
+#include <chrono>
+#include <ctime>
+#include <sstream>
+#include <iomanip>
 
 namespace lrtc {
+    std::string getCurrentDateTimeAsString() {
+        // 获取当前时间
+        auto now = std::chrono::system_clock::now();
 
+        // 转换为时间点结构
+        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+        // 使用put_time函数将时间转换为字符串
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&currentTime), "%Y-%m-%d-%H");
+        
+        return ss.str();
+    }
     LrtcLog::LrtcLog(const std::string &log_dir, 
     const std::string &log_name, 
     const std::string &log_level):
     log_dir_(log_dir),
     log_name_(log_name),
     log_level_(log_level),
-    log_file_(log_dir + "/" + log_name + ".log"),
+    log_file_(log_dir + "/" + log_name + "_"+ getCurrentDateTimeAsString()+".log"),
     log_file_wf_(log_dir + "/" + log_name + ".log.wf")
     {
 

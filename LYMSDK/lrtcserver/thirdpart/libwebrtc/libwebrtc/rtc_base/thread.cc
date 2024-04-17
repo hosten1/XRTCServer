@@ -359,7 +359,7 @@ void* Thread::PreRun(void* pv) {
 }
 
 void Thread::Run() {
-  //RTC_LOG(LS_INFO) << "[vrv_wy] Thread Run: name=" << name_.c_str() << ",fd=" << thread_;
+  RTC_LOG(LS_INFO) << "[vrv_wy] Thread Run: name=" << name_.c_str() << ",fd=" << thread_;
   ProcessMessages(kForever);
 }
 

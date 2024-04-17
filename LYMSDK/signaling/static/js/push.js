@@ -27,6 +27,7 @@ pushBtn.addEventListener("click", () => {
         console.log("push response:"+JSON.stringify(data));
         if("success" == textStatus && 0 == data.errNo){
             $("#tips1").html("<font color='blue'>推流请求成功</font")
+            console.log("remote offer: \r\n" + data.data.sdp)
         }else{
             $("#tips1").html("<font color='red'>推流请求失败</font")
         }

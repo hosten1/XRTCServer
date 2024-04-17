@@ -16,7 +16,8 @@ namespace lrtc
     EventLoop::EventLoop(void *owner) : owner_(owner),
                                         loop_(ev_loop_new(EVFLAG_AUTO))
     {
-        assert(loop_ != nullptr);
+        RTC_DCHECK(loop_);
+        RTC_DCHECK(owner_);
     }
 
     EventLoop::~EventLoop()
@@ -24,23 +25,15 @@ namespace lrtc
     }
     void EventLoop::start()
     {
-        // This should never happen.
-        if (loop_ == nullptr){
-            // MS_ABORT("DepLibUV::loop was not allocated");
-
-        }
+           RTC_DCHECK(loop_);
 
             ev_run(loop_);
     }
     void lrtc::EventLoop::stop()
     {
-        // This should never happen.
-        if (loop_ == nullptr){
-            // MS_ABORT("DepLibUV::loop was not allocated");
+        RTC_DCHECK(loop_);
 
-        }
-
-            ev_break(loop_, EVBREAK_ALL);
+        ev_break(loop_, EVBREAK_ALL);
         // delete loop_;
     }
 
@@ -65,6 +58,8 @@ namespace lrtc
         void *data_;
     };
     static void genric_io_cb(struct ev_loop */*loop*/, struct ev_io* io,int events){
+        RTC_DCHECK(io);
+        RTC_DCHECK(io->data);
         IOWatcher *watcher = (IOWatcher *)(io->data);
         watcher->cb_(watcher->el_,watcher,io->fd,TRANS_FROM_EV_MASK(events),watcher->data_);
    
@@ -78,6 +73,8 @@ namespace lrtc
     }
     void EventLoop::start_io_event(IOWatcher *watcher, int fd, int mask)
     {
+        RTC_DCHECK(watcher);
+        RTC_DCHECK_GE(fd, 0);
         assert(watcher != nullptr); // 确保 watcher 不是空指针
         struct ev_io *io = &(watcher->io_);
         // 如果之前有启动过 需要先停止然后 启动
@@ -104,8 +101,8 @@ namespace lrtc
 
     void EventLoop::stop_io_event(IOWatcher *watcher,int fd,int mask)
     {
-        assert(watcher != nullptr); // 确保 watcher 不是空指针
-
+        RTC_DCHECK(watcher);
+        RTC_DCHECK_GE(fd, 0);
         struct  ev_io *io = &(watcher->io_);
         if (ev_is_active(io))
         {
@@ -127,12 +124,14 @@ namespace lrtc
     }
    void EventLoop::delete_io_event(IOWatcher *watcher)
     {
+        RTC_DCHECK(watcher);
         struct  ev_io *io = &(watcher->io_);
         ev_io_stop(loop_, io);
         delete watcher;
     }
     void EventLoop::destroy_io_event(IOWatcher *watcher,int /*fd*/,int /*mask*/)
     {
+        RTC_DCHECK(watcher);
         struct  ev_io *io = &(watcher->io_);
         ev_io_stop(loop_, io);
         delete watcher;

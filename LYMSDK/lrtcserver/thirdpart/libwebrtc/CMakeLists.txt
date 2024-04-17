@@ -48,6 +48,7 @@ set(SOURCES
     "libwebrtc/rtc_base/message_queue.cc"
     "libwebrtc/rtc_base/net_helper.cc"
     "libwebrtc/rtc_base/net_helpers.cc"
+    "libwebrtc/rtc_base/network.cc"
     "libwebrtc/rtc_base/network_monitor.cc"
     "libwebrtc/rtc_base/null_socket_server.cc"
     "libwebrtc/rtc_base/openssl_digest.cc"
@@ -60,6 +61,7 @@ set(SOURCES
     "libwebrtc/rtc_base/openssl_utility.cc"
     "libwebrtc/rtc_base/platform_thread_types.cc"
     "libwebrtc/rtc_base/platform_thread.cc"
+    "libwebrtc/rtc_base/proxy_info.cc"
     "libwebrtc/rtc_base/physical_socket_server.cc"
     "libwebrtc/rtc_base/rate_statistics.cc"
     "libwebrtc/rtc_base/rtc_certificate.cc"
@@ -74,6 +76,7 @@ set(SOURCES
     "libwebrtc/rtc_base/socket.cc"
     "libwebrtc/rtc_base/socket_stream.cc"
     "libwebrtc/rtc_base/socket_address.cc"
+    "libwebrtc/rtc_base/socket_adapters.cc"
     "libwebrtc/rtc_base/ssl_adapter.cc"
     "libwebrtc/rtc_base/ssl_certificate.cc"
     "libwebrtc/rtc_base/ssl_fingerprint.cc"
@@ -82,18 +85,20 @@ set(SOURCES
     "libwebrtc/rtc_base/socket_address_pair.cc"
     "libwebrtc/rtc_base/socket_address_pair.cc"
     "libwebrtc/rtc_base/time_utils.cc"
+    "libwebrtc/rtc_base/task_queue_stdlib.cc"
+    "libwebrtc/rtc_base/task_queue.cc"
     "libwebrtc/rtc_base/zero_memory.cc"
     "libwebrtc/rtc_base/thread.cc"
     "libwebrtc/rtc_base/async_invoker.cc"
     "libwebrtc/rtc_base/strings/string_builder.cc"
     "libwebrtc/rtc_base/synchronization/rw_lock_wrapper.cc"
     "libwebrtc/rtc_base/synchronization/rw_lock_posix.cc"
-    # "libwebrtc/rtc_base/synchronization/rw_lock_win.cc"
     "libwebrtc/rtc_base/synchronization/sequence_checker.cc"
-    "libwebrtc/rtc_base/synchronization/yield_policy.h"
+    "libwebrtc/rtc_base/synchronization/yield_policy.cc"
     "libwebrtc/rtc_base/strings/audio_format_to_string.cc"
     "libwebrtc/rtc_base/third_party/base64/base64.cc"
     "libwebrtc/rtc_base/third_party/sigslot/sigslot.cc"
+    "libwebrtc/rtc_base/task_utils/repeating_task.cc"
 
     #  这个是redis的库
     "libwebrtc/rtc_base/sds/sds.cc"
@@ -120,9 +125,52 @@ set(SOURCES
     "libwebrtc/api/video/video_bitrate_allocation.cc"
     "libwebrtc/api/video/video_content_type.cc"
     "libwebrtc/api/video/video_timing.cc"
+    "libwebrtc/api/task_queue/default_task_queue_factory_stdlib.cc"
+    "libwebrtc/api/task_queue/global_task_queue_factory.cc"
+    "libwebrtc/api/task_queue/task_queue_base.cc"
+
+
     "libwebrtc/api/rtp_packet_info.cc"
+    "libwebrtc/p2p/base/async_stun_tcp_socket.cc"
+    "libwebrtc/p2p/base/basic_async_resolver_factory.cc"
+    "libwebrtc/p2p/base/basic_packet_socket_factory.cc"
+    "libwebrtc/p2p/base/packet_socket_factory.cc"
+    "libwebrtc/p2p/base/stun.cc"
+
+)
+set(api_win
+"libwebrtc/api/task_queue/default_task_queue_factory_gcd.cc"
+
+)
+set(api_apple
+    "libwebrtc/api/task_queue/default_task_queue_factory_gcd.cc"
+)
+set(rtc_base_win 
+    "libwebrtc/rtc_base/task_queue_win.cc"
+    "libwebrtc/rtc_base/synchronization/rw_lock_win.cc"
+)
+set(rtc_base_android 
+    "libwebrtc/rtc_base/strings/ifaddrs_android.cc"
+
+)
+set(rtc_base_apple 
+"libwebrtc/rtc_base/task_queue_gcd.cc"
+
 )
 
+set(audio_device_win 
+    "libwebrtc/rtc_base/synchronization/rw_lock_win.cc"
+
+)
+set(video_capture_win 
+    "libwebrtc/rtc_base/synchronization/rw_lock_win.cc"
+)
+
+set(use_libevent
+ "libwebrtc/api/task_queue/default_task_queue_factory_libevent.cc"
+ "libwebrtc/rtc_base/task_queue_libevent.cc"
+
+)
 # 添加头文件路径
 include_directories(
     "libwebrtc"
@@ -134,27 +182,39 @@ include_directories(
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if(ANDROID)
     MESSAGE(STATUS "current platform: Android")
-    # 向 SOURCES 变量追加新的源文件
-     list(APPEND SOURCES 
-            "libwebrtc/rtc_base/strings/ifaddrs_android.cc"
+    add_definitions(-DWEBRTC_ANDROID)
+    # # 向 SOURCES 变量追加新的源文件
+    #  list(APPEND SOURCES 
+    #         "libwebrtc/rtc_base/strings/ifaddrs_android.cc"
          
-          )
+    #       )
 else()
     # 添加条件定义
     if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         MESSAGE(STATUS "current platform: Darwin ")
-        add_definitions(-DWEBRTC_MAC)
-        add_definitions(-DWEBRTC_POSIX)
+        add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX
+        -DWEBRTC_MAC  -Wno-unused-parameter -DWEBRTC_APM_DEBUG_DUMP=0 -mfma -DWEBRTC_EXTERNAL_JSON=0
+        ")
         #add_definitions(-DNDEBUG)
     elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
         MESSAGE(STATUS "current platform: Linux ")
-        add_definitions(-DWEBRTC_LINUX)
-        add_definitions(-DWEBRTC_POSIX)
+        # add_definitions(-DWEBRTC_LINUX)
+        # add_definitions(-DWEBRTC_POSIX)
         add_definitions(-DUSE_MEDIASOUP_ClASS)
+        add_definitions("-g -pipe -W -Wall -fPIC -std=gnu++14 -DWEBRTC_POSIX
+    -DWEBRTC_LINUX  -Wno-unused-parameter -DWEBRTC_APM_DEBUG_DUMP=0 -mfma -DWEBRTC_EXTERNAL_JSON=0
+    ")
         #add_definitions(-DNDEBUG)
     elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
         MESSAGE(STATUS "current platform: Windows ")
-        add_definitions(-DWEBRTC_WIN)
+        add_definitions(-DUNICODE -D_UNICODE -DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN 
+        -DNOMINMAX 
+        -D_WINDOWS
+        -D_USE_MATH_DEFINES
+        -DWEBRTC_WIN
+        -DWEBRTC_INCLUDE_INTERNAL_AUDIO_DEVICE
+        -DWEBRTC_EXTERNAL_JSON
+        -DWEBRTC_APM_DEBUG_DUMP)
         #add_definitions(-DNDEBUG)
     endif()
 
@@ -178,19 +238,72 @@ link_directories(
 
 # add_subdirectory("./deps/abseil-cpp")
 # add_subdirectory("./deps/abseil-cpp")
+if(ANDROID)
+    MESSAGE(STATUS "current platform: Android")
+    add_definitions(-DWEBRTC_ANDROID)
+    add_library(libwebrtc STATIC
+          ${SOURCES}
+          ${rtc_base_android}
+          
+      )
+    install(TARGETS libwebrtc ARCHIVE DESTINATION lib)
+elseif(APPLE)
+    add_library(libwebrtc STATIC
+    ${SOURCES}
+    ${rtc_base_apple}
+    ${api_apple}
+    )
+    install(TARGETS libwebrtc ARCHIVE DESTINATION lib)
+else()
+    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+            add_library(libwebrtc STATIC
+                ${SOURCES}
+                ${rtc_base_win}
+                ${api_win}
+                ${audio_device_win}
+                ${video_capture_win}
 
-# 添加依赖库
-add_library(libwebrtc STATIC ${SOURCES})
+            )
+            install(TARGETS libwebrtc ARCHIVE DESTINATION lib)
+        elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+            file(GLOB exclude_src
+                "./src/rtc_base/win32.cc"
+                "./src/rtc_base/task_queue_win.cc"
+                "./src/api/task_queue/default_task_queue_factory_win.cc"
+                "./src/rtc_base/system/warn_current_thread_is_deadlocked.cc"
+            )
+            list(REMOVE_ITEM all_src ${exclude_src})
+            add_library(libwebrtc 
+                ${SOURCES}
+            )
+    endif()
 
-# 查找 pthread 库
-# find_package(Threads REQUIRED)
-target_link_libraries(libwebrtc 
-                    pthread
-                    absl_strings
-                    absl_strerror
-                    crypto
-                    ssl
-)
+endif()
+
+
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/install)  # 设置安装目录
 install(TARGETS libwebrtc DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/libwebrtc/src/rtc_base 
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/api
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/p2p/base
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/system_wrappers
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/modules
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/common_audio
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/common_video
+    ${PROJECT_SOURCE_DIR}/libwebrt/src/media
+    DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h"
+)
+
+# 查找 pthread 库
+# find_package(Threads REQUIRED)
+target_link_libraries(libwebrtc  pthread
+                    libabsl_strings.a 
+                    libabsl_throw_delegate.a
+                    libabsl_strerror.a
+                    libabsl_bad_optional_access.a
+                    libssl.a
+                    libcrypto.a
+)

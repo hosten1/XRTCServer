@@ -28,6 +28,7 @@ link_directories(
     "./third_party/jsoncpp/lib64"
     # "./third_party/libuv/include"
     "./third_party/libev/lib"
+    "./thirdpart/libwebrtc/deps/openssl/install/lib"
     )
 
 file(GLOB all_src
@@ -37,6 +38,7 @@ file(GLOB all_src
     "./src/server/*.cpp"
     "./src/stream/*.cpp"
     "./src/pc/*.cpp"
+    "./src/ice/*.cpp"
    )    
 
 add_executable(lrtcserver ${all_src})
@@ -48,6 +50,10 @@ target_link_libraries(lrtcserver
                     # uv
                     ev
                     jsoncpp
-                    absl_strings
-                    absl_strerror
+                    libabsl_strings.a 
+                    libabsl_throw_delegate.a
+                    libabsl_strerror.a
+                    libabsl_bad_optional_access.a
+                    crypto
+                    ssl
 )

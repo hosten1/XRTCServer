@@ -196,3 +196,25 @@ LYMSDK/lrtcserver/thirdpart/libwebrtc/deps/opensslLYMSDK/lrtcserver/thirdpart/li
 
 # Windows manifest files
 LYMSDK/lrtcserver/thirdpart/libwebrtc/deps/opensslLYMSDK/lrtcserver/thirdpart/libwebrtc/deps/openssl/*.manifest
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/out/
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/*.s
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/*.o
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/*.obj
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/*.swp
+
+
+
+
+
+
+
+LYMSDK/lrtcserver/thirdpart/libsrtp/install/lib/libsrtp2.a
+LYMSDK/lrtcserver/thirdpart/libsrtp/install/lib/pkgconfig/libsrtp2.pc
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/libsrtp2.a
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/libsrtp2.pc
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/crypto/cipher/*.o
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/crypto/hash/*.o
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/crypto/kernel/*.o
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/crypto/math/*.o
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/crypto/replay/*.o
+LYMSDK/lrtcserver/thirdpart/libsrtp/srtp/srtp/*.o
