@@ -47,9 +47,9 @@ namespace lrtc
 
         // IceTransportState ice_state() { return ice_state_; }
 
-        // sigslot::signal4<IceAgent *, const std::string &, IceCandidateComponent,
-        //                  const std::vector<Candidate> &>
-        //     signal_candidate_allocate_done;
+        sigslot::signal4<IceAgent *, const std::string &, IceCandidateComponent,
+                         const std::vector<Candidate> &>
+            signal_candidate_allocate_done;
         // sigslot::signal2<IceAgent *, IceTransportState> signal_ice_state;
         // sigslot::signal6<IceAgent *, const std::string &, int, const char *, size_t, int64_t> signal_read_packet;
 
@@ -57,7 +57,7 @@ namespace lrtc
         std::vector<IceTransportChannel *>::iterator _get_channels(
             const std::string &transport_name,
             IceCandidateComponent component);
-        // void _on_candidate_allocate_done(IceTransportChannel *channel, const std::vector<Candidate> &candidates);
+        void _on_candidate_allocate_done(IceTransportChannel *channel, const std::vector<Candidate> &candidates);
         // void _on_ice_receiving_state(IceTransportChannel *channel);
         // void _on_ice_writable_state(IceTransportChannel *channel);
         // void _on_ice_state_changed(IceTransportChannel *channel);

@@ -38,8 +38,8 @@ namespace lrtc
                                                                                             transport_controller_(new TransportController(el, allocator, dtls_on)),
                                                                                             clock_(webrtc::Clock::GetRealTimeClock())
     {
-        // transport_controller_->signal_candidate_allocate_done.connect(this,
-        //                                                               &PeerConnection::_on_candidate_allocate_done);
+        transport_controller_->signal_candidate_allocate_done.connect(this,
+                                                                      &PeerConnection::_on_candidate_allocate_done);
         // transport_controller_->signal_connection_state.connect(this,
         //                                                        &PeerConnection::_on_connection_state);
         // transport_controller_->signal_rtp_packet_received.connect(this,
@@ -135,6 +135,21 @@ namespace lrtc
         transport_controller_->set_local_description(local_session_description_.get());
 
         return local_session_description_->to_string(false);
+    }
+
+    void PeerConnection::_on_candidate_allocate_done(TransportController *transport_controller, const std::string &transport_name, IceCandidateComponent component, const std::vector<Candidate> &candidates)
+    {
+
+        for (auto &candidate : candidates)
+        {
+            RTC_LOG(LS_INFO) << "candidate: " << candidate.to_string();
+        }
+        if (!local_session_description_)
+        {
+            return;
+        }
+        auto content = local_session_description_->get_content(transport_name);
+        content->add_candidates(candidates);
     }
 
 } // namespace lrtc

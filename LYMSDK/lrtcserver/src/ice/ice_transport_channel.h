@@ -63,8 +63,8 @@ namespace lrtc
         // void on_check_and_ping();
         // int send_packet(const char *data, size_t len);
 
-        // sigslot::signal2<IceTransportChannel *, const std::vector<Candidate> &>
-        //     signal_candidate_allocate_done;
+        sigslot::signal2<IceTransportChannel *, const std::vector<Candidate> &>
+            signal_candidate_allocate_done;
         // sigslot::signal1<IceTransportChannel *> signal_receiving_state;
         // sigslot::signal1<IceTransportChannel *> signal_writable_state;
         // sigslot::signal4<IceTransportChannel *, const char *, size_t, int64_t> signal_read_packet;

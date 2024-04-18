@@ -9,7 +9,7 @@
 
 #include "pc/codec_info.h"
 #include "ice/ice_credentials.h"
-// #include "ice/candidate.h"
+#include "ice/candidate.h"
 #include "pc/stream_params.h"
 
 namespace lrtc
@@ -52,11 +52,11 @@ namespace lrtc
         bool rtcp_mux() { return use_rtcp_mux_; }
         void set_rtcp_mux(bool mux) { use_rtcp_mux_ = mux; }
 
-        // const std::vector<Candidate> &candidates() { return candidates_; }
-        // void add_candidates(const std::vector<Candidate> &candidates)
-        // {
-        //     candidates_ = candidates;
-        // }
+        const std::vector<Candidate> &candidates() { return candidates_; }
+        void add_candidates(const std::vector<Candidate> &candidates)
+        {
+            candidates_ = candidates;
+        }
 
         const std::vector<StreamParams> &streams() { return send_streams_; }
         void add_stream(const StreamParams &stream)
@@ -68,7 +68,7 @@ namespace lrtc
         std::vector<std::shared_ptr<CodecInfo>> codecs_;
         RtpDirection direction_;
         bool use_rtcp_mux_ = true;
-        // std::vector<Candidate> candidates_;
+        std::vector<Candidate> candidates_;
         std::vector<StreamParams> send_streams_;
     };
 

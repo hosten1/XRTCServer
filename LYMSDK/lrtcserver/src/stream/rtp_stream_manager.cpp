@@ -12,6 +12,7 @@
 #include "stream/push_stream.h"
 #include "stream/rtp_stream_manager.h"
 #include "ice/port_allocator.h"
+#include "server/settings.h"
 
 namespace lrtc
 {
@@ -19,6 +20,7 @@ namespace lrtc
         : el_(event_loop),
           port_allocator_(new PortAllocator)
     {
+        port_allocator_->set_port_range(Singleton<Settings>::Instance()->IceMinPort(), Singleton<Settings>::Instance()->IceMaxPort());
     }
     RTPStreamManager::~RTPStreamManager()
     {

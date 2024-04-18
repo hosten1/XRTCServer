@@ -31,7 +31,7 @@ namespace lrtc
         }
 
         auto channel = new IceTransportChannel(el, port_allocator_, transport_name, component);
-        // channel->signal_candidate_allocate_done.connect(this, &IceAgent::_on_candidate_allocate_done);
+        channel->signal_candidate_allocate_done.connect(this, &IceAgent::_on_candidate_allocate_done);
         // channel->signal_receiving_state.connect(this, &IceAgent::_on_ice_receiving_state);
         // channel->signal_writable_state.connect(this, &IceAgent::_on_ice_writable_state);
         // channel->signal_ice_state_changed.connect(this, &IceAgent::_on_ice_state_changed);
@@ -41,12 +41,13 @@ namespace lrtc
         return true;
     }
 
-    // void IceAgent::_on_candidate_allocate_done(IceTransportChannel *channel,
-    //                                            const std::vector<Candidate> &candidates)
-    // {
-    //     signal_candidate_allocate_done(this, channel->transport_name(),
-    //                                    channel->component(), candidates);
-    // }
+    void IceAgent::_on_candidate_allocate_done(IceTransportChannel *channel,
+                                               const std::vector<Candidate> &candidates)
+    {
+        // RTC_LOG(LS_INFO) << "IceAgent::_on_candidate_allocate_done" << candidates[0].to_string();
+        signal_candidate_allocate_done(this, channel->transport_name(),
+                                       channel->component(), candidates);
+    }
 
     // void IceAgent::_on_ice_receiving_state(IceTransportChannel *)
     // {

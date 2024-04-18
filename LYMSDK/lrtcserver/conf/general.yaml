@@ -6,7 +6,7 @@ log:
     log_to_stderr: true
 rtc:
     worker_num: 2
-    candidate_ip: 1.14.148.67
+    candidate_ip: 11.14.148.67
 ice:
    min_port: 10025
    max_port: 65535

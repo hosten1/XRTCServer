@@ -68,7 +68,7 @@ namespace lrtc
         }
 
         local_addr_.SetIP(network->ip());
-        // local_addr_.SetIP(Singleton<Settings>::Instance()->CandidateIp().c_str());
+        local_addr_.SetIP(Singleton<Settings>::Instance()->CandidateIp().c_str());
         local_addr_.SetPort(port);
 
         async_socket_ = std::make_unique<AsyncUdpSocket>(el_, socket_);

@@ -43,9 +43,9 @@ namespace lrtc
         // int send_rtcp(const std::string &transport_name, const char *data, size_t len);
         // int send_unencrypted_rtcp(const std::string &transport_name, const char *data, size_t len);
 
-        // sigslot::signal4<TransportController *, const std::string &, IceCandidateComponent,
-        //                  const std::vector<Candidate> &>
-        //     signal_candidate_allocate_done;
+        sigslot::signal4<TransportController *, const std::string &, IceCandidateComponent,
+                         const std::vector<Candidate> &>
+            signal_candidate_allocate_done;
         // sigslot::signal2<TransportController *, PeerConnectionState> signal_connection_state;
         // sigslot::signal3<TransportController *, rtc::CopyOnWriteBuffer *, int64_t> signal_rtp_packet_received;
         // sigslot::signal3<TransportController *, rtc::CopyOnWriteBuffer *, int64_t> signal_rtcp_packet_received;

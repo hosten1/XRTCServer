@@ -34,7 +34,7 @@ namespace lrtc
         bool use_rtcp_mux = true;
         bool dtls_on = true;
     };
-    class PeerConnection
+    class PeerConnection : public sigslot::has_slots<>
     {
 
     public:
@@ -44,6 +44,12 @@ namespace lrtc
         void destroy();
 
         std::string create_offer_sdp(const RTCOfferAnswerOptions &options);
+
+    private:
+        void _on_candidate_allocate_done(TransportController *transport_controller,
+                                         const std::string &transport_name,
+                                         IceCandidateComponent component,
+                                         const std::vector<Candidate> &candidates);
 
     private:
         EventLoop *el_;

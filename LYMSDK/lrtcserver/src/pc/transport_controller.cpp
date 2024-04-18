@@ -14,8 +14,8 @@ namespace lrtc
                                                                                                       ice_agent_(new IceAgent(el, allocator)),
                                                                                                       dtls_on_(dtls_on)
     {
-        // ice_agent_->signal_candidate_allocate_done.connect(this,
-        //    &TransportController::_on_candidate_allocate_done);
+        ice_agent_->signal_candidate_allocate_done.connect(this,
+                                                           &TransportController::_on_candidate_allocate_done);
     }
 
     TransportController::~TransportController()
@@ -39,13 +39,13 @@ namespace lrtc
         }
     }
 
-    // void TransportController::_on_candidate_allocate_done(IceAgent * /*agent*/,
-    //                                                       const std::string &transport_name,
-    //                                                       IceCandidateComponent component,
-    //                                                       const std::vector<Candidate> &candidates)
-    // {
-    //     signal_candidate_allocate_done(this, transport_name, component, candidates);
-    // }
+    void TransportController::_on_candidate_allocate_done(IceAgent * /*agent*/,
+                                                          const std::string &transport_name,
+                                                          IceCandidateComponent component,
+                                                          const std::vector<Candidate> &candidates)
+    {
+        signal_candidate_allocate_done(this, transport_name, component, candidates);
+    }
 
     int TransportController::set_local_description(SessionDescription *desc)
     {

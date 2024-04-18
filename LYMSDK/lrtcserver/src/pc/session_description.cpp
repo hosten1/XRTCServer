@@ -294,21 +294,21 @@ namespace lrtc
         return content_group[0]->content_names()[0];
     }
 
-    // static void build_candidates(std::shared_ptr<MediaContentDescription> content,
-    //                              std::stringstream &ss)
-    // {
-    //     for (auto c : content->candidates())
-    //     {
-    //         ss << "a=candidate:" << c.foundation
-    //            << " " << c.component
-    //            << " " << c.protocol
-    //            << " " << c.priority
-    //            << " " << c.address.HostAsURIString()
-    //            << " " << c.port
-    //            << " typ " << c.type
-    //            << "\r\n";
-    //     }
-    // }
+    static void build_candidates(std::shared_ptr<MediaContentDescription> content,
+                                 std::stringstream &ss)
+    {
+        for (auto c : content->candidates())
+        {
+            ss << "a=candidate:" << c.foundation
+               << " " << c.component
+               << " " << c.protocol
+               << " " << c.priority
+               << " " << c.address.HostAsURIString()
+               << " " << c.port
+               << " typ " << c.type
+               << "\r\n";
+        }
+    }
 
     static void add_ssrc_line(uint32_t ssrc, const std::string &attribute,
                               const std::string &value, std::stringstream &ss)
@@ -451,7 +451,7 @@ namespace lrtc
             build_rtp_map(content, ss);
             build_ssrc(content, ss);
 
-            // build_candidates(content, ss);
+            build_candidates(content, ss);
         }
 
         return ss.str();

@@ -118,7 +118,7 @@ namespace lrtc
             local_candidates_.push_back(c);
         }
 
-        // signal_candidate_allocate_done(this, local_candidates_);
+        signal_candidate_allocate_done(this, local_candidates_);
     }
 
     // void IceTransportChannel::_on_unknown_address(UDPPort *port,
