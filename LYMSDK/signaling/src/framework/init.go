@@ -17,7 +17,7 @@ func Init(confFile string) error {
 	
 	glog.SetLogDic(gconf.logDir)
 	glog.SetLogFileName(gconf.logFile);
-	glog.SetAlsoLogToStderr(gconf.logToStderr)
+	glog.SetLogToStderr(gconf.logToStderr)
 	glog.SetLogLevel(gconf.logLevel)
 	// glog.setlo
 	err = loadLrpc()

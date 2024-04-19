@@ -44,6 +44,7 @@ namespace lrtc
         void destroy();
 
         std::string create_offer_sdp(const RTCOfferAnswerOptions &options);
+        int set_remote_sdp(const std::string &sdp);
 
     private:
         void _on_candidate_allocate_done(TransportController *transport_controller,

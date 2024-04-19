@@ -26,6 +26,8 @@ namespace lrtc
         int create_push_stream(const std::shared_ptr<LRtcMsg> &msg, std::string &sdp);
         PushStream *find_push_stream(const std::string &stream_name);
 
+        int set_answer(const std::shared_ptr<LRtcMsg> &msg);
+
     private:
         EventLoop *el_;
         std::unordered_map<std::string, PushStream *> push_stream_map_;

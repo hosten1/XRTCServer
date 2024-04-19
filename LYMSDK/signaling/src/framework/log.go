@@ -60,7 +60,7 @@ func  (l *CommonLog) TimeEnd(field string){
 
 func (l *CommonLog) GetPrefixLog() string{
 	prefixLog := ""
-
+    // mainLog
 	for _, item := range l.mainLog {
 		prefixLog += fmt.Sprintf("%s[%s]",item.field,item.value)		
 	}

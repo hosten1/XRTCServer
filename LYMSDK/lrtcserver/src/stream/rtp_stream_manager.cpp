@@ -13,6 +13,7 @@
 #include "stream/rtp_stream_manager.h"
 #include "ice/port_allocator.h"
 #include "server/settings.h"
+#include "rtp_stream_manager.h"
 
 namespace lrtc
 {
@@ -38,6 +39,7 @@ namespace lrtc
         stream = new PushStream(el_, port_allocator_.get(), msg);
         stream->start((rtc::RTCCertificate *)msg->certificate);
         sdp = stream->create_offer_sdp();
+        push_stream_map_[msg->stream_name] = stream;
 
         return 0;
     }
@@ -51,6 +53,30 @@ namespace lrtc
         }
 
         return nullptr;
+    }
+
+    int RTPStreamManager::set_answer(const std::shared_ptr<LRtcMsg> &msg)
+    {
+        if ("push" == msg->stream_type)
+        {
+            PushStream *push_stream = find_push_stream(msg->stream_name);
+            if (!push_stream)
+            {
+                RTC_LOG(LS_ERROR) << "set_answer: push stream not found, stream_name=" << msg->stream_name
+                                  << ", uid=" << msg->uid
+                                  << ", logid =" << msg->log_id;
+                return -1;
+            }
+            return push_stream->set_remote_sdp(msg->sdp);
+        }
+        else if ("pull" == msg->stream_type)
+        {
+        }
+        else
+        {
+        }
+
+        return 0;
     }
 
 } // namespace lrtc

@@ -25,35 +25,36 @@ var isPushScreen = true;
 
 var offerSdp;
 
-pushBtn.addEventListener("click", () => {
+pushBtn.addEventListener("click", async () => {
   // 在控制台输出按钮被点击的消息
   console.log("push: send push: /signaling/push")
   // 禁用按钮
   pushBtn.disabled = true;
-  $.post("/signaling/push",
-    {
+  try {
+    const jsonData = {
       "uid": uid,
       "streamName": streamName,
       "audio": audio,
       "video": video
-    },
-    (data, textStatus) => {
-      // 请求完成后重新启用按钮
-      pushBtn.disabled = false;
-      console.log("push response:" + JSON.stringify(data));
-      if ("success" == textStatus && 0 == data.errNo) {
-        $("#tips1").html("<font color='blue'>推流请求成功</font")
-        console.log("remote offer: \r\n" + data.data.sdp);
-        pushStream(data.data);
-      } else {
-        $("#tips1").html("<font color='red'>推流请求失败</font")
-      }
+    };
+    const { data, textStatus } = await sendPostData("/signaling/push", jsonData);
+    // 请求完成后重新启用按钮
+    pushBtn.disabled = false;
+    console.log("push response:" + JSON.stringify(data));
+    if ("success" == textStatus && 0 == data.errNo) {
+      $("#tips1").html("<font color='blue'>推流请求成功</font")
+      console.log("remote offer: \r\n" + data.data.sdp);
+      pushStream(data.data);
+    } else {
+      $("#tips1").html("<font color='red'>推流请求失败</font")
+    }
+  } catch (error) {
+    console.log(error);
+  }
 
-    },
-    "json")
-  // 在此处可以添加其他处理逻辑
 });
-stopPushBtn.addEventListener("click", () => {
+stopPushBtn.addEventListener("click", async () => {
+
   console.log("push: send stop push: /signaling/stoppush");
   localVideo.srcObject = null;
   localStream = null;
@@ -66,18 +67,24 @@ stopPushBtn.addEventListener("click", () => {
   $("#pushTips1").html("");
   $("#pushTips2").html("");
   $("#pushTips3").html("");
-  $.post("/signaling/stoppush",
-    { "uid": uid, "streamName": pushStreamName },
-    function (data, textStatus) {
-      console.log("stop push response: " + JSON.stringify(data));
-      if ("success" == textStatus && 0 == data.errNo) {
-        $("#pushTips1").html("<font color='blue'>停止推流请求成功!</font>");
-      } else {
-        $("#pushTips1").html("<font color='red'>停止推流请求失败!</font>");
-      }
-    },
-    "json"
-  );
+  try {
+    const jsonData = {
+      "uid": uid,
+      "streamName": streamName,
+    };
+    const { data, textStatus } = await sendPostData("/signaling/push", jsonData);
+    // 请求完成后重新启用按钮
+    pushBtn.disabled = false;
+    console.log("stop push response: " + JSON.stringify(data));
+    if ("success" == textStatus && 0 == data.errNo) {
+      $("#pushTips1").html("<font color='blue'>停止推流请求成功!</font>");
+    } else {
+      $("#pushTips1").html("<font color='red'>停止推流请求失败!</font>");
+    }
+
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 window.addEventListener("message", function (event) {
@@ -94,6 +101,45 @@ window.addEventListener("message", function (event) {
     }
   }
 });
+//将 jQuery 的 $.post 方法方法封装成函数
+async function sendPostData(method, dataJson) {
+  // 参数校验
+  if (typeof method !== 'string' || !method.trim()) {
+    throw new Error('Invalid method provided');
+  }
+  if (typeof dataJson !== 'object' || dataJson === null) {
+    throw new Error('Invalid dataJson provided');
+  }
+  return new Promise((resolve, reject) => {
+    const timeout = 5000; // 设置超时时间为 5 秒
+    let timedOut = false;
+
+    // 使用 try-catch 捕获可能的异常
+    try {
+      // 发送异步请求
+      const request = $.post(method, dataJson, (data, textStatus) => {
+        if (!timedOut) {
+          resolve({ data, textStatus });
+        }
+      }, "json");
+
+      // 设置超时处理
+      setTimeout(() => {
+        timedOut = true;
+        request.abort(); // 中止请求
+        reject(new Error(`Request to ${method} timed out`)); // 触发超时错误，提供更明确的错误信息
+      }, timeout);
+
+      // 增加对请求失败的错误处理
+      request.fail((jqXHR, textStatus, errorThrown) => {
+        reject(new Error(`Request to ${method} failed: ${errorThrown}`)); // 提供更详细的错误信息
+      });
+    } catch (error) {
+      reject(new Error(`An error occurred while sending post data: ${error.message}`));
+    }
+  });
+}
+
 async function startScreenStreamForm(streamId) {
   console.log("开始推流" + streamId);
   var constraints = {
@@ -109,6 +155,7 @@ async function startScreenStreamForm(streamId) {
     },
     audio: false
   };
+  let answer;
   try {
     const videoStream = await navigator.mediaDevices.getUserMedia(constraints);
     // const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -118,20 +165,52 @@ async function startScreenStreamForm(streamId) {
     localStream = videoStream;
     localVideo.srcObject = videoStream;
 
-
-    await pushPc.setRemoteDescription(offerSdp);
-    const answer = await pushPc.createAnswer();
+    answer = await pushPc.createAnswer();
     console.log("create answer: \r\n" + answer.sdp);
-    // await pushPc.setLocalDescription(answer);
+    await pushPc.setLocalDescription(answer);
+
+
   } catch (error) {
     console.error('Error occurred:', error);
   }
+  try {
+    console.log("push: send answer: /signaling/sendanswer");
+    const jsonData = {
+      "uid": uid,
+      "streamName": streamName,
+      "answer": answer.sdp,
+      "type": "push"
+    }
+    const { data, textStatus } = await sendPostData("/signaling/sendanswer", jsonData);
+    if ("success" == textStatus && 0 == data.errNo) {
+      $("#tips3").html("<font color='blue'>answer请求成功!</font>")
+      // console.log("remote answer: \r\n" + data.data.sdp)
+      // pushStream(data.data);
+    } else {
+      $("#tips3").html("<font color='red'>answer请求失败!</font>")
+    }
+    console.log("startScreenStreamForm push resp : " + data);
+  } catch (error) {
+    console.error('Error occurred:', error);
+  }
+
 
 }
 async function pushStream(offer) {
   const config = [];
   offerSdp = offer;
   pushPc = new RTCPeerConnection(config);
+  pushPc.onconnectionstatechange = () => {
+    var state = "";
+    if (pushLastConnectionState != "") {
+      state = pushLastConnectionState + " -> " + pushPc.iceConnectionState;
+    } else {
+      state = pushPc.iceConnectionState;
+    }
+    pushLastConnectionState = pushPc.iceConnectionState;
+    $("#tips2").html("<font color='#01ee55'>ICE连接状态: " + state + "</font>");
+    console.log("connection state: " + state);
+  };
   try {
     await pushPc.setRemoteDescription(offer)
     console.log("setRemoteDescription success");
@@ -159,27 +238,7 @@ async function showAudioDeviceList() {
   }
   const selectedDeviceId = audioDevices[selectedDeviceIndex - 1].deviceId;
   return selectedDeviceId;
-  // const audioDevices = await getAudioDevices();
-  // const selectElement = document.createElement('select');
-
-  // audioDevices.forEach(device => {
-  //   const optionElement = document.createElement('option');
-  //   optionElement.value = device.deviceId;
-  //   optionElement.textContent = device.label || `Audio Device ${selectElement.length + 1}`;
-  //   selectElement.appendChild(optionElement);
-  // });
-
-  // document.body.appendChild(selectElement);
-
-  // return new Promise(resolve => {
-  //   selectElement.addEventListener('change', () => {
-  //     const selectedDeviceId = selectElement.value;
-  //     resolve(selectedDeviceId);
-  //     selectElement.remove();
-  //   });
-  // });
 }
-
 // 获取用户选择的音频设备，并返回相应的约束信息
 async function getUserSelectedAudioStream() {
   const selectedDeviceId = await showAudioDeviceList();

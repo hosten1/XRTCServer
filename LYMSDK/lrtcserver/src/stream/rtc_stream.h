@@ -51,6 +51,7 @@ namespace lrtc
 
   public:
     int start(rtc::RTCCertificate *certificate);
+    int set_remote_sdp(const std::string &sdp);
 
   protected:
     EventLoop *el_;

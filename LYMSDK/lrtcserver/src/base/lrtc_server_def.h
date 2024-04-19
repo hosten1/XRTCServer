@@ -29,6 +29,7 @@ namespace lrtc
         int cmdno = 0;
         uint64_t uid = 0;
         std::string stream_name = "";
+        std::string stream_type = "";
         int audio = 0;
         int video = 0;
         bool dtls_on = true;
@@ -39,7 +40,7 @@ namespace lrtc
         std::string sdp;
         int err_no = 0;
         int fd = 0;
-        void *certificate;
+        void *certificate = nullptr;
 
     public:
         LRtcMsg() = default;

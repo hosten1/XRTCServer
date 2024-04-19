@@ -65,6 +65,7 @@ namespace lrtc
         int _process_request_msg(TcpConnection *conn, Json::Value root, uint32_t log_id);
         int _process_request_push_msg(TcpConnection *conn, int cmdno, Json::Value root, uint32_t log_id);
         void _process_rtc_msg();
+        int _process_request_answer_msg(TcpConnection *conn, int cmdno, Json::Value root, uint32_t log_id);
         void _response_server_offer(std::shared_ptr<LRtcMsg> rtc_msg);
 #ifdef USE_SDS
         void _add_reply_conn(TcpConnection *conn, const rtc::Slice &repaly);

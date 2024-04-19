@@ -137,6 +137,12 @@ namespace lrtc
         return local_session_description_->to_string(false);
     }
 
+    int PeerConnection::set_remote_sdp(const std::string &sdp)
+    {
+        RTC_LOG(LS_INFO) << "set_remote_sdp" << sdp;
+        return 0;
+    }
+
     void PeerConnection::_on_candidate_allocate_done(TransportController *transport_controller, const std::string &transport_name, IceCandidateComponent component, const std::vector<Candidate> &candidates)
     {
 

@@ -51,6 +51,8 @@ namespace lrtc
         void _stop();
         void _process_rtc_msg();
         void _process_push_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg);
+        void _process_answer_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg);
+
         void _read_query(int fd);
         void _close_connection(TcpConnection *conn);
         void _remove_connection(TcpConnection *conn);

@@ -53,6 +53,15 @@
 
 <body>
   <h2>屏幕共享推流端</h2>
+
+  <!-- 在HTML文件中添加以下内容 -->
+  <div id="audioDeviceModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>Select an Audio Device</h3>
+      <ul id="audioDeviceList"></ul>
+      <button id="confirmSelectionBtn">Confirm Selection</button>
+    </div>
+  </div>
   <div class="titleHighlight">
     <span>
       uid = {{ .uid }}
@@ -62,10 +71,12 @@
 
     </span>
   </div>
-  <span id="tips1"></span>
+  <span id="tips1"></span><br>
+  <span id="tips2"></span><br>
+  <span id="tips3"></span><br>
 
   <div style="margin-top: 5px;">
-    <video id="localVideo" controls autoplay></video>
+    <video id="localVideo" autoplay controls></video>
   </div>
 
   <button id="startPushBtn">开始推流</button>

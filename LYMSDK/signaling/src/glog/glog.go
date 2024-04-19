@@ -1,3 +1,4 @@
+
 // Go support for leveled logs, analogous to https://code.google.com/p/google-glog/
 //
 // Copyright 2013 Google Inc. All Rights Reserved.
@@ -67,7 +68,6 @@
 //		"glob" pattern and N is a V level. For instance,
 //			-vmodule=gopher*=3
 //		sets the V level to 3 in all Go files whose names begin "gopher".
-//
 package glog
 
 import (
@@ -98,9 +98,8 @@ type severity int32 // sync/atomic int32
 // A message written to a high-severity log file is also written to each
 // lower-severity log file.
 const (
-
 	debugLog severity = iota
-	infoLog  
+	infoLog
 	warningLog
 	errorLog
 	fatalLog
@@ -110,7 +109,7 @@ const (
 const severityChar = "DIWEF"
 
 var severityName = []string{
-	debugLog:    "DEBUG",
+	debugLog:   "DEBUG",
 	infoLog:    "INFO",
 	warningLog: "WARNING",
 	errorLog:   "ERROR",
@@ -183,11 +182,11 @@ func (s *OutputStats) Bytes() int64 {
 // Stats tracks the number of lines of output and number of bytes
 // per severity level. Values must be read with atomic.LoadInt64.
 var Stats struct {
-	Debug,Info, Warning, Error OutputStats
+	Debug, Info, Warning, Error OutputStats
 }
 
 var severityStats = [numSeverity]*OutputStats{
-	debugLog : &Stats.Debug,
+	debugLog:   &Stats.Debug,
 	infoLog:    &Stats.Info,
 	warningLog: &Stats.Warning,
 	errorLog:   &Stats.Error,
@@ -399,18 +398,13 @@ type flushSyncWriter interface {
 	io.Writer
 }
 
-func SetAlsoLogToStderr(value  bool) {
+func SetLogToStderr(value bool) {
 	logging.alsoToStderr = value
 }
 
-func SetLogLevel(level string)  {
+func SetLogLevel(level string) {
 	logging.stderrThreshold.Set(level)
-	
 }
-
-// func SetStderrThreshold()  {
-	
-// }
 
 func init() {
 	flag.BoolVar(&logging.toStderr, "logtostderr", false, "log to standard error instead of files")
@@ -538,8 +532,11 @@ It returns a buffer containing the formatted header and the user's file and line
 The depth specifies how many stack frames above lives the source line to be identified in the log message.
 
 Log lines have this form:
+
 	Lmmdd hh:mm:ss.uuuuuu threadid file:line] msg...
+
 where the fields are defined as follows:
+
 	L                A single character, representing the log level (eg 'I' for INFO)
 	mm               The month (zero padded; ie May is '05')
 	dd               The day (zero padded)
@@ -710,10 +707,10 @@ func (l *loggingT) output(s severity, buf *buffer, file string, line int, alsoTo
 		}
 		switch s {
 		case fatalLog:
-			// l.file[fatalLog].Write(data)
+			//l.file[fatalLog].Write(data)
 			fallthrough
 		case errorLog:
-			// l.file[errorLog].Write(data)
+			//l.file[errorLog].Write(data)
 			fallthrough
 		case warningLog:
 			l.file[warningLog].Write(data)
@@ -722,6 +719,7 @@ func (l *loggingT) output(s severity, buf *buffer, file string, line int, alsoTo
 			fallthrough
 		case infoLog:
 			l.file[infoLog].Write(data)
+
 		}
 	}
 	if s == fatalLog {
@@ -1005,9 +1003,13 @@ type Verbose bool
 // The returned value is a boolean of type Verbose, which implements Info, Infoln
 // and Infof. These methods will write to the Info log if called.
 // Thus, one may write either
+//
 //	if glog.V(2) { glog.Info("log this") }
+//
 // or
+//
 //	glog.V(2).Info("log this")
+//
 // The second form is shorter but the first is cheaper if logging is off because it does
 // not evaluate its arguments.
 //

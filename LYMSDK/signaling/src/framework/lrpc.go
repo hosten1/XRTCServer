@@ -80,7 +80,7 @@ func loadLrpc() error {
 }
 func Call(serviceName string, request interface{} ,response interface{},logId uint32) error{
    
-	fmt.Println("call" +serviceName)
+	// fmt.Println("call" +serviceName)
 
 	client,ok := lrtpClients["lrpc."+serviceName]
 	if !ok {
@@ -98,7 +98,7 @@ func Call(serviceName string, request interface{} ,response interface{},logId ui
 	}
 	
 	err = json.Unmarshal(resp.Body,response)
-	fmt.Println("Call resp:",resp,response,err)
+	// fmt.Println("Call resp:",resp,response,err)
 	if err != nil {
 		return err
 	}

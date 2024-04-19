@@ -228,6 +228,11 @@ namespace lrtc
 
         // 将结果返回给client
     }
+    void RtcWorker::_process_answer_rtcmsg(std::shared_ptr<LRtcMsg> rtcmsg)
+    {
+        int ret = rtp_stream_manager_->set_answer(rtcmsg);
+        RTC_LOG(LS_INFO) << "RtcWorker server process answer rtcmsg  ret:" << ret;
+    }
     void RtcWorker::_process_rtc_msg()
     {
         std::shared_ptr<LRtcMsg> rtcmsg;
@@ -241,6 +246,9 @@ namespace lrtc
         {
         case CMDNUM_PUSH:
             _process_push_rtcmsg(rtcmsg);
+            break;
+        case CMDNUM_ANSWER:
+            _process_answer_rtcmsg(rtcmsg);
             break;
 
         default:

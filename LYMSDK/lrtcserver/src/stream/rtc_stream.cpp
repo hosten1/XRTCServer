@@ -50,4 +50,10 @@ namespace lrtc
         return pc_->init(certificate);
     }
 
+    int RtcStream::set_remote_sdp(const std::string &sdp)
+    {
+
+        return pc_->set_remote_sdp(sdp);
+    }
+
 } // namespace lrtc

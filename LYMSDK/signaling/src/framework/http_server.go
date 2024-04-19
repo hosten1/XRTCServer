@@ -76,7 +76,7 @@ func entry(w http.ResponseWriter, r *http.Request) {
             cr.Logger.TimeBegin("timeCast")
 			action.Execute(w, cr)
 			cr.Logger.TimeEnd("timeCast")
-			cr.Logger.Infof("http request uri = " + r.URL.Path)
+			cr.Logger.Infof(" ")
 		} else {
 			responseError(w, http.StatusInternalServerError, "Internal server error")
 		}
