@@ -139,7 +139,7 @@ namespace lrtc
 
     int PeerConnection::set_remote_sdp(const std::string &sdp)
     {
-        RTC_LOG(LS_INFO) << "set_remote_sdp" << sdp;
+        RTC_LOG(LS_INFO) << "===============>set_remote_sdp";
         return 0;
     }
 
