@@ -21,6 +21,7 @@
 #include "base/event_loop.h"
 #include "pc/session_description.h"
 #include "pc/transport_controller.h"
+#include "pc/stream_params.h"
 
 namespace lrtc
 {
@@ -46,6 +47,19 @@ namespace lrtc
         std::string create_offer_sdp(const RTCOfferAnswerOptions &options);
         int set_remote_sdp(const std::string &sdp);
 
+        SessionDescription *remote_desc() { return remote_desc_.get(); }
+        SessionDescription *local_desc() { return local_session_description_.get(); }
+
+        void add_audio_source(const std::vector<StreamParams> &source)
+        {
+            audio_source_ = source;
+        }
+
+        void add_video_source(const std::vector<StreamParams> &source)
+        {
+            video_source_ = source;
+        }
+
     private:
         void _on_candidate_allocate_done(TransportController *transport_controller,
                                          const std::string &transport_name,
@@ -57,10 +71,29 @@ namespace lrtc
         TimerWatcher *destroy_timer_ = nullptr;
         rtc::RTCCertificate *certificate_ = nullptr;
         std::unique_ptr<SessionDescription> local_session_description_;
+        std::shared_ptr<SessionDescription> remote_desc_;
 
         std::unique_ptr<TransportController> transport_controller_;
 
+        std::vector<StreamParams> audio_source_;
+        std::vector<StreamParams> video_source_;
+
+        uint32_t remote_audio_ssrc_ = 0;
+        uint32_t remote_video_ssrc_ = 0;
+        uint32_t remote_video_rtx_ssrc_ = 0;
+
+        uint8_t video_payload_type_ = 0;
+        uint8_t video_rtx_payload_type_ = 0;
+        uint8_t audio_payload_type_ = 0;
+
         webrtc::Clock *clock_;
+
+        RTCOfferAnswerOptions options_;
+
+        bool exist_push_audio_source_ = false;
+        bool exist_push_video_source_ = false;
+        int h264_codec_id_ = 0;
+        int rtx_codec_id_ = 0;
     };
 
 } // namespace lrtc

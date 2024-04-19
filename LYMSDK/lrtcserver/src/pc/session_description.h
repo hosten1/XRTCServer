@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <sstream>
 
 #include <rtc_base/ssl_fingerprint.h>
 
@@ -14,6 +15,21 @@
 
 namespace lrtc
 {
+    struct SsrcInfo
+    {
+        SsrcInfo()
+        {
+            ssrc_id = 0;
+            cname = "";
+            stream_id = "";
+        }
+        ~SsrcInfo(){};
+        uint32_t ssrc_id;
+        std::string cname;
+        std::string stream_id;
+        std::string track_id;
+    };
+
     enum SdpType
     {
         kOffer = 0,
@@ -34,6 +50,7 @@ namespace lrtc
         k_recv_only,
         k_inactive
     };
+
     class MediaContentDescription
     {
     public:
@@ -52,30 +69,34 @@ namespace lrtc
         bool rtcp_mux() { return use_rtcp_mux_; }
         void set_rtcp_mux(bool mux) { use_rtcp_mux_ = mux; }
 
-        const std::vector<Candidate> &candidates() { return candidates_; }
-        void add_candidates(const std::vector<Candidate> &candidates)
+        const std::vector<std::shared_ptr<Candidate>> &candidates() { return candidates_; }
+        void add_candidates(const std::vector<std::shared_ptr<Candidate>> &candidates)
         {
             candidates_ = candidates;
         }
 
-        const std::vector<StreamParams> &streams() { return send_streams_; }
-        void add_stream(const StreamParams &stream)
+        const std::vector<std::shared_ptr<StreamParams>> &streams() { return send_streams_; }
+        void add_stream(std::shared_ptr<StreamParams> stream)
         {
             send_streams_.push_back(stream);
         }
+        std::string rtpDirectionToString(const RtpDirection &direction) const;
+
+        std::string to_string() const;
 
     protected:
         std::vector<std::shared_ptr<CodecInfo>> codecs_;
         RtpDirection direction_;
         bool use_rtcp_mux_ = true;
-        std::vector<Candidate> candidates_;
-        std::vector<StreamParams> send_streams_;
+        std::vector<std::shared_ptr<Candidate>> candidates_;
+        std::vector<std::shared_ptr<StreamParams>> send_streams_;
     };
 
     class AudioContentDescription : public MediaContentDescription
     {
     public:
         AudioContentDescription();
+        ~AudioContentDescription() override;
         MediaType type() override { return MediaType::MEDIA_TYPE_AUDIO; }
         std::string mid() override { return "audio"; }
     };
@@ -83,6 +104,7 @@ namespace lrtc
     class VideoContentDescription : public MediaContentDescription
     {
     public:
+        ~VideoContentDescription() override;
         VideoContentDescription(int h264_codec_id = 107, int rtx_codec_id = 99);
         MediaType type() override { return MediaType::MEDIA_TYPE_VIDEO; }
         std::string mid() override { return "video"; }
@@ -117,6 +139,12 @@ namespace lrtc
     class TransportDescription
     {
     public:
+        TransportDescription()
+        {
+        }
+        ~TransportDescription()
+        {
+        }
         std::string mid;
         std::string ice_ufrag;
         std::string ice_pwd;
@@ -150,6 +178,11 @@ namespace lrtc
 
         bool is_bundle(const std::string &mid);
         std::string get_first_bundle_mid();
+
+        std::shared_ptr<AudioContentDescription> get_audio_content_description();
+        std::shared_ptr<VideoContentDescription> get_video_content_description();
+
+        static std::shared_ptr<SessionDescription> parse_session_description(const std::string &sdp, const SdpType type, int &h264_codec_id, int &rtx_codec_id);
 
     private:
         SdpType sdp_type_;

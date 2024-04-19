@@ -30,6 +30,10 @@ namespace lrtc
     public:
         virtual AudioCodecInfo *as_audio() { return nullptr; }
         virtual VideoCodecInfo *as_video() { return nullptr; }
+        std::string to_string()
+        {
+            return "cdoeInfo:" + name + " " + std::to_string(id);
+        }
 
     public:
         int id;
