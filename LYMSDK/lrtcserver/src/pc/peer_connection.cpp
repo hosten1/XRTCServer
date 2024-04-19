@@ -148,7 +148,7 @@ namespace lrtc
         remote_desc_ = SessionDescription::parse_session_description(sdp, kOffer, h264_codec_id_, rtx_codec_id_);
         std::shared_ptr<AudioContentDescription> audio_content = remote_desc_->get_audio_content_description();
         std::shared_ptr<VideoContentDescription> video_content = remote_desc_->get_video_content_description();
-        RTC_LOG(LS_INFO) << "set_remote_sdp audio_content:" << audio_content << " video_content:" << video_content;
+        RTC_LOG(LS_INFO) << "set_remote_sdp audio_content:" << audio_content->to_string() << " video_content:" << video_content->to_string();
         if (audio_content)
         {
             exist_push_audio_source_ = true;

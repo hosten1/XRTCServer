@@ -790,9 +790,9 @@ namespace lrtc
     std::shared_ptr<SessionDescription> SessionDescription::parse_session_description(const std::string &sdp, const SdpType type, int &h264_codec_id, int &rtx_codec_id)
     {
 
-        bool exist_push_audio_source_ = false;
+        bool exist_push_audio_source = false;
 
-        bool exist_push_video_source_ = false;
+        bool exist_push_video_source = false;
 
         std::vector<std::string> fields;
         size_t size = rtc::tokenize(sdp, '\n', &fields);
@@ -858,12 +858,12 @@ namespace lrtc
                 if ("audio" == media_type)
                 {
                     audio_td->mid = "audio";
-                    // exist_push_audio_source_ = true;
+                    exist_push_audio_source = true;
                 }
                 else if ("video" == media_type)
                 {
                     video_td->mid = "video";
-                    // exist_push_video_source_ = true;
+                    exist_push_video_source = true;
                 }
             }
 
@@ -910,19 +910,19 @@ namespace lrtc
             }
         }
 
-        if (exist_push_audio_source_)
+        if (exist_push_audio_source)
         {
             audio_content = std::make_shared<AudioContentDescription>();
             remote_desc->add_content(audio_content);
         }
 
-        if (exist_push_video_source_)
+        if (exist_push_video_source)
         {
             video_content = std::make_shared<VideoContentDescription>(h264_codec_id, rtx_codec_id);
             remote_desc->add_content(video_content);
         }
 
-        if (!audio_ssrc_info.empty())
+        if (exist_push_audio_source && !audio_ssrc_info.empty())
         {
             create_track_from_ssrc_info(audio_ssrc_info, audio_tracks);
 
@@ -932,7 +932,7 @@ namespace lrtc
             }
         }
 
-        if (!video_ssrc_info.empty())
+        if (exist_push_video_source && !video_ssrc_info.empty())
         {
             create_track_from_ssrc_info(video_ssrc_info, video_tracks);
 
