@@ -74,7 +74,7 @@ namespace lrtc
     private:
         void _on_unknown_address(UDPPort *port,
                                  const rtc::SocketAddress &addr,
-                                 StunMessage *msg,
+                                 std::shared_ptr<StunMessage> msg,
                                  const std::string &remote_ufrag);
         void _on_connection_state_change(IceConnection *conn);
         void _on_connection_destroyed(IceConnection *conn);

@@ -14,12 +14,12 @@ namespace lrtc
     const int MIN_RTT = 100;
     const int MAX_RTT = 60000;
 
-    ConnectionRequest::ConnectionRequest(IceConnection *conn) : StunRequest(new StunMessage()), connection_(conn)
+    ConnectionRequest::ConnectionRequest(IceConnection *conn) : StunRequest(std::make_shared<StunMessage>()), connection_(conn)
     {
         ice_tiebreaker_ = rtc::CreateRandomId64();
     }
 
-    void ConnectionRequest::prepare(StunMessage *msg)
+    void ConnectionRequest::prepare(std::shared_ptr<StunMessage> msg)
     {
         msg->set_type(STUN_BINDING_REQUEST);
         std::string username;
@@ -37,12 +37,12 @@ namespace lrtc
         msg->add_fingerprint();
     }
 
-    void ConnectionRequest::on_request_response(StunMessage *msg)
+    void ConnectionRequest::on_request_response(std::shared_ptr<StunMessage> msg)
     {
         connection_->on_connection_request_response(this, msg);
     }
 
-    void ConnectionRequest::on_request_error_response(StunMessage *msg)
+    void ConnectionRequest::on_request_error_response(std::shared_ptr<StunMessage> msg)
     {
         connection_->on_connection_request_error_response(this, msg);
     }
@@ -72,7 +72,7 @@ namespace lrtc
 
     void IceConnection::on_read_packet(const char *buf, size_t len, int64_t timestamp)
     {
-        std::unique_ptr<StunMessage> stun_msg;
+        std::shared_ptr<StunMessage> stun_msg;
         std::string remote_ufrag;
         const Candidate &remote = remote_candidate_;
         if (!port_->get_stun_message(buf, len, remote.address, &stun_msg, &remote_ufrag))
@@ -94,7 +94,7 @@ namespace lrtc
                                         << stun_method_to_string(stun_msg->type())
                                         << " with bad username=" << remote_ufrag
                                         << ", transaction_id=" << rtc::hex_encode(stun_msg->transaction_id());
-                    port_->send_binding_error_response(stun_msg.get(),
+                    port_->send_binding_error_response(stun_msg,
                                                        remote.address, STUN_ERROR_UNAUTHORIZED,
                                                        STUN_ERROR_REASON_UNAUTHORIZED);
                 }
@@ -103,7 +103,7 @@ namespace lrtc
                     RTC_LOG(LS_INFO) << to_string() << ": Received "
                                      << stun_method_to_string(stun_msg->type())
                                      << ", transaction_id=" << rtc::hex_encode(stun_msg->transaction_id());
-                    handle_stun_binding_request(stun_msg.get());
+                    handle_stun_binding_request(stun_msg);
                 }
                 break;
             case STUN_BINDING_RESPONSE:
@@ -111,7 +111,7 @@ namespace lrtc
                 stun_msg->validate_message_integrity(remote_candidate_.password);
                 if (stun_msg->integrity_ok())
                 {
-                    requests_.check_response(stun_msg.get());
+                    requests_.check_response(stun_msg);
                 }
                 break;
             default:
@@ -133,7 +133,7 @@ namespace lrtc
         return priority + 2 * std::max(g, d) + (g > d ? 1 : 0);
     }
 
-    void IceConnection::handle_stun_binding_request(StunMessage *stun_msg)
+    void IceConnection::handle_stun_binding_request(std::shared_ptr<StunMessage> stun_msg)
     {
         // role的冲突问题(控制方和被控制方)，当前xrtcserver强制服务端和客户端都是controling控制方，所以不存在冲突问题
 
@@ -141,7 +141,7 @@ namespace lrtc
         send_stun_binding_response(stun_msg);
     }
 
-    void IceConnection::send_stun_binding_response(StunMessage *stun_msg)
+    void IceConnection::send_stun_binding_response(std::shared_ptr<StunMessage> stun_msg)
     {
         const StunByteStringAttribute *username_attr = stun_msg->get_byte_string(
             STUN_ATTR_USERNAME);
@@ -209,7 +209,7 @@ namespace lrtc
     void IceConnection::ping(int64_t now)
     {
         last_ping_sent_ = now;
-        ConnectionRequest *request = new ConnectionRequest(this);
+        std::shared_ptr<ConnectionRequest> request = std::make_shared<ConnectionRequest>(this);
         pings_since_last_response_.push_back(SentPing(request->id(), now));
         RTC_LOG(LS_INFO) << to_string() << ": Sending STUN ping, id=" << rtc::hex_encode(request->id());
         requests_.send(request);
@@ -341,7 +341,7 @@ namespace lrtc
         set_state(IceCandidatePairState::SUCCEEDED);
     }
 
-    void IceConnection::on_connection_request_response(ConnectionRequest *request, StunMessage *msg)
+    void IceConnection::on_connection_request_response(ConnectionRequest *request, std::shared_ptr<StunMessage> msg)
     {
         int rtt = request->elapsed();
         std::string pings;
@@ -369,7 +369,7 @@ namespace lrtc
         delete this;
     }
 
-    void IceConnection::on_connection_request_error_response(ConnectionRequest *request, StunMessage *msg)
+    void IceConnection::on_connection_request_error_response(ConnectionRequest *request, std::shared_ptr<StunMessage> msg)
     {
         int rtt = request->elapsed();
         int error_code = msg->get_error_code_value();

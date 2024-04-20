@@ -1,4 +1,6 @@
 #include <sstream>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <rtc_base/logging.h>
 #include <rtc_base/crc32.h>
@@ -9,7 +11,6 @@
 #include "base/async_udp_socket.h"
 #include "ice/udp_port.h"
 #include "ice/stun.h"
-// #include "ice/ice_connection.h"
 #include "server/settings.h"
 
 namespace lrtc
@@ -111,20 +112,20 @@ namespace lrtc
 
     IceConnection *UDPPort::create_connection(const Candidate &remote_candidate)
     {
-        // IceConnection *conn = new IceConnection(el_, this, remote_candidate);
-        // auto ret = connections_.insert(
-        //     std::make_pair(conn->remote_candidate().address, conn));
-        // if (ret.second == false && ret.first->second != conn)
-        // {
-        //     RTC_LOG(LS_WARNING) << to_string() << ": create ice connection on "
-        //                         << "an existing remote address, addr: "
-        //                         << conn->remote_candidate().address.ToString();
-        //     ret.first->second = conn;
+        IceConnection *conn = new IceConnection(el_, this, remote_candidate);
+        auto ret = connections_.insert(
+            std::make_pair(conn->remote_candidate().address, conn));
+        if (ret.second == false && ret.first->second != conn)
+        {
+            RTC_LOG(LS_WARNING) << to_string() << ": create ice connection on "
+                                << "an existing remote address, addr: "
+                                << conn->remote_candidate().address.ToString();
+            ret.first->second = conn;
 
-        //     // todo 清理以前存在的ice connection
-        // }
+            // todo 清理以前存在的ice connection
+        }
 
-        return nullptr;
+        return conn;
     }
 
     int UDPPort::send_to(const char *buf, size_t len, const rtc::SocketAddress &addr)
@@ -146,12 +147,13 @@ namespace lrtc
     void UDPPort::_on_read_packet(AsyncUdpSocket * /*socket*/, char *buf, size_t size,
                                   const rtc::SocketAddress &addr, int64_t timestamp)
     {
-        // if (IceConnection *conn = get_connection(addr))
-        // {
-        //     conn->on_read_packet(buf, size, timestamp);
-        //     return;
-        // }
-        std::unique_ptr<StunMessage> stun_msg;
+        IceConnection *conn = get_connection(addr);
+        if (conn)
+        {
+            conn->on_read_packet(buf, size, timestamp);
+            return;
+        }
+        std::shared_ptr<StunMessage> stun_msg;
         std::string remote_ufrag;
         bool res = get_stun_message(buf, size, addr, &stun_msg, &remote_ufrag);
         if (!res || !stun_msg)
@@ -167,13 +169,13 @@ namespace lrtc
                              << stun_method_to_string(stun_msg->type())
                              << " id=" << rtc::hex_encode(stun_msg->transaction_id())
                              << " from " << addr.ToString();
-            signal_unknown_address(this, addr, stun_msg.get(), remote_ufrag);
+            signal_unknown_address(this, addr, stun_msg, remote_ufrag);
         }
     }
 
     bool UDPPort::get_stun_message(const char *data, size_t len,
                                    const rtc::SocketAddress &addr,
-                                   std::unique_ptr<StunMessage> *out_msg,
+                                   std::shared_ptr<StunMessage> *out_msg,
                                    std::string *out_username)
     {
         // 先验证fingerprint
@@ -182,7 +184,7 @@ namespace lrtc
             return false;
         }
 
-        std::unique_ptr<StunMessage> stun_msg = std::make_unique<StunMessage>();
+        std::shared_ptr<StunMessage> stun_msg = std::make_shared<StunMessage>();
         rtc::ByteBufferReader buf(data, len);
         if (!stun_msg->read(&buf) || buf.Length() != 0)
         {
@@ -198,7 +200,7 @@ namespace lrtc
                                     << stun_method_to_string(stun_msg->type())
                                     << " without username/M-I attr from "
                                     << addr.ToString();
-                send_binding_error_response(stun_msg.get(), addr, STUN_ERROR_BAD_REQUEST,
+                send_binding_error_response(stun_msg, addr, STUN_ERROR_BAD_REQUEST,
                                             STUN_ERROR_REASON_BAD_REQUEST);
                 return true;
             }
@@ -206,14 +208,14 @@ namespace lrtc
             // 解析并验证USERNAME属性
             std::string local_ufrag;
             std::string remote_ufrag;
-            if (!_parse_stun_username(stun_msg.get(), &local_ufrag, &remote_ufrag) ||
+            if (!_parse_stun_username(stun_msg, &local_ufrag, &remote_ufrag) ||
                 local_ufrag != ice_params_.ice_ufrag)
             {
                 RTC_LOG(LS_WARNING) << to_string() << ": recevied "
                                     << stun_method_to_string(stun_msg->type())
                                     << " with bad local_ufrag: " << local_ufrag
                                     << " from " << addr.ToString();
-                send_binding_error_response(stun_msg.get(), addr, STUN_ERROR_UNAUTHORIZED,
+                send_binding_error_response(stun_msg, addr, STUN_ERROR_UNAUTHORIZED,
                                             STUN_ERROR_REASON_UNAUTHORIZED);
                 return true;
             }
@@ -226,7 +228,7 @@ namespace lrtc
                                     << stun_method_to_string(stun_msg->type())
                                     << " with bad M-I from "
                                     << addr.ToString();
-                send_binding_error_response(stun_msg.get(), addr, STUN_ERROR_UNAUTHORIZED,
+                send_binding_error_response(stun_msg, addr, STUN_ERROR_UNAUTHORIZED,
                                             STUN_ERROR_REASON_UNAUTHORIZED);
                 return true;
             }
@@ -239,7 +241,7 @@ namespace lrtc
         return true;
     }
 
-    bool UDPPort::_parse_stun_username(StunMessage *stun_msg, std::string *local_ufrag, std::string *remote_ufrag)
+    bool UDPPort::_parse_stun_username(std::shared_ptr<StunMessage> stun_msg, std::string *local_ufrag, std::string *remote_ufrag)
     {
         local_ufrag->clear();
         remote_ufrag->clear();
@@ -274,7 +276,7 @@ namespace lrtc
         return ss.str();
     }
 
-    void UDPPort::send_binding_error_response(StunMessage *stun_msg,
+    void UDPPort::send_binding_error_response(std::shared_ptr<StunMessage> stun_msg,
                                               const rtc::SocketAddress &addr,
                                               int err_code,
                                               const std::string &reason)

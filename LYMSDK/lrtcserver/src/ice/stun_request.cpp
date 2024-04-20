@@ -11,13 +11,17 @@ namespace lrtc
     {
         while (requests_.begin() != requests_.end())
         {
-            StunRequest *request = requests_.begin()->second;
+            std::shared_ptr<StunRequest> request = requests_.begin()->second;
             requests_.erase(requests_.begin());
-            delete request;
+            if (request)
+            {
+                request.reset();
+                request = nullptr;
+            }
         }
     }
 
-    void StunRequestManager::send(StunRequest *request)
+    void StunRequestManager::send(std::shared_ptr<StunRequest> request)
     {
         if (!request)
         {
@@ -38,8 +42,9 @@ namespace lrtc
         }
     }
 
-    bool StunRequestManager::check_response(StunMessage *msg)
+    bool StunRequestManager::check_response(std::shared_ptr<StunMessage> msg)
     {
+        RTC_DCHECK(msg);
         if (!msg)
         {
             return false;
@@ -51,7 +56,8 @@ namespace lrtc
             return false;
         }
 
-        StunRequest *request = iter->second;
+        std::shared_ptr<StunRequest> request = iter->second;
+        RTC_DCHECK(request);
         if (msg->type() == get_stun_success_response(request->type()))
         {
             request->on_request_response(msg);
@@ -64,16 +70,22 @@ namespace lrtc
         {
             RTC_LOG(LS_WARNING) << "Received STUN binding response with wrong type="
                                 << msg->type() << ", id=" << rtc::hex_encode(msg->transaction_id());
-            delete request;
+
+            request.reset();
+            request = nullptr;
             return false;
         }
 
-        delete request;
+        if (request)
+        {
+            request.reset();
+            request = nullptr;
+        }
 
         return true;
     }
 
-    StunRequest::StunRequest(StunMessage *msg) : msg_(msg)
+    StunRequest::StunRequest(std::shared_ptr<StunMessage> msg) : msg_(msg)
     {
         msg_->set_transaction_id(rtc::CreateRandomString(k_stun_transaction_id_length));
     }
@@ -85,8 +97,11 @@ namespace lrtc
             manager_->remove(this);
         }
 
-        delete msg_;
-        msg_ = nullptr;
+        if (msg_)
+        {
+            msg_.reset();
+            msg_ = nullptr;
+        }
     }
 
     void StunRequest::construct()

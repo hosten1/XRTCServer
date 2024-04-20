@@ -10,6 +10,8 @@
 #ifndef __LYMSDK_LRTCSERVER_SRC_ICE_ICE_CONNECTION_H_
 #define __LYMSDK_LRTCSERVER_SRC_ICE_ICE_CONNECTION_H_
 
+#include <memory>
+
 #include "ice/candidate.h"
 #include "ice/stun.h"
 #include "ice/ice_credentials.h"
@@ -28,9 +30,9 @@ namespace lrtc
         ConnectionRequest(IceConnection *conn);
 
     protected:
-        void prepare(StunMessage *msg) override;
-        void on_request_response(StunMessage *msg) override;
-        void on_request_error_response(StunMessage *msg) override;
+        void prepare(std::shared_ptr<StunMessage> msg) override;
+        void on_request_response(std::shared_ptr<StunMessage> msg) override;
+        void on_request_error_response(std::shared_ptr<StunMessage> msg) override;
 
     private:
         IceConnection *connection_ = nullptr;
@@ -61,8 +63,8 @@ namespace lrtc
 
     public:
         void on_read_packet(const char *buf, size_t len, int64_t timestamp);
-        void handle_stun_binding_request(StunMessage *stun_msg);
-        void send_stun_binding_response(StunMessage *stun_msg);
+        void handle_stun_binding_request(std::shared_ptr<StunMessage> stun_msg);
+        void send_stun_binding_response(std::shared_ptr<StunMessage> stun_msg);
         void maybe_set_remote_ice_params(const IceParameters &ice_params);
         void print_pings_since_last_response(std::string &pings, size_t max);
 
@@ -93,8 +95,8 @@ namespace lrtc
         const Candidate &local_candidate() const;
         UDPPort *port() { return port_; }
 
-        void on_connection_request_response(ConnectionRequest *request, StunMessage *msg);
-        void on_connection_request_error_response(ConnectionRequest *request, StunMessage *msg);
+        void on_connection_request_response(ConnectionRequest *request, std::shared_ptr<StunMessage> msg);
+        void on_connection_request_error_response(ConnectionRequest *request, std::shared_ptr<StunMessage> msg);
 
         std::string to_string();
         void update_state(int64_t now);

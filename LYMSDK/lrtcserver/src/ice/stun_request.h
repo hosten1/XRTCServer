@@ -26,21 +26,21 @@ namespace lrtc
         StunRequestManager() = default;
         ~StunRequestManager();
 
-        void send(StunRequest *request);
-        bool check_response(StunMessage *msg);
+        void send(std::shared_ptr<StunRequest> request);
+        bool check_response(std::shared_ptr<StunMessage> msg);
         void remove(StunRequest *request);
 
-        sigslot::signal3<StunRequest *, const char *, size_t> signal_send_packet;
+        sigslot::signal3< StunRequest *, const char *, size_t> signal_send_packet;
 
     private:
-        typedef std::map<std::string, StunRequest *> RequestMap;
+        typedef std::map<std::string, std::shared_ptr<StunRequest>> RequestMap;
         RequestMap requests_;
     };
 
     class StunRequest
     {
     public:
-        StunRequest(StunMessage *request);
+        StunRequest(std::shared_ptr<StunMessage> msg);
         virtual ~StunRequest();
 
         int type() const { return msg_->type(); }
@@ -51,14 +51,14 @@ namespace lrtc
         int elapsed();
 
     protected:
-        virtual void prepare(StunMessage *) {}
-        virtual void on_request_response(StunMessage *) {}
-        virtual void on_request_error_response(StunMessage *) {}
+        virtual void prepare(std::shared_ptr<StunMessage>) {}
+        virtual void on_request_response(std::shared_ptr<StunMessage>) {}
+        virtual void on_request_error_response(std::shared_ptr<StunMessage>) {}
 
         friend class StunRequestManager;
 
     private:
-        StunMessage *msg_ = nullptr;
+        std::shared_ptr<StunMessage> msg_ = nullptr;
         StunRequestManager *manager_ = nullptr;
         int64_t ts_ = 0;
     };

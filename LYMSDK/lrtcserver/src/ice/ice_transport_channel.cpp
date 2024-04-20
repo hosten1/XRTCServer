@@ -125,7 +125,7 @@ namespace lrtc
 
     void IceTransportChannel::_on_unknown_address(UDPPort *port,
                                                   const rtc::SocketAddress &addr,
-                                                  StunMessage *msg,
+                                                  std::shared_ptr<StunMessage> msg,
                                                   const std::string &remote_ufrag)
     {
         const StunUInt32Attribute *priority_attr = msg->get_uint32(STUN_ATTR_PRIORITY);
@@ -214,7 +214,7 @@ namespace lrtc
 
     void IceTransportChannel::_switch_selected_connection(IceConnection *conn)
     {
-        RTC_DCHECK(conn != nullptr);
+        RTC_DCHECK(conn);
         IceConnection *old_selected_connection = selected_connection_;
         selected_connection_ = conn;
         if (old_selected_connection)

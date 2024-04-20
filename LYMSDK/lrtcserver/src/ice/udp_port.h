@@ -21,13 +21,14 @@
 #include "ice/ice_def.h"
 #include "ice/ice_credentials.h"
 #include "ice/candidate.h"
+#include "ice/ice_connection.h"
+#include "rtc_base/checks.h"
 
 namespace lrtc
 {
     class EventLoop;
     class AsyncUdpSocket;
     class StunMessage;
-    class IceConnection;
 
     typedef std::map<rtc::SocketAddress, IceConnection *> AddressMap;
 
@@ -51,10 +52,10 @@ namespace lrtc
         int create_ice_candidate(Network *network, int min_port, int max_port, Candidate &c);
         bool get_stun_message(const char *data, size_t len,
                               const rtc::SocketAddress &addr,
-                              std::unique_ptr<StunMessage> *out_msg,
+                              std::shared_ptr<StunMessage> *out_msg,
                               std::string *out_username);
 
-        void send_binding_error_response(StunMessage *stun_msg,
+        void send_binding_error_response(std::shared_ptr<StunMessage> stun_msg,
                                          const rtc::SocketAddress &addr,
                                          int err_code,
                                          const std::string &reason);
@@ -66,12 +67,12 @@ namespace lrtc
         void create_stun_username(const std::string &remote_username, std::string *stun_attr_username);
         int send_to(const char *buf, size_t len, const rtc::SocketAddress &addr);
 
-        sigslot::signal4<UDPPort *, const rtc::SocketAddress &, StunMessage *, const std::string &> signal_unknown_address;
+        sigslot::signal4<UDPPort *, const rtc::SocketAddress &, std::shared_ptr<StunMessage>, const std::string &> signal_unknown_address;
 
     private:
         void _on_read_packet(AsyncUdpSocket *socket, char *buf, size_t size,
                              const rtc::SocketAddress &addr, int64_t timestamp);
-        bool _parse_stun_username(StunMessage *stun_msg, std::string *local_ufrag, std::string *remote_ufrag);
+        bool _parse_stun_username(std::shared_ptr<StunMessage> stun_msg, std::string *local_ufrag, std::string *remote_ufrag);
 
     private:
         EventLoop *el_;
