@@ -36,7 +36,7 @@ namespace lrtc
         ~TransportController();
 
         int set_local_description(SessionDescription *desc);
-        // int set_remote_description(SessionDescription *desc);
+        int set_remote_description(SessionDescription *desc);
         void set_local_certificate(rtc::RTCCertificate *cert);
 
         // int send_rtp(const std::string &transport_name, const char *data, size_t len);

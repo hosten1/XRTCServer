@@ -8,6 +8,8 @@
  */
 #include "pc/peer_connection.h"
 
+#include <algorithm>
+
 #include <rtc_base/logging.h>
 #include <rtc_base/helpers.h>
 #include <api/task_queue/default_task_queue_factory.h>
@@ -146,9 +148,14 @@ namespace lrtc
     {
         RTC_LOG(LS_INFO) << __FUNCTION__;
         remote_desc_ = SessionDescription::parse_session_description(sdp, kOffer, h264_codec_id_, rtx_codec_id_);
-        std::shared_ptr<AudioContentDescription> audio_content = remote_desc_->get_audio_content_description();
-        std::shared_ptr<VideoContentDescription> video_content = remote_desc_->get_video_content_description();
-        RTC_LOG(LS_INFO) << "set_remote_sdp audio_content:" << audio_content->to_string() << " video_content:" << video_content->to_string();
+        const std::shared_ptr<AudioContentDescription> audio_content = remote_desc_->get_audio_content_description();
+        const std::shared_ptr<VideoContentDescription> video_content = remote_desc_->get_video_content_description();
+        const std::vector<std::shared_ptr<TransportDescription>> transport_infos = remote_desc_->get_transport_infos();
+        // std::for_each(transport_infos.begin(), transport_infos.end(), [&](const std::shared_ptr<TransportDescription> &transport_info)
+        //               { RTC_LOG(LS_INFO) << "set_remote_sdp transport_info:" << transport_info->to_string(); });
+        // RTC_LOG(LS_INFO)
+        //     << "set_remote_sdp audio_content:" << audio_content->to_string()
+        //     << " video_content:" << video_content->to_string();
         if (audio_content)
         {
             exist_push_audio_source_ = true;
@@ -185,7 +192,7 @@ namespace lrtc
             }
         }
 
-        // transport_controller_->set_remote_description(remote_desc_.get());
+        transport_controller_->set_remote_description(remote_desc_.get());
 
         return 0;
     }

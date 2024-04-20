@@ -21,6 +21,12 @@ namespace lrtc
 
         std::string ice_ufrag;
         std::string ice_pwd;
+
+    public:
+        std::string to_string() const
+        {
+            return "ice_ufrag:" + ice_ufrag + "ice_pwd:" + ice_pwd;
+        };
     };
 
     class IceCredentials

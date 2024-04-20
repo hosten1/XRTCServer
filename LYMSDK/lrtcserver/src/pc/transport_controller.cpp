@@ -291,39 +291,39 @@ namespace lrtc
     //     return nullptr;
     // }
 
-    // int TransportController::set_remote_description(SessionDescription *desc)
-    // {
-    //     if (!desc)
-    //     {
-    //         return -1;
-    //     }
+    int TransportController::set_remote_description(SessionDescription *desc)
+    {
+        if (!desc)
+        {
+            return -1;
+        }
 
-    //     for (auto content : desc->contents())
-    //     {
-    //         std::string mid = content->mid();
-    //         if (desc->is_bundle(mid) && mid != desc->get_first_bundle_mid())
-    //         {
-    //             continue;
-    //         }
+        for (auto content : desc->contents())
+        {
+            std::string mid = content->mid();
+            if (desc->is_bundle(mid) && mid != desc->get_first_bundle_mid())
+            {
+                continue;
+            }
 
-    //         auto td = desc->get_transport_info(mid);
-    //         if (td)
-    //         {
-    //             ice_agent_->set_remote_ice_params(content->mid(), IceCandidateComponent::RTP,
-    //                                               IceParameters(td->ice_ufrag, td->ice_pwd));
+            auto td = desc->get_transport_info(mid);
+            if (td)
+            {
+                ice_agent_->set_remote_ice_params(content->mid(), IceCandidateComponent::RTP,
+                                                  IceParameters(td->ice_ufrag, td->ice_pwd));
 
-    //             auto dtls = _get_dtls_transport(mid);
-    //             if (dtls && td->identity_fingerprint)
-    //             {
-    //                 dtls->set_remote_fingerprint(td->identity_fingerprint->algorithm,
-    //                                              td->identity_fingerprint->digest.cdata(),
-    //                                              td->identity_fingerprint->digest.size());
-    //             }
-    //         }
-    //     }
+                // auto dtls = _get_dtls_transport(mid);
+                // if (dtls && td->identity_fingerprint)
+                // {
+                //     dtls->set_remote_fingerprint(td->identity_fingerprint->algorithm,
+                //                                  td->identity_fingerprint->digest.cdata(),
+                //                                  td->identity_fingerprint->digest.size());
+                // }
+            }
+        }
 
-    //     return 0;
-    // }
+        return 0;
+    }
 
     void TransportController::set_local_certificate(rtc::RTCCertificate *cert)
     {

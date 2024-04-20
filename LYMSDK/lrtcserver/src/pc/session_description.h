@@ -150,6 +150,12 @@ namespace lrtc
         std::string ice_pwd;
         std::unique_ptr<rtc::SSLFingerprint> identity_fingerprint;
         ConnectionRole connection_role = ConnectionRole::NONE;
+
+    public:
+        std::string to_string() const
+        {
+            return " mid:" + mid + "  ice_ufrag:" + ice_ufrag + " ice_pwd:" + ice_pwd + " identity_fingerprint:" + identity_fingerprint->ToString() + " ";
+        }
     };
     class SessionDescription
     {
@@ -175,6 +181,10 @@ namespace lrtc
                                 rtc::RTCCertificate *certificate);
         bool add_transport_info(std::shared_ptr<TransportDescription> td);
         std::shared_ptr<TransportDescription> get_transport_info(const std::string &mid);
+        std::vector<std::shared_ptr<TransportDescription>> get_transport_infos() const
+        {
+            return transport_infos_;
+        }
 
         bool is_bundle(const std::string &mid);
         std::string get_first_bundle_mid();

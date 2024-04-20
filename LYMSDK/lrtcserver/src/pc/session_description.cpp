@@ -866,7 +866,6 @@ namespace lrtc
                     exist_push_video_source = true;
                 }
             }
-
             if ("audio" == media_type)
             {
                 if (parse_transport_info(audio_td.get(), field) != 0)
@@ -931,6 +930,11 @@ namespace lrtc
                 audio_content->add_stream(track);
             }
         }
+        else
+        {
+            RTC_LOG(LS_WARNING) << "no audio track exist_push_audio_source = " << exist_push_audio_source
+                                << " audio_ssrc_info.empty() = " << audio_ssrc_info.empty();
+        }
 
         if (exist_push_video_source && !video_ssrc_info.empty())
         {
@@ -957,6 +961,11 @@ namespace lrtc
             {
                 video_content->add_stream(track);
             }
+        }
+        else
+        {
+            RTC_LOG(LS_WARNING) << "no video track exist_push_audio_source = " << exist_push_video_source
+                                << " audio_ssrc_info.empty() = " << video_ssrc_info.empty();
         }
 
         remote_desc->add_transport_info(audio_td);
