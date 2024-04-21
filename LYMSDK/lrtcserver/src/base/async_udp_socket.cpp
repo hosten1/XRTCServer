@@ -1,3 +1,6 @@
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <rtc_base/logging.h>
 
 #include "base/socket.h"

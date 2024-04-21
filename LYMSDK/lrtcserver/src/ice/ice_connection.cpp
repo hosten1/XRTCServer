@@ -82,6 +82,7 @@ namespace lrtc
         }
         else if (!stun_msg)
         {
+            RTC_LOG(LS_WARNING) << to_string() << " stun_msg is null ";
         }
         else
         { // stun massage
